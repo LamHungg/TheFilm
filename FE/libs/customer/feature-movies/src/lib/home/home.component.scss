@@ -1,0 +1,954 @@
+.home-page {
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+// 1. HERO SECTION (Figma: Wine/Burgundy Header #23080E 'Điện ảnh chạm đến bạn')
+.hero-section {
+  background: linear-gradient(135deg, #1f070c 0%, #2e0a12 50%, #1a050a 100%);
+  color: #ffffff;
+  padding: 4.5rem 1.5rem 6.5rem;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(201, 14, 41, 0.22) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+.hero-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  .hero-tag {
+    align-self: flex-start;
+    display: inline-block;
+    padding: 0.35rem 0.95rem;
+    background: rgba(201, 14, 41, 0.25);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: #fca5a5;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border-radius: 999px;
+  }
+
+  .hero-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    margin: 0;
+
+    @media (min-width: 768px) {
+      font-size: 3.75rem;
+    }
+  }
+
+  .hero-desc {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: #cbd5e1;
+    margin: 0;
+    max-width: 520px;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+
+    .hero-btn-main {
+      height: 46px;
+      padding: 0 2.25rem;
+      font-size: 14px;
+    }
+
+    .btn-hero-link {
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s ease;
+
+      &:hover {
+        color: #fca5a5;
+        transform: translateX(4px);
+      }
+    }
+  }
+}
+
+// Hero Visual: Vector Artwork Tickets
+.hero-visual {
+  display: flex;
+  justify-content: center;
+
+  .ticket-stack {
+    position: relative;
+    width: 320px;
+    height: 340px;
+  }
+
+  .ticket-card {
+    position: absolute;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+
+    &.back-ticket {
+      top: 0;
+      left: 10px;
+      width: 220px;
+      height: 290px;
+      transform: rotate(-8deg);
+      opacity: 0.85;
+
+      .mini-art {
+        width: 100%;
+        height: 100%;
+        background-color: #d9483b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+
+        .art-circle {
+          width: 90px;
+          height: 90px;
+          border-radius: 50%;
+          background-color: #f3a738;
+          box-shadow: 0 0 20px rgba(243, 167, 56, 0.5);
+          margin-bottom: 2rem;
+        }
+
+        .art-strip {
+          position: absolute;
+          bottom: 1.5rem;
+          background-color: #1a1020;
+          color: #ffffff;
+          padding: 0.35rem 0.85rem;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          border-radius: 4px;
+        }
+      }
+    }
+
+    &.front-ticket {
+      top: 30px;
+      right: 0;
+      width: 240px;
+      height: 310px;
+      transform: rotate(4deg);
+      z-index: 2;
+
+      &:hover {
+        transform: rotate(0) scale(1.03);
+      }
+
+      .mini-art {
+        width: 100%;
+        height: 100%;
+        background-color: #122947;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+
+        .cinema-top-brand {
+          position: absolute;
+          top: 1rem;
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        .gold-disc {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          background-color: #f3a738;
+          box-shadow: 0 0 30px rgba(243, 167, 56, 0.6);
+          margin-bottom: 2.5rem;
+        }
+
+        .art-strip {
+          position: absolute;
+          bottom: 3.5rem;
+          background-color: #0f172a;
+          color: #ffffff;
+          padding: 0.4rem 1rem;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          border-radius: 4px;
+        }
+
+        .ticket-pill-time {
+          position: absolute;
+          bottom: 1rem;
+          right: -1rem;
+          background-color: #ffffff;
+          color: #1a1b21;
+          padding: 0.45rem 1rem;
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.15rem;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+
+          .pill-top-label {
+            font-size: 9px;
+            font-weight: 800;
+            color: #c90e29;
+            letter-spacing: 0.06em;
+          }
+
+          .pill-time-num {
+            font-size: 16px;
+            font-weight: 900;
+            color: #1a1b21;
+            line-height: 1.1;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 2. QUICK BOOKING FLOATING WIDGET (Figma: Tìm suất chiếu)
+.quick-booking-section {
+  max-width: 1440px;
+  margin: -3.5rem auto 3.5rem;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.quick-booking-card {
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e4e9;
+
+  .card-header-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1b21;
+      margin: 0;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: #666b78;
+    }
+  }
+
+  .booking-controls-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    align-items: flex-end;
+
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1.4fr 1.6fr 1.2fr 1.2fr auto;
+    }
+  }
+
+  .control-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+
+    .control-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #666b78;
+    }
+  }
+
+  .control-action {
+    .btn-find-showtimes {
+      height: 42px;
+      padding: 0 1.75rem;
+      font-size: 13px;
+    }
+  }
+}
+
+// Global section containers
+.section-container {
+  max-width: 1440px;
+  margin: 0 auto 5rem;
+  padding: 0 1.5rem;
+}
+
+.section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+
+  .section-main-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1b21;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+
+  .section-sub-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #666b78;
+    margin: 0;
+  }
+
+  .section-link-more {
+    color: #c90e29;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+
+    &:hover {
+      transform: translateX(4px);
+    }
+  }
+}
+
+// 3. MOVIES GRID (4 Columns on Desktop matching Figma CUS-F01)
+.movies-grid-4 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+
+  @media (min-width: 1220px) {
+    display: grid;
+    grid-template-columns: repeat(4, 280px);
+    justify-content: space-between;
+  }
+
+  thefilm-movie-card {
+    display: block;
+    width: 280px;
+  }
+}
+
+.movies-footer-note {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #e2e4e9;
+
+  p {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #666b78;
+    margin: 0;
+  }
+}
+
+// 4. PROMOS SECTION (Figma 2-Column: Warm Pink & Dark Burgundy)
+.promos-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+.promo-card-light {
+  background-color: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+
+  .promo-badge-tag {
+    color: #991b1b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+
+  .promo-heading {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1a1b21;
+    line-height: 1.2;
+    margin: 0 0 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .promo-summary {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0 0 1.75rem;
+  }
+
+  .promo-benefits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      font-size: 14px;
+      color: #333640;
+
+      .check-icon {
+        color: #c90e29;
+        font-weight: 900;
+      }
+    }
+  }
+
+  .promo-link-cta {
+    margin-top: auto;
+    color: #c90e29;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.promo-card-dark {
+  background: linear-gradient(145deg, #2b0b13 0%, #170408 100%);
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 15px 35px rgba(43, 11, 19, 0.35);
+
+  .member-header-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    .member-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fda4af;
+    }
+
+    .tier-badge {
+      background-color: rgba(243, 167, 56, 0.2);
+      color: #f3a738;
+      border: 1px solid rgba(243, 167, 56, 0.4);
+      padding: 0.25rem 0.65rem;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+  }
+
+  .points-display {
+    margin-bottom: 1.5rem;
+
+    .points-number {
+      font-size: 3.75rem;
+      font-weight: 800;
+      color: #f3a738;
+      line-height: 1;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .points-desc {
+      font-size: 12px;
+      font-weight: 700;
+      color: #e2e8f0;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  .points-progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f3a738 0%, #fbbf24 100%);
+      border-radius: 999px;
+    }
+  }
+
+  .member-hint {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0 0 2rem;
+  }
+
+  .btn-member-redeem {
+    margin-top: auto;
+    width: 100%;
+    height: 44px;
+    font-size: 14px;
+  }
+}
+
+// 5. EXPERIENCE SECTION (Figma 06 · Trải nghiệm phòng chiếu)
+.experience-section {
+  .section-heading-block {
+    margin-bottom: 2rem;
+
+    .section-main-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1b21;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .section-sub-desc {
+      font-size: 14px;
+      color: #666b78;
+      margin: 0;
+    }
+  }
+
+  .experience-steps-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .step-card {
+      background-color: #ffffff;
+      border: 1px solid #e2e4e9;
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+      }
+
+      .step-num-badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background-color: #fff1f4;
+        color: #c90e29;
+        font-size: 15px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .step-info {
+        .step-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1a1b21;
+          margin: 0 0 0.35rem;
+        }
+
+        .step-desc {
+          font-size: 13px;
+          color: #666b78;
+          line-height: 1.55;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  // Find cinema bar (Figma: Tìm rạp gần bạn)
+  .find-cinema-bar {
+    background-color: #ffffff;
+    border: 1px solid #e2e4e9;
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: stretch;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bar-left {
+      .bar-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1a1b21;
+        margin: 0 0 0.25rem;
+      }
+
+      .bar-desc {
+        font-size: 13px;
+        color: #666b78;
+        margin: 0;
+      }
+    }
+
+    .bar-right {
+      display: flex;
+      align-items: flex-end;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      .area-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+
+        .field-label {
+          font-size: 11px;
+          font-weight: 700;
+          color: #666b78;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .figma-select {
+          height: 42px;
+          min-width: 200px;
+          background-color: #f7f8fb;
+          border: 1px solid #e2e4e9;
+          border-radius: 10px;
+          padding: 0 1rem;
+          font-size: 13px;
+          font-weight: 600;
+          color: #1a1b21;
+          outline: none;
+          cursor: pointer;
+
+          &:focus {
+            border-color: #c90e29;
+            background-color: #ffffff;
+          }
+        }
+      }
+
+      .btn-find-cinema {
+        height: 42px;
+        padding: 0 1.75rem;
+        background-color: #c90e29;
+        color: #ffffff;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background-color: #a80b22;
+        }
+      }
+    }
+  }
+}
+
+// 6. SUPPORT CTA SECTION (Figma 07 · Hỗ trợ khách hàng)
+.support-cta-section {
+  .support-cta-box {
+    background-color: #ffffff;
+    border: 1px solid #e2e4e9;
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    align-items: center;
+
+    @media (min-width: 992px) {
+      grid-template-columns: 1.15fr 0.85fr;
+    }
+
+    .cta-left {
+      .cta-tag {
+        color: #c90e29;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.75rem;
+        display: block;
+      }
+
+      .cta-title {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: #1a1b21;
+        line-height: 1.2;
+        margin: 0 0 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .cta-desc {
+        font-size: 14px;
+        color: #666b78;
+        line-height: 1.6;
+        margin: 0 0 1.75rem;
+        max-width: 480px;
+      }
+
+      .support-links-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+
+        .link-faq {
+          color: #c90e29;
+          font-size: 14px;
+          font-weight: 700;
+          text-decoration: none;
+          transition: transform 0.15s ease;
+
+          &:hover {
+            transform: translateX(3px);
+          }
+        }
+
+        .link-contact {
+          display: inline-flex;
+          align-items: center;
+          height: 38px;
+          padding: 0 1.25rem;
+          background-color: #f7f8fb;
+          border: 1px solid #e2e4e9;
+          border-radius: 999px;
+          color: #1a1b21;
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: all 0.15s ease;
+
+          &:hover {
+            background-color: #fff1f4;
+            color: #c90e29;
+            border-color: #fecdd3;
+          }
+        }
+      }
+    }
+
+    .cta-right {
+      .assistant-card {
+        background-color: #1a1d26;
+        border-radius: 16px;
+        padding: 1.5rem;
+        color: #ffffff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.15);
+
+        .assistant-header {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 1rem;
+
+          .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+          }
+
+          .assistant-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 0.02em;
+          }
+        }
+
+        .chat-flow {
+          display: flex;
+          flex-direction: column;
+          gap: 0.85rem;
+          margin-bottom: 1.25rem;
+
+          .bubble {
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 13px;
+            line-height: 1.5;
+
+            p {
+              margin: 0;
+            }
+
+            &.bot {
+              background-color: rgba(255, 255, 255, 0.08);
+              color: #f1f5f9;
+              align-self: flex-start;
+              max-width: 85%;
+
+              .bubble-tag {
+                display: block;
+                font-size: 10px;
+                font-weight: 700;
+                color: #fca5a5;
+                margin-bottom: 0.25rem;
+                letter-spacing: 0.05em;
+              }
+            }
+
+            &.user {
+              background-color: #c90e29;
+              color: #ffffff;
+              align-self: flex-end;
+              max-width: 75%;
+              font-weight: 600;
+            }
+
+            &.note {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              background-color: rgba(255, 255, 255, 0.04);
+              color: #94a3b8;
+              font-size: 12px;
+              padding: 0.5rem 0.85rem;
+              align-self: stretch;
+
+              .note-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background-color: #64748b;
+                flex-shrink: 0;
+              }
+            }
+          }
+        }
+
+        .chat-input-row {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background-color: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 999px;
+          padding: 0.35rem 0.5rem 0.35rem 1rem;
+
+          input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-size: 12px;
+            color: #ffffff;
+            cursor: pointer;
+
+            &::placeholder {
+              color: #94a3b8;
+            }
+          }
+
+          .btn-send {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #c90e29;
+            color: #ffffff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+
+            &:hover {
+              background-color: #a80b22;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

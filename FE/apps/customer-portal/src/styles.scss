@@ -1,0 +1,295 @@
+/* Core Design System & CSS Reset - 100% Figma Specifications */
+:root {
+  /* Exact Figma Brand Colors */
+  --primary: #C90E29;
+  --primary-hover: #A80B22;
+  --primary-active: #8E091C;
+  --primary-light: #FEE2E2;
+  --primary-light-text: #991B1B;
+  
+  --wine-dark: #23080E;
+  --wine-hero: #2D0A12;
+  --gold: #F3A738;
+  --gold-glow: rgba(243, 167, 56, 0.4);
+  
+  /* Exact Figma Neutrals */
+  --text-dark: #1A1B21;
+  --text-body: #333640;
+  --text-muted: #666B78;
+  --text-light: #FFFFFF;
+  
+  --bg-white: #FFFFFF;
+  --bg-subtle: #F7F8FB;
+  --bg-page: #F8FAFC;
+  --border-light: #E2E4E9;
+  --border-focus: #C90E29;
+  
+  /* Status Colors */
+  --success: #10B981;
+  --success-light: #D1FAE5;
+  --warning: #F59E0B;
+  
+  /* Exact Figma Corner Radii */
+  --radius-pill: 999px;
+  --radius-card: 16px;
+  --radius-card-lg: 20px;
+  --radius-input: 10px;
+  --radius-btn: 12px;
+  --radius-sm: 6px;
+  
+  /* Global Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-family);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-dark);
+  background-color: var(--bg-page);
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-family);
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--text-dark);
+}
+
+/* Ensure all form controls use Inter */
+button, input, select, textarea {
+  font-family: var(--font-family);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* ========================================================
+   GLOBAL FIGMA UI COMPONENTS: BUTTONS (btn), COMBOBOXES (cbx), CHECKBOXES
+   ======================================================== */
+
+/* Figma Pill Primary Button */
+.figma-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0 1.5rem;
+  background-color: var(--primary);
+  color: #FFFFFF !important;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(201, 14, 41, 0.25);
+
+  &:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(201, 14, 41, 0.35);
+  }
+
+  &:active {
+    background-color: var(--primary-active);
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    background-color: #CBD5E1;
+    color: #94A3B8 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+/* Figma Secondary Button (White with border) */
+.figma-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding: 0 1.25rem;
+  background-color: var(--bg-white);
+  color: var(--text-dark) !important;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #CBD5E1;
+    background-color: var(--bg-subtle);
+    color: var(--primary) !important;
+  }
+}
+
+/* Figma Combobox / Select Dropdown (.figma-select) */
+.figma-select, select.figma-control {
+  appearance: none;
+  width: 100%;
+  height: 42px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-input);
+  padding: 0 36px 0 14px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666B78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #CBD5E1;
+  }
+
+  &:focus {
+    border-color: var(--primary);
+    background-color: var(--bg-white);
+    box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
+  }
+}
+
+/* Figma Text Input (.figma-input) */
+.figma-input, input.figma-control {
+  width: 100%;
+  height: 42px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-input);
+  padding: 0 14px;
+  font-family: var(--font-family);
+  font-size: 13px;
+  color: var(--text-dark);
+  outline: none;
+  transition: all 0.15s ease;
+
+  &::placeholder {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  &:hover {
+    border-color: #CBD5E1;
+  }
+
+  &:focus {
+    border-color: var(--primary);
+    background-color: var(--bg-white);
+    box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
+  }
+}
+
+/* Figma Custom Checkbox (.figma-checkbox) */
+.figma-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: var(--text-dark);
+
+  input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background-color: var(--bg-subtle);
+    border: 1.5px solid #CBD5E1;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+    margin: 0;
+    flex-shrink: 0;
+
+    &:checked {
+      background-color: var(--primary);
+      border-color: var(--primary);
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        width: 4px;
+        height: 8px;
+        border: solid #FFFFFF;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(201, 14, 41, 0.2);
+    }
+  }
+}
+
+/* Figma Pink Filter Pill Chip (.figma-chip-pink) */
+.figma-chip-pink {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  background-color: var(--primary-light);
+  color: var(--primary-light-text);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 0 16px;
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  outline: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: #FECACA;
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "customer-feature-booking",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/customer/feature-booking/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-feature-booking --web",
+  "targets": {}
+}

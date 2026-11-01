@@ -1,0 +1,233 @@
+.movies-page-container {
+  max-width: 1440px;
+  margin: 2.5rem auto 5rem;
+  padding: 0 2rem;
+  min-height: 80vh;
+}
+
+// Page Header
+.page-header-block {
+  margin-bottom: 2rem;
+
+  .red-subtitle {
+    display: block;
+    color: #c90e29;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+  }
+
+  .main-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1a1b21;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.35rem;
+  }
+
+  .sub-description {
+    font-size: 14px;
+    color: #666b78;
+    margin: 0;
+  }
+}
+
+// Toolbar (Search + Pink Pills)
+.toolbar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  @media (min-width: 992px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+// Search Pill (Figma style)
+.search-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 440px;
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    color: #666b78;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    height: 42px;
+    background-color: #f7f8fb;
+    border: 1px solid #e2e4e9;
+    border-radius: 999px;
+    padding: 0 2.5rem 0 2.65rem;
+    font-size: 13px;
+    color: #1a1b21;
+    outline: none;
+    transition: all 0.15s ease;
+
+    &::placeholder {
+      color: #666b78;
+      font-size: 12px;
+    }
+
+    &:focus {
+      background-color: #ffffff;
+      border-color: #c90e29;
+      box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
+    }
+  }
+
+  .clear-btn {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+}
+
+// Filter Chips (Pill shaped buttons in Figma - #FEE2E2 bg & #991B1B text, 999px radius)
+.filter-chips-row {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .chip-dropdown select {
+    appearance: none;
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: none;
+    border-radius: 999px;
+    padding: 0.5rem 2rem 0.5rem 1.15rem;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    outline: none;
+    white-space: nowrap;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23991B1B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: #fecaca;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 2px #c90e29;
+    }
+  }
+}
+
+// Figma Tabs
+.figma-tabs {
+  display: flex;
+  gap: 2rem;
+  border-bottom: 1.5px solid #e2e4e9;
+  margin-bottom: 2rem;
+
+  .tab-item {
+    background: none;
+    border: none;
+    padding: 0.75rem 0.25rem;
+    font-size: 14px;
+    font-weight: 700;
+    color: #666b78;
+    cursor: pointer;
+    position: relative;
+    letter-spacing: 0.04em;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: #c90e29;
+    }
+
+    &.active {
+      color: #c90e29;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background-color: #c90e29;
+        border-radius: 2px;
+      }
+    }
+  }
+}
+
+// Movies Grid (Figma: 4 Columns Desktop, 2 Columns Mobile)
+.movies-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 3.5rem;
+
+  @media (min-width: 1220px) {
+    display: grid;
+    grid-template-columns: repeat(4, 280px);
+    justify-content: space-between;
+  }
+
+  thefilm-movie-card {
+    display: block;
+    width: 280px;
+  }
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  margin-bottom: 3rem;
+
+  p {
+    font-size: 14px;
+    color: #666b78;
+    margin-bottom: 1rem;
+  }
+
+  .btn-reset {
+    height: 38px;
+    font-size: 13px;
+  }
+}
+
+// Upcoming Section
+.upcoming-section {
+  border-top: 1px solid #e2e4e9;
+  padding-top: 2.5rem;
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #666b78;
+    letter-spacing: 0.06em;
+    margin: 0 0 1.5rem;
+  }
+}

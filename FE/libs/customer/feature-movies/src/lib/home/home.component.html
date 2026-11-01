@@ -1,0 +1,239 @@
+<div class="home-page">
+  <!-- CUS-F01: Hero Banner Section (Wine Burgundy #23080E) -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-tag">RẠP CHIẾU · TRẢI NGHIỆM ĐÁNG NHỚ</div>
+        <h1 class="hero-title">Điện ảnh<br />chạm đến bạn.</h1>
+        <p class="hero-desc">
+          Chọn phim yêu thích, đặt chỗ ngồi đẹp và tận hưởng khoảnh khắc điện ảnh theo cách của bạn.
+        </p>
+        <div class="hero-actions">
+          <a routerLink="/movies" class="figma-btn-primary hero-btn-main">ĐẶT VÉ NGAY</a>
+          <a routerLink="/movies" class="btn-hero-link">Khám phá phim &rarr;</a>
+        </div>
+      </div>
+
+      <!-- Hero Visual: Figma Stylized Vector Artwork & Ticket Mockups -->
+      <div class="hero-visual">
+        <div class="ticket-stack">
+          <!-- Back Ticket (Orange/Coral) -->
+          <div class="ticket-card back-ticket">
+            <div class="mini-art art-coral">
+              <div class="art-circle"></div>
+              <div class="art-strip">MÙA HÈ BẤT TẬN</div>
+            </div>
+          </div>
+
+          <!-- Front Ticket (Navy & Gold Disc with Showtime Badge) -->
+          <div class="ticket-card front-ticket">
+            <div class="mini-art art-navy">
+              <span class="cinema-top-brand">THEFILM · CINEMA</span>
+              <div class="art-circle gold-disc"></div>
+              <div class="art-strip">TẦNG MÂY CUỐI CÙNG</div>
+              <div class="ticket-pill-time">
+                <span class="pill-top-label">SUẤT TỐI NAY</span>
+                <strong class="pill-time-num">19:30</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Booking Floating Widget (Figma 03 · Tìm suất) -->
+  <section class="quick-booking-section">
+    <thefilm-quick-booking
+      [cinemas]="cinemas"
+      (search)="handleQuickSearch($event)"
+    ></thefilm-quick-booking>
+  </section>
+
+  <!-- CUS-F01 Section: Phim đang chiếu (4 Columns Desktop) -->
+  <section class="section-container movies-section">
+    <div class="section-header-flex">
+      <div>
+        <h2 class="section-main-title">Phim đang chiếu</h2>
+        <p class="section-sub-desc">Chọn phim và khám phá suất chiếu tại rạp.</p>
+      </div>
+      <a routerLink="/movies" class="section-link-more">Xem tất cả &rarr;</a>
+    </div>
+
+    <div class="movies-grid-4">
+      <thefilm-movie-card
+        *ngFor="let movie of nowShowingMovies"
+        [movie]="movie"
+        (selectShowtime)="goToMovie($event)"
+        (cardClick)="goToMovie($event)"
+      ></thefilm-movie-card>
+    </div>
+
+    <!-- Figma Bottom Note -->
+    <div class="movies-footer-note">
+      <p>Lịch chiếu và định dạng thay đổi theo rạp, ngày chiếu và tình trạng mở bán.</p>
+    </div>
+  </section>
+
+  <!-- 05 · Thành viên & ưu đãi (Figma Exact) -->
+  <section class="section-container promos-section" id="uu-dai">
+    <div class="promos-grid">
+      <!-- Left: Khám phá thành viên -->
+      <div class="promo-card-light">
+        <span class="promo-badge-tag">THEFILM+ · THÀNH VIÊN</span>
+        <h2 class="promo-heading">Ưu đãi điện ảnh<br />mỗi ngày.</h2>
+        <p class="promo-summary">
+          Tài khoản thành viên giúp bạn theo dõi điểm, voucher và lịch sử giao dịch ở cùng một nơi.
+        </p>
+
+        <ul class="promo-benefits-list">
+          <li>
+            <span class="bullet-dot">&bull;</span>
+            <span>Tích điểm</span>
+          </li>
+          <li>
+            <span class="bullet-dot">&bull;</span>
+            <span>Voucher</span>
+          </li>
+          <li>
+            <span class="bullet-dot">&bull;</span>
+            <span>Theo dõi vé</span>
+          </li>
+        </ul>
+
+        <a routerLink="/member" class="figma-btn-primary btn-member-explore">KHÁM PHÁ THÀNH VIÊN</a>
+      </div>
+
+      <!-- Right: Thẻ thành viên demo -->
+      <div class="promo-card-dark">
+        <div class="member-header-box">
+          <span class="member-label">THÀNH VIÊN</span>
+          <span class="tier-badge">DỮ LIỆU MINH HỌA</span>
+        </div>
+
+        <div class="points-display">
+          <span class="points-number">1.250</span>
+          <span class="points-desc">ĐIỂM KHẢ DỤNG</span>
+        </div>
+
+        <div class="points-progress-bar">
+          <div class="progress-fill" style="width: 75%"></div>
+        </div>
+
+        <div class="perk-note">
+          <span class="gift-icon">&#127873;</span>
+          <span>Ưu đãi sinh nhật</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 · Trải nghiệm phòng chiếu (Figma Exact) -->
+  <section class="section-container experience-section">
+    <div class="section-heading-block">
+      <h2 class="section-main-title">Chọn trải nghiệm phù hợp</h2>
+      <p class="section-sub-desc">Loại phòng, tiện ích và suất chiếu được hiển thị theo thông tin từng rạp.</p>
+    </div>
+
+    <!-- 3-Step Info Cards -->
+    <div class="experience-steps-grid">
+      <div class="step-card">
+        <div class="step-num-badge">01</div>
+        <div class="step-info">
+          <h3 class="step-title">Loại phòng công bố</h3>
+          <p class="step-desc">Xem tên loại phòng và tiện ích có tại rạp bạn chọn.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num-badge">02</div>
+        <div class="step-info">
+          <h3 class="step-title">Suất tương thích</h3>
+          <p class="step-desc">Chỉ hiển thị suất phù hợp với định dạng phòng được công bố.</p>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num-badge">03</div>
+        <div class="step-info">
+          <h3 class="step-title">Ghế xác nhận</h3>
+          <p class="step-desc">Trạng thái ghế được cập nhật khi bạn mở sơ đồ chọn chỗ.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cinema Search / Filter Bar -->
+    <div class="find-cinema-bar">
+      <div class="bar-left">
+        <h4 class="bar-title">Tìm rạp gần bạn</h4>
+        <p class="bar-desc">Chọn khu vực để xem danh sách rạp.</p>
+      </div>
+      <div class="bar-right">
+        <div class="area-field">
+          <label class="field-label">Tỉnh / thành</label>
+          <div class="select-wrapper">
+            <select [(ngModel)]="selectedArea" class="figma-select">
+              <option value="">Chọn khu vực</option>
+              <option value="HCM">TP. Hồ Chí Minh</option>
+              <option value="HN">Hà Nội</option>
+              <option value="DN">Đà Nẵng</option>
+            </select>
+          </div>
+        </div>
+        <button class="figma-btn-primary btn-find-cinema" routerLink="/cinemas">
+          TÌM RẠP
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 · Hỗ trợ khách hàng (Figma Exact) -->
+  <section class="section-container support-cta-section">
+    <div class="support-cta-box">
+      <!-- Left side: Text & Links -->
+      <div class="cta-left">
+        <span class="cta-tag">CSKH · CHAT HỖ TRỢ</span>
+        <h2 class="cta-title">Cần trợ giúp?<br />Chúng tôi luôn ở đây.</h2>
+        <p class="cta-desc">
+          Tra cứu hướng dẫn đặt vé, đổi/hoàn vé hoặc trò chuyện với trợ lý AI.
+        </p>
+        <div class="support-links-row">
+          <a routerLink="/support" class="link-faq">Câu hỏi thường gặp &rarr;</a>
+          <a routerLink="/support" class="link-contact">Liên hệ CSKH</a>
+        </div>
+      </div>
+
+      <!-- Right side: AI Assistant Card Mockup -->
+      <div class="cta-right">
+        <div class="assistant-card">
+          <div class="assistant-header">
+            <span class="status-dot"></span>
+            <span class="assistant-name">Trợ lý THEFILM</span>
+          </div>
+          <div class="chat-flow">
+            <div class="bubble bot">
+              <span class="bubble-tag">TRỢ LÝ AI</span>
+              <p>Chào bạn! Mình có thể giúp tìm suất chiếu hoặc hướng dẫn đặt vé.</p>
+            </div>
+            <div class="bubble user">
+              <p>Mình muốn đổi vé.</p>
+            </div>
+            <div class="bubble note">
+              <span class="note-dot"></span>
+              <p>Nếu cần, mình sẽ kết nối nhân viên CSKH.</p>
+            </div>
+          </div>
+          <div class="chat-input-row">
+            <input type="text" placeholder="Nhập câu hỏi của bạn..." readonly routerLink="/support" />
+            <button class="btn-send" routerLink="/support" aria-label="Gửi câu hỏi">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,87 @@
+<div class="thefilm-quick-booking">
+  <div class="booking-card">
+    <!-- Header Row (Title & Subtitle right-aligned) -->
+    <div class="header-row">
+      <h2 class="card-title">Tìm suất chiếu</h2>
+      <span class="card-subtitle">Chọn rạp, phim và ngày</span>
+    </div>
+
+    <!-- Controls Row (Figma Desktop 5 Controls: Rạp chiếu, Phim, Ngày chiếu (3 boxes), Loại phòng, Nút TÌM SUẤT) -->
+    <div class="controls-row">
+      <!-- Control 1: Rạp chiếu -->
+      <div class="control-col">
+        <label class="control-label">Rạp chiếu</label>
+        <div class="select-container">
+          <select [(ngModel)]="selectedCinemaId" class="figma-select">
+            <option value="">Chọn rạp</option>
+            <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Control 2: Phim (Input with placeholder "Tìm tên phim") -->
+      <div class="control-col">
+        <label class="control-label">Phim</label>
+        <div class="input-container">
+          <input
+            type="text"
+            [(ngModel)]="movieSearchTerm"
+            placeholder="Tìm tên phim"
+            class="figma-input"
+          />
+        </div>
+      </div>
+
+      <!-- Control 3: Ngày chiếu (3 distinct boxes: 01, 11, 2026) -->
+      <div class="control-col date-col">
+        <label class="control-label">Ngày chiếu</label>
+        <div class="date-group">
+          <input
+            type="text"
+            [(ngModel)]="dayVal"
+            maxlength="2"
+            class="date-box day"
+            placeholder="01"
+            title="Ngày"
+          />
+          <input
+            type="text"
+            [(ngModel)]="monthVal"
+            maxlength="2"
+            class="date-box month"
+            placeholder="11"
+            title="Tháng"
+          />
+          <input
+            type="text"
+            [(ngModel)]="yearVal"
+            maxlength="4"
+            class="date-box year"
+            placeholder="2026"
+            title="Năm"
+          />
+        </div>
+      </div>
+
+      <!-- Control 4: Loại phòng -->
+      <div class="control-col">
+        <label class="control-label">Loại phòng</label>
+        <div class="select-container">
+          <select [(ngModel)]="selectedRoomType" class="figma-select">
+            <option value="ALL">Tất cả loại phòng</option>
+            <option value="STANDARD">Standard Digital</option>
+            <option value="VIP">Gold Class VIP</option>
+            <option value="IMAX">IMAX 3D Laser</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="action-col">
+        <button class="btn-find-showtimes" (click)="onSearch()">
+          TÌM SUẤT
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

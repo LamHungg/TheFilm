@@ -1,0 +1,298 @@
+.auth-page-container {
+  max-width: 1100px;
+  margin: 3.5rem auto 5rem;
+  padding: 0 1.5rem;
+}
+
+.auth-desktop-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+  display: grid;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 900px) {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+}
+
+// Left Form Column
+.auth-form-column {
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+
+  .brand-badge-box {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.5rem;
+
+    .logo-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #c90e29;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 1.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-subtitle-tag {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #c90e29;
+      letter-spacing: 0.08em;
+    }
+  }
+
+  .auth-main-title {
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: #1a1b21;
+    line-height: 1.25;
+    margin: 0 0 0.5rem;
+  }
+
+  .auth-meta-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0 0 2rem;
+  }
+
+  .auth-toggle-pills {
+    display: flex;
+    background-color: #f1f5f9;
+    padding: 0.35rem;
+    border-radius: 50px;
+    margin-bottom: 2rem;
+
+    .toggle-pill {
+      flex: 1;
+      border: none;
+      background: none;
+      padding: 0.65rem 0.5rem;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #64748b;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &.active {
+        background-color: #c90e29;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(201, 14, 41, 0.3);
+      }
+    }
+  }
+
+  .auth-input-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+
+      label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #334155;
+      }
+
+      input {
+        height: 44px;
+        background-color: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0 1rem;
+        font-size: 0.9rem;
+        color: #1e293b;
+        outline: none;
+        transition: all 0.15s ease;
+
+        &:focus {
+          border-color: #c90e29;
+          background-color: #ffffff;
+          box-shadow: 0 0 0 2px rgba(201, 14, 41, 0.15);
+        }
+      }
+    }
+
+    .form-row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+
+      .remember-label {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: #64748b;
+        cursor: pointer;
+
+        input {
+          accent-color: #c90e29;
+        }
+      }
+
+      .forgot-pwd-link {
+        color: #c90e29;
+        text-decoration: none;
+        font-weight: 700;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .btn-auth-submit {
+      height: 46px;
+      background-color: #c90e29;
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.15s ease;
+
+      &:hover {
+        background-color: #a80b22;
+      }
+    }
+  }
+
+  .auth-toggle-footer {
+    text-align: center;
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+
+    a {
+      color: #c90e29;
+      font-weight: 800;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .auth-security-caption {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-align: center;
+    margin: 0;
+  }
+}
+
+// Right Perks Column (Figma Navy)
+.auth-perks-column {
+  background: linear-gradient(145deg, #162032 0%, #0b1322 100%);
+  color: #ffffff;
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+
+  .perks-inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .perks-badge {
+    color: #f3a738;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+  }
+
+  .perks-title {
+    font-size: 1.85rem;
+    font-weight: 900;
+    line-height: 1.25;
+    margin: 0 0 0.85rem;
+  }
+
+  .perks-desc {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin: 0 0 2rem;
+  }
+
+  .perks-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+
+    li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+
+      .icon-disc {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background-color: rgba(243, 167, 56, 0.2);
+        color: #f3a738;
+        font-weight: 900;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      strong {
+        display: block;
+        color: #ffffff;
+        font-size: 0.92rem;
+        margin-bottom: 0.2rem;
+      }
+
+      p {
+        font-size: 0.82rem;
+        color: #94a3b8;
+        line-height: 1.45;
+        margin: 0;
+      }
+    }
+  }
+
+  .perks-bottom-card {
+    margin-top: auto;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px dashed rgba(243, 167, 56, 0.4);
+    padding: 0.85rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: #e2e8f0;
+    text-align: center;
+
+    strong {
+      color: #f3a738;
+    }
+  }
+}

@@ -1,0 +1,225 @@
+.thefilm-movie-card {
+  width: 280px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e4e9;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+
+    .btn-select-showtime {
+      background-color: #a80b22;
+      box-shadow: 0 4px 14px rgba(201, 14, 41, 0.35);
+    }
+  }
+}
+
+// Poster Artwork Area (280px x 320px)
+.poster-artwork {
+  position: relative;
+  width: 280px;
+  height: 320px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  // Themes matching Figma illustrations
+  &.theme-navy {
+    background-color: #122947;
+    .arc-back {
+      background-color: #c90e29;
+    }
+    .arc-front {
+      background-color: #0b1a2f;
+    }
+  }
+
+  &.theme-coral {
+    background-color: #e04d3f;
+    .arc-back {
+      background-color: #f3a738;
+    }
+    .arc-front {
+      background-color: #0d5c64;
+    }
+  }
+
+  &.theme-purple {
+    background-color: #231a38;
+    .arc-back {
+      background-color: #5c3577;
+    }
+    .arc-front {
+      background-color: #130d21;
+    }
+  }
+
+  &.theme-teal {
+    background-color: #459a88;
+    .arc-back {
+      background-color: #f3a738;
+    }
+    .arc-front {
+      background-color: #e04d3f;
+    }
+  }
+
+  // Top-left category tag
+  .category-tag {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 3;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+
+  // Vector Scene (Sun & overlapping curved hills)
+  .vector-scene {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+
+    .sun-disc {
+      position: absolute;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      background-color: #f3a738;
+      box-shadow: 0 0 40px rgba(243, 167, 56, 0.5);
+    }
+
+    .arc {
+      position: absolute;
+      border-radius: 50%;
+
+      &.arc-back {
+        width: 380px;
+        height: 200px;
+        bottom: 30px;
+        left: -50px;
+        opacity: 0.95;
+      }
+
+      &.arc-front {
+        width: 420px;
+        height: 160px;
+        bottom: 40px;
+        left: -30px;
+      }
+    }
+  }
+
+  // Bottom dark banner with movie title
+  .poster-title-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 4;
+    background-color: #0f172a;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-align: center;
+    padding: 13px 12px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// Movie Card Details Body
+.movie-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+
+  .movie-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 23px;
+    color: #1a1b21;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .movie-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 18px;
+    color: #666b78;
+    margin: 0;
+  }
+
+  .badge-container {
+    margin-top: 2px;
+    margin-bottom: 4px;
+
+    .figma-format-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #fff1f4;
+      color: #c90e29;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 999px;
+      width: fit-content;
+      letter-spacing: 0.03em;
+    }
+  }
+
+  .btn-select-showtime {
+    width: 100%;
+    height: 40px;
+    background-color: #c90e29;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(201, 14, 41, 0.25);
+
+    &:hover {
+      background-color: #a80b22;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(201, 14, 41, 0.35);
+    }
+  }
+}

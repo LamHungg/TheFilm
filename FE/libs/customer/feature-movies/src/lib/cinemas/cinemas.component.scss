@@ -1,0 +1,265 @@
+.cinemas-page-container {
+  max-width: 1360px;
+  margin: 2.5rem auto 5rem;
+  padding: 0 1.5rem;
+}
+
+.page-heading {
+  margin-bottom: 2rem;
+
+  .red-subtitle {
+    display: block;
+    color: #b91c1c;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+  }
+
+  .main-title {
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.35rem;
+  }
+
+  .sub-description {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin: 0;
+  }
+}
+
+// Location Toolbar
+.location-toolbar {
+  margin-bottom: 2rem;
+
+  .location-pill-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    background-color: #f1f5f9;
+    border-radius: 50px;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.88rem;
+
+    .loc-icon {
+      color: #c90e29;
+      font-size: 1.1rem;
+    }
+
+    .loc-text {
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .sep {
+      color: #cbd5e1;
+    }
+
+    .change-btn {
+      background: none;
+      border: none;
+      color: #c90e29;
+      font-weight: 800;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+  }
+}
+
+// Cinema Grid (3 Columns on Desktop)
+.cinema-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  margin-bottom: 3.5rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cinema-item-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .cinema-card-header {
+      padding: 1.5rem 1.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffffff;
+
+      &.brand-red {
+        background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+      }
+
+      &.brand-navy {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      }
+
+      &.brand-teal {
+        background: linear-gradient(135deg, #0d9488 0%, #115e59 100%);
+      }
+
+      .logo-text-box {
+        font-weight: 900;
+        font-size: 1.15rem;
+        letter-spacing: 0.05em;
+      }
+
+      .city-badge {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.65rem;
+        border-radius: 4px;
+      }
+    }
+
+    .cinema-card-body {
+      padding: 1.5rem;
+      flex: 1;
+
+      .cinema-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 0.5rem;
+      }
+
+      .cinema-address {
+        font-size: 0.88rem;
+        color: #475569;
+        line-height: 1.5;
+        margin: 0 0 0.5rem;
+      }
+
+      .cinema-hours {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin: 0 0 1.25rem;
+      }
+
+      .amenities-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+
+        .tag {
+          background-color: #f1f5f9;
+          color: #475569;
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.25rem 0.6rem;
+          border-radius: 4px;
+
+          &.tag-gold {
+            background-color: rgba(243, 167, 56, 0.15);
+            color: #b45309;
+            border: 1px solid rgba(243, 167, 56, 0.3);
+          }
+        }
+      }
+    }
+
+    .cinema-card-footer {
+      padding: 1.25rem 1.5rem;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #059669;
+
+        .dot-green {
+          font-size: 0.65rem;
+        }
+      }
+
+      .btn-showtimes {
+        background-color: #c90e29;
+        color: #ffffff;
+        border: none;
+        border-radius: 999px;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+          background-color: #a80b22;
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+}
+
+// Features Block
+.features-block {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 2.5rem;
+
+  .features-label {
+    display: block;
+    color: #b91c1c;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.5rem;
+  }
+
+  .features-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .feat-item {
+      strong {
+        display: block;
+        color: #0f172a;
+        font-size: 1rem;
+        margin-bottom: 0.35rem;
+      }
+
+      p {
+        font-size: 0.88rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin: 0;
+      }
+    }
+  }
+}

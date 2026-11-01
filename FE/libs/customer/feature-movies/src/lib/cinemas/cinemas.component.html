@@ -1,0 +1,114 @@
+<div class="cinemas-page-container">
+  <div class="page-heading">
+    <span class="red-subtitle">HỆ THỐNG CỤM RẠP TOÀN QUỐC</span>
+    <h1 class="main-title">Rạp gần bạn</h1>
+    <p class="sub-description">Trải nghiệm không gian rạp chiếu chuẩn quốc tế với công nghệ IMAX Laser và dịch vụ tận tâm</p>
+  </div>
+
+  <!-- Location Filter Pill -->
+  <div class="location-toolbar">
+    <div class="location-pill-card">
+      <span class="loc-icon">⌖</span>
+      <span class="loc-text">TP. Hồ Chí Minh &middot; Hà Nội &middot; Đà Nẵng</span>
+      <span class="sep">·</span>
+      <button class="change-btn">3 Cụm rạp đang hoạt động</button>
+    </div>
+  </div>
+
+  <!-- Cinema Cards Grid (3 Columns on Desktop, 1 Column on Mobile) -->
+  <div class="cinema-cards-grid">
+    <!-- Card 1: THEFILM Nguyễn Trãi -->
+    <div class="cinema-item-card">
+      <div class="cinema-card-header brand-red">
+        <div class="logo-text-box">THEFILM</div>
+        <span class="city-badge">TP. HỒ CHÍ MINH</span>
+      </div>
+      <div class="cinema-card-body">
+        <h3 class="cinema-name">THEFILM Nguyễn Trãi</h3>
+        <p class="cinema-address">279 Nguyễn Trãi, Phường Nguyễn Cư Trinh, Quận 1, TP. HCM</p>
+        <p class="cinema-hours">Mở cửa: 08:30 - 23:30 mỗi ngày</p>
+        <div class="amenities-tags">
+          <span class="tag">2 Phòng Standard</span>
+          <span class="tag">1 Phòng VIP</span>
+          <span class="tag">Bãi xe ô tô</span>
+        </div>
+      </div>
+      <div class="cinema-card-footer">
+        <div class="status-indicator">
+          <span class="dot-green">●</span>
+          <span>Đang hoạt động</span>
+        </div>
+        <button class="btn-showtimes" (click)="viewShowtimes('cin-01')">XEM SUẤT CHIẾU</button>
+      </div>
+    </div>
+
+    <!-- Card 2: THEFILM Thảo Điền -->
+    <div class="cinema-item-card">
+      <div class="cinema-card-header brand-navy">
+        <div class="logo-text-box">THEFILM</div>
+        <span class="city-badge">TP. THỦ ĐỨC</span>
+      </div>
+      <div class="cinema-card-body">
+        <h3 class="cinema-name">THEFILM Thảo Điền (Landmark 81)</h3>
+        <p class="cinema-address">Tầng B1, TTTM Vincom Mega Mall Thảo Điền, TP. Thủ Đức, TP. HCM</p>
+        <p class="cinema-hours">Mở cửa: 08:30 - 24:00 mỗi ngày</p>
+        <div class="amenities-tags">
+          <span class="tag tag-gold">IMAX Laser</span>
+          <span class="tag">3D RealD</span>
+          <span class="tag">Gold Class</span>
+        </div>
+      </div>
+      <div class="cinema-card-footer">
+        <div class="status-indicator">
+          <span class="dot-green">●</span>
+          <span>Đang hoạt động</span>
+        </div>
+        <button class="btn-showtimes" (click)="viewShowtimes('cin-02')">XEM SUẤT CHIẾU</button>
+      </div>
+    </div>
+
+    <!-- Card 3: THEFILM Tây Hồ -->
+    <div class="cinema-item-card">
+      <div class="cinema-card-header brand-teal">
+        <div class="logo-text-box">THEFILM</div>
+        <span class="city-badge">HÀ NỘI</span>
+      </div>
+      <div class="cinema-card-body">
+        <h3 class="cinema-name">THEFILM Tây Hồ</h3>
+        <p class="cinema-address">Lotte Mall Tây Hồ, 272 Võ Chí Công, Quận Tây Hồ, Hà Nội</p>
+        <p class="cinema-hours">Mở cửa: 09:00 - 23:30 mỗi ngày</p>
+        <div class="amenities-tags">
+          <span class="tag tag-gold">IMAX Laser</span>
+          <span class="tag">Ghế da ngả lưng</span>
+          <span class="tag">Dolby Atmos</span>
+        </div>
+      </div>
+      <div class="cinema-card-footer">
+        <div class="status-indicator">
+          <span class="dot-green">●</span>
+          <span>Đang hoạt động</span>
+        </div>
+        <button class="btn-showtimes" (click)="viewShowtimes('cin-03')">XEM SUẤT CHIẾU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standards & Features -->
+  <div class="features-block">
+    <span class="features-label">TIÊU CHUẨN RẠP CHIẾU THEFILM</span>
+    <div class="features-list">
+      <div class="feat-item">
+        <strong>100% Máy chiếu Laser 4K</strong>
+        <p>Độ sáng vượt trội, màu sắc chân thực từng khung hình.</p>
+      </div>
+      <div class="feat-item">
+        <strong>Âm thanh vòm Dolby Atmos</strong>
+        <p>Hiệu ứng âm thanh đa chiều bao phủ toàn bộ không gian phòng chiếu.</p>
+      </div>
+      <div class="feat-item">
+        <strong>Ghế da cao cấp ngả lưng</strong>
+        <p>Khoảng cách rộng rãi 1.2m giữa các hàng ghế đảm bảo sự riêng tư.</p>
+      </div>
+    </div>
+  </div>
+</div>

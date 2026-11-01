@@ -1,0 +1,110 @@
+<div class="movies-page-container">
+  <!-- CUS-F02: Header & Search/Filter Section -->
+  <div class="page-header-block">
+    <span class="red-subtitle">ĐANG CHIẾU & SẮP CHIẾU</span>
+    <h1 class="main-title">Tìm phim yêu thích</h1>
+    <p class="sub-description">Lọc theo thể loại, ngày chiếu, định dạng và rạp chiếu toàn hệ thống</p>
+  </div>
+
+  <!-- Filter & Search Toolbar (Exact Figma Desktop CUS-F02 & Mobile Node 41-173) -->
+  <div class="toolbar-wrapper">
+    <!-- Search Bar (Figma Pill) -->
+    <div class="search-pill">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (input)="applyFilters()"
+        placeholder="Tên phim, thể loại, diễn viên..."
+      />
+      <button *ngIf="searchQuery" (click)="searchQuery = ''; applyFilters()" class="clear-btn">✕</button>
+    </div>
+
+    <!-- Filter Dropdown Chips (Figma Pink Pills: #FEE2E2 / #991B1B) -->
+    <div class="filter-chips-row">
+      <div class="chip-dropdown">
+        <select [(ngModel)]="selectedGenre" (change)="applyFilters()">
+          <option value="">THỂ LOẠI</option>
+          <option *ngFor="let g of availableGenres" [value]="g">{{ g }}</option>
+        </select>
+      </div>
+
+      <div class="chip-dropdown">
+        <select [(ngModel)]="selectedDateFilter" (change)="applyFilters()">
+          <option value="">NGÀY CHIẾU</option>
+          <option value="today">Hôm nay (01/11)</option>
+          <option value="tomorrow">Ngày mai (02/11)</option>
+          <option value="weekend">Cuối tuần</option>
+        </select>
+      </div>
+
+      <div class="chip-dropdown">
+        <select [(ngModel)]="selectedFormat" (change)="applyFilters()">
+          <option value="">ĐỊNH DẠNG</option>
+          <option value="2D">2D Digital</option>
+          <option value="3D">3D Digital</option>
+          <option value="IMAX">IMAX Laser</option>
+        </select>
+      </div>
+
+      <div class="chip-dropdown">
+        <select [(ngModel)]="selectedCinemaFilter" (change)="applyFilters()">
+          <option value="">RẠP CHIẾU</option>
+          <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs: ĐANG CHIẾU vs SẮP CHIẾU (Figma Tabs) -->
+  <div class="figma-tabs">
+    <button
+      class="tab-item"
+      [class.active]="activeTab === 'NOW_SHOWING'"
+      (click)="setTab('NOW_SHOWING')"
+    >
+      ĐANG CHIẾU ({{ displayedNowShowing.length }})
+    </button>
+    <button
+      class="tab-item"
+      [class.active]="activeTab === 'COMING_SOON'"
+      (click)="setTab('COMING_SOON')"
+    >
+      SẮP CHIẾU ({{ upcomingMovies.length }})
+    </button>
+  </div>
+
+  <!-- Movie Grid (Figma: 4 Columns Desktop, 2 Columns Mobile) -->
+  <div class="movies-grid">
+    <thefilm-movie-card
+      *ngFor="let movie of displayedNowShowing"
+      [movie]="movie"
+      (selectShowtime)="goToMovieDetail($event)"
+      (cardClick)="goToMovieDetail($event)"
+    ></thefilm-movie-card>
+  </div>
+
+  <!-- Empty State if filtered out -->
+  <div class="empty-state" *ngIf="displayedNowShowing.length === 0">
+    <p>Không tìm thấy phim phù hợp với tiêu chí lọc.</p>
+    <button (click)="searchQuery = ''; selectedGenre = ''; selectedDateFilter = ''; selectedFormat = ''; selectedCinemaFilter = ''; applyFilters()" class="figma-btn-primary btn-reset">
+      Xóa bộ lọc
+    </button>
+  </div>
+
+  <!-- Section: SẮP CHIẾU TUẦN TỚI (Figma bottom section) -->
+  <div class="upcoming-section" *ngIf="upcomingMovies.length > 0 && activeTab === 'NOW_SHOWING'">
+    <h3 class="section-label">SẮP CHIẾU TUẦN TỚI</h3>
+    <div class="movies-grid">
+      <thefilm-movie-card
+        *ngFor="let movie of upcomingMovies"
+        [movie]="movie"
+        (selectShowtime)="goToMovieDetail($event)"
+        (cardClick)="goToMovieDetail($event)"
+      ></thefilm-movie-card>
+    </div>
+  </div>
+</div>

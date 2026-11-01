@@ -1,0 +1,424 @@
+<div class="booking-page" *ngIf="showtime && movie">
+  <!-- Top Progress Bar & Hold Countdown Header -->
+  <header class="booking-header">
+    <div class="header-container">
+      <div class="movie-brief">
+        <a routerLink="/movies/{{ movie.slug }}" class="back-link">
+          ← Quay lại
+        </a>
+        <div class="movie-meta-summary">
+          <h2 class="title">{{ movie.title }}</h2>
+          <p class="meta">
+            {{ cinema?.name }} · {{ showtime.roomName }} ({{ showtime.format }}) · {{ showtime.startTime }} ({{ showtime.date }})
+          </p>
+        </div>
+      </div>
+
+      <!-- Hold Timer (CUS-F07: 10 min countdown) -->
+      <div class="hold-timer-box" [class.urgent]="holdSeconds <= 120" *ngIf="step < 4">
+        <span class="timer-label">Thời gian giữ vé:</span>
+        <span class="timer-countdown">⏳ {{ formattedCountdown }}</span>
+      </div>
+    </div>
+
+    <!-- Stepper Navigation -->
+    <div class="stepper-bar">
+      <div class="step-item" [class.active]="step === 1" [class.completed]="step > 1">
+        <span class="step-num">1</span>
+        <span class="step-title">Chọn ghế</span>
+      </div>
+      <div class="step-line" [class.completed]="step > 1"></div>
+      <div class="step-item" [class.active]="step === 2" [class.completed]="step > 2">
+        <span class="step-num">2</span>
+        <span class="step-title">Bắp nước & Ưu đãi</span>
+      </div>
+      <div class="step-line" [class.completed]="step > 2"></div>
+      <div class="step-item" [class.active]="step === 3" [class.completed]="step > 3">
+        <span class="step-num">3</span>
+        <span class="step-title">Thanh toán</span>
+      </div>
+      <div class="step-line" [class.completed]="step > 3"></div>
+      <div class="step-item" [class.active]="step === 4">
+        <span class="step-num">4</span>
+        <span class="step-title">Vé điện tử</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Step Content Area -->
+  <main class="booking-main">
+    <div class="main-container">
+      <!-- STEP 1: SEAT SELECTION (CUS-F07) -->
+      <div class="step-content" *ngIf="step === 1">
+        <div class="seat-selection-wrapper">
+          <!-- Screen Arc Visual -->
+          <div class="cinema-screen-box">
+            <div class="screen-curve"></div>
+            <span class="screen-text">MÀN HÌNH CHIẾU</span>
+          </div>
+
+          <!-- Seat Grid Matrix -->
+          <div class="seats-matrix-scroll">
+            <div class="seats-matrix">
+              <div class="seat-row" *ngFor="let rowName of seatRows">
+                <span class="row-label">{{ rowName }}</span>
+                <div class="row-seats">
+                  <button
+                    *ngFor="let s of getSeatsByRow(rowName)"
+                    class="seat-btn"
+                    [ngClass]="[
+                      'seat-' + s.type.toLowerCase(),
+                      'status-' + s.status.toLowerCase(),
+                      isSeatSelected(s) ? 'is-selected' : ''
+                    ]"
+                    [disabled]="s.status === 'BOOKED'"
+                    (click)="onSeatClick(s)"
+                    [title]="s.code + ' - ' + formatMoney(s.price)"
+                  >
+                    <span class="seat-num">{{ s.col }}</span>
+                  </button>
+                </div>
+                <span class="row-label">{{ rowName }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Seat Legend (Matching Figma) -->
+          <div class="seat-legend">
+            <div class="legend-item">
+              <span class="legend-box seat-standard"></span>
+              <span>Ghế thường ({{ formatMoney(showtime.priceStandard) }})</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box seat-vip"></span>
+              <span>Ghế VIP ({{ formatMoney(showtime.priceVip) }})</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box seat-couple"></span>
+              <span>Ghế Đôi ({{ formatMoney(showtime.priceCouple) }})</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box is-selected"></span>
+              <span>Đang chọn</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box status-booked"></span>
+              <span>Đã bán</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: F&B COMBOS & VOUCHERS (CUS-F10, CUS-F09) -->
+      <div class="step-content" *ngIf="step === 2">
+        <div class="fnb-section">
+          <div class="section-title-box">
+            <h3>Combo Bắp & Nước Uống</h3>
+            <p>Thưởng thức bắp rang bơ giòn rụm và nước ngọt mát lạnh trong suốt suất chiếu</p>
+          </div>
+
+          <div class="fnb-grid">
+            <div class="fnb-card" *ngFor="let item of fnbItems">
+              <img [src]="item.imageUrl" [alt]="item.name" class="fnb-img" />
+              <div class="fnb-info">
+                <h4>{{ item.name }}</h4>
+                <p class="fnb-desc">{{ item.description }}</p>
+                <div class="fnb-bottom">
+                  <span class="fnb-price">{{ formatMoney(item.price) }}</span>
+                  <div class="qty-control">
+                    <button class="qty-btn" (click)="updateFnb(item, -1)" [disabled]="getFnbQty(item) === 0">-</button>
+                    <span class="qty-val">{{ getFnbQty(item) }}</span>
+                    <button class="qty-btn" (click)="updateFnb(item, 1)">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: CHECKOUT & PAYMENT (CUS-F08, CUS-F11, CUS-F12) -->
+      <div class="step-content" *ngIf="step === 3">
+        <div class="checkout-grid">
+          <!-- Left: Buyer Information Form -->
+          <div class="buyer-form-card">
+            <h3>Thông tin người nhận vé</h3>
+            <p class="form-desc">Mã vé và hóa đơn VAT sẽ được gửi về thông tin liên hệ dưới đây</p>
+
+            <form class="buyer-form">
+              <div class="form-group">
+                <label>Họ và tên người nhận <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="buyer.fullName" name="fullName" placeholder="VD: Nguyễn Văn An" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Số điện thoại <span class="required">*</span></label>
+                  <input type="tel" [(ngModel)]="buyer.phone" name="phone" placeholder="VD: 0909123456" />
+                </div>
+                <div class="form-group">
+                  <label>Email nhận vé điện tử <span class="required">*</span></label>
+                  <input type="email" [(ngModel)]="buyer.email" name="email" placeholder="VD: an.nguyen@example.com" />
+                </div>
+              </div>
+
+              <!-- VAT Invoice Request (Tài liệu nghiệp vụ: Thuế demo) -->
+              <div class="vat-invoice-toggle">
+                <label class="checkbox-label">
+                  <input type="checkbox" [(ngModel)]="buyer.needInvoice" name="needInvoice" />
+                  <span>Yêu cầu xuất hóa đơn điện tử VAT (Thuế suất GTGT 8%)</span>
+                </label>
+              </div>
+
+              <div class="vat-fields" *ngIf="buyer.needInvoice">
+                <div class="form-group">
+                  <label>Tên công ty / Tổ chức</label>
+                  <input type="text" [(ngModel)]="buyer.companyName" name="companyName" placeholder="Tên doanh nghiệp đầy đủ" />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Mã số thuế (MST)</label>
+                    <input type="text" [(ngModel)]="buyer.taxCode" name="taxCode" placeholder="VD: 0101234567" />
+                  </div>
+                  <div class="form-group">
+                    <label>Địa chỉ công ty</label>
+                    <input type="text" [(ngModel)]="buyer.companyAddress" name="companyAddress" placeholder="Địa chỉ đăng ký kinh doanh" />
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <!-- Payment Methods Selection (CUS-F12) -->
+            <div class="payment-methods-box">
+              <h3>Phương thức thanh toán an toàn</h3>
+              <div class="methods-list">
+                <label class="method-option" [class.selected]="selectedPaymentMethod === 'VNPAY_QR'">
+                  <input type="radio" name="paymentMethod" value="VNPAY_QR" [(ngModel)]="selectedPaymentMethod" />
+                  <div class="method-details">
+                    <strong>VNPAY-QR (Khuyên dùng)</strong>
+                    <span>Quét mã QR qua ứng dụng ngân hàng hoặc ví VNPAY</span>
+                  </div>
+                </label>
+
+                <label class="method-option" [class.selected]="selectedPaymentMethod === 'E_WALLET'">
+                  <input type="radio" name="paymentMethod" value="E_WALLET" [(ngModel)]="selectedPaymentMethod" />
+                  <div class="method-details">
+                    <strong>Ví điện tử MoMo / ZaloPay / ShopeePay</strong>
+                    <span>Thanh toán liên kết ví nhanh chóng không phí giao dịch</span>
+                  </div>
+                </label>
+
+                <label class="method-option" [class.selected]="selectedPaymentMethod === 'DOMESTIC_CARD'">
+                  <input type="radio" name="paymentMethod" value="DOMESTIC_CARD" [(ngModel)]="selectedPaymentMethod" />
+                  <div class="method-details">
+                    <strong>Thẻ ATM / Internet Banking (Napas)</strong>
+                    <span>Hỗ trợ hơn 40 ngân hàng nội địa Việt Nam</span>
+                  </div>
+                </label>
+
+                <label class="method-option" [class.selected]="selectedPaymentMethod === 'INTERNATIONAL_CARD'">
+                  <input type="radio" name="paymentMethod" value="INTERNATIONAL_CARD" [(ngModel)]="selectedPaymentMethod" />
+                  <div class="method-details">
+                    <strong>Thẻ quốc tế Visa, MasterCard, JCB</strong>
+                    <span>Bảo mật 3D Secure</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: SUCCESS TICKET QR (CUS-F13, CUS-F14) -->
+      <div class="step-content" *ngIf="step === 4 && confirmedOrder">
+        <div class="success-ticket-card">
+          <div class="success-banner">
+            <div class="icon-circle">✓</div>
+            <h2>ĐẶT VÉ VÀ THANH TOÁN THÀNH CÔNG!</h2>
+            <p>Mã đặt vé của bạn đã được ghi nhận. Vui lòng xuất trình mã QR này tại quầy hoặc máy in vé tại rạp.</p>
+          </div>
+
+          <div class="ticket-body">
+            <!-- QR Code Box -->
+            <div class="ticket-qr-section">
+              <img [src]="confirmedOrder.qrCodeUrl" [alt]="confirmedOrder.bookingCode" class="qr-img" />
+              <div class="booking-code-badge">
+                <span class="label">MÃ LẤY VÉ:</span>
+                <span class="code">{{ confirmedOrder.bookingCode }}</span>
+              </div>
+              <span class="note">Mã QR dùng để quét vào cửa phòng chiếu</span>
+            </div>
+
+            <!-- Ticket Detailed Specs -->
+            <div class="ticket-details-section">
+              <div class="movie-header">
+                <thefilm-badge [type]="confirmedOrder.movieRating" variant="solid">{{ confirmedOrder.movieRating }}</thefilm-badge>
+                <h3>{{ confirmedOrder.movieTitle }}</h3>
+              </div>
+
+              <div class="specs-grid">
+                <div class="spec-item">
+                  <span class="label">Rạp chiếu:</span>
+                  <strong>{{ confirmedOrder.cinemaName }}</strong>
+                </div>
+                <div class="spec-item">
+                  <span class="label">Phòng chiếu:</span>
+                  <strong>{{ confirmedOrder.roomName }}</strong>
+                </div>
+                <div class="spec-item">
+                  <span class="label">Suất chiếu:</span>
+                  <strong>{{ confirmedOrder.showTime }} · {{ confirmedOrder.showDate }}</strong>
+                </div>
+                <div class="spec-item">
+                  <span class="label">Ghế đã chọn:</span>
+                  <strong class="seats-highlight">{{ getSeatCodes(confirmedOrder.seats) }}</strong>
+                </div>
+                <div class="spec-item" *ngIf="confirmedOrder.combos.length > 0">
+                  <span class="label">Bắp nước:</span>
+                  <strong>{{ getCombosSummary(confirmedOrder.combos) }}</strong>
+                </div>
+                <div class="spec-item">
+                  <span class="label">Tổng thanh toán:</span>
+                  <strong class="price-highlight">{{ formatMoney(confirmedOrder.finalTotal) }}</strong>
+                </div>
+              </div>
+
+              <div class="action-buttons">
+                <a routerLink="/my-tickets" class="btn-primary">Xem Ví Vé Của Tôi</a>
+                <a routerLink="/" class="btn-outline">Về Trang Chủ</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Summary Sidebar (Figma Desktop CUS-F07, CUS-F08) -->
+      <aside class="booking-sidebar" *ngIf="step < 4">
+        <div class="sidebar-card">
+          <div class="movie-summary">
+            <img [src]="movie.posterUrl" [alt]="movie.title" class="summary-poster" />
+            <div class="summary-info">
+              <h4>{{ movie.title }}</h4>
+              <p class="cinema-name">{{ cinema?.name }}</p>
+              <p class="format-tag">{{ showtime.format }} · {{ showtime.roomName }}</p>
+              <p class="time-tag">Suất: <strong>{{ showtime.startTime }}</strong> ({{ showtime.date }})</p>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Selected Seats List -->
+          <div class="summary-seats">
+            <div class="summary-row">
+              <span class="label">Ghế ({{ selectedSeats.length }}):</span>
+              <span class="val font-bold">
+                {{ selectedSeats.length > 0 ? getSeatCodes(selectedSeats) : 'Chưa chọn ghế' }}
+              </span>
+            </div>
+            <div class="summary-row" *ngIf="selectedSeats.length > 0">
+              <span class="label">Tiền vé:</span>
+              <span class="val">{{ formatMoney(ticketTotal) }}</span>
+            </div>
+          </div>
+
+          <!-- Selected F&B List -->
+          <div class="summary-fnb" *ngIf="selectedCombos.length > 0">
+            <div class="divider"></div>
+            <div class="summary-row">
+              <span class="label">Bắp nước:</span>
+              <span class="val">{{ formatMoney(fnbTotal) }}</span>
+            </div>
+            <div class="fnb-mini-list">
+              <div class="mini-item" *ngFor="let c of selectedCombos">
+                <span>{{ c.name }} x{{ c.quantity }}</span>
+                <span>{{ formatMoney(c.price * c.quantity) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Voucher Code Input Box (CUS-F09) -->
+          <div class="voucher-box">
+            <div class="divider"></div>
+            <label class="voucher-label">Mã giảm giá / Ưu đãi (Demo: THEFILM20, VIPMEMBER)</label>
+            <div class="voucher-input-group">
+              <input
+                type="text"
+                [(ngModel)]="voucherInput"
+                placeholder="Nhập mã ưu đãi..."
+                [disabled]="discountAmount > 0"
+              />
+              <button
+                class="btn-apply-voucher"
+                *ngIf="discountAmount === 0"
+                (click)="applyVoucher()"
+              >
+                Áp dụng
+              </button>
+              <button
+                class="btn-remove-voucher"
+                *ngIf="discountAmount > 0"
+                (click)="removeVoucher()"
+              >
+                Hủy
+              </button>
+            </div>
+            <p class="voucher-msg" [class.success]="discountAmount > 0" *ngIf="voucherMessage">
+              {{ voucherMessage }}
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Total Calculation -->
+          <div class="calc-section">
+            <div class="calc-row" *ngIf="discountAmount > 0">
+              <span class="label">Giảm giá:</span>
+              <span class="val discount">- {{ formatMoney(discountAmount) }}</span>
+            </div>
+            <div class="calc-row">
+              <span class="label">Thuế GTGT (VAT 8% demo):</span>
+              <span class="val">{{ formatMoney(vatAmount) }}</span>
+            </div>
+            <div class="calc-row grand-total-row">
+              <span class="label">TỔNG TIỀN:</span>
+              <span class="val grand-total">{{ formatMoney(grandTotal) }}</span>
+            </div>
+          </div>
+
+          <!-- Next / Back Step Button -->
+          <div class="step-actions">
+            <button
+              class="btn-next"
+              *ngIf="step === 1"
+              [disabled]="selectedSeats.length === 0"
+              (click)="nextStep()"
+            >
+              TIẾP TỤC CHỌN BẮP NƯỚC →
+            </button>
+
+            <button
+              class="btn-next"
+              *ngIf="step === 2"
+              (click)="nextStep()"
+            >
+              TIẾP TỤC ĐẾN THANH TOÁN →
+            </button>
+
+            <button
+              class="btn-confirm-pay"
+              *ngIf="step === 3"
+              [disabled]="isProcessingPayment"
+              (click)="submitPayment()"
+            >
+              {{ isProcessingPayment ? 'ĐANG XỬ LÝ THANH TOÁN...' : 'XÁC NHẬN & THANH TOÁN ' + formatMoney(grandTotal) }}
+            </button>
+
+            <button class="btn-prev" *ngIf="step > 1 && step < 4" (click)="prevStep()">
+              ← Quay lại bước trước
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,95 @@
+<div class="support-page">
+  <div class="page-container">
+    <div class="page-header">
+      <span class="subtitle">TRUNG TÂM HỖ TRỢ & AI CHATBOT (CUS-F19 · CUS-F21)</span>
+      <h1 class="page-title">Hỗ Trợ & Chăm Sóc Khách Hàng</h1>
+      <p class="page-desc">Giải đáp thắc mắc về suất chiếu, chính sách đổi vé, đặt vé online và hướng dẫn thanh toán 24/7</p>
+    </div>
+
+    <div class="support-grid">
+      <!-- Left: FAQ Accordion -->
+      <div class="faq-col">
+        <h3>Câu Hỏi Thường Gặp (FAQ)</h3>
+
+        <div class="accordion-list">
+          <div class="faq-item" *ngFor="let item of faqList; let i = index">
+            <button class="faq-question" (click)="toggleFaq(i)">
+              <span>{{ item.q }}</span>
+              <span class="chevron">{{ activeFaqIndex === i ? '−' : '+' }}</span>
+            </button>
+            <div class="faq-answer" *ngIf="activeFaqIndex === i">
+              <p>{{ item.a }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-channels">
+          <h4>Kênh hỗ trợ trực tiếp</h4>
+          <div class="channel-cards">
+            <div class="channel-card">
+              <span class="icon">📞</span>
+              <div>
+                <strong>Hotline CSKH</strong>
+                <p>1900 6868 (8:00 - 24:00 hàng ngày)</p>
+              </div>
+            </div>
+            <div class="channel-card">
+              <span class="icon">✉️</span>
+              <div>
+                <strong>Email hỗ trợ</strong>
+                <p>cskh&#64;thefilm.vn</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: AI Chatbot Assistant Widget -->
+      <div class="chatbot-col">
+        <div class="chatbot-card">
+          <div class="chat-header">
+            <div class="bot-avatar">🤖</div>
+            <div class="bot-info">
+              <h4>Trợ Lý Ảo TheFilm AI</h4>
+              <span class="status-indicator">● Đang trực tuyến · Sẵn sàng giải đáp</span>
+            </div>
+          </div>
+
+          <div class="chat-messages" #chatContainer>
+            <div
+              class="message-bubble"
+              *ngFor="let msg of messages"
+              [class.user]="msg.sender === 'USER'"
+              [class.bot]="msg.sender === 'BOT'"
+            >
+              <div class="bubble-content">
+                {{ msg.text }}
+              </div>
+              <span class="bubble-time">{{ msg.time }}</span>
+            </div>
+          </div>
+
+          <!-- Quick Suggestion Chips -->
+          <div class="quick-chips">
+            <button class="chip" (click)="sendPreset('Cách tra cứu vé đã mua?')">Tra cứu vé đã mua</button>
+            <button class="chip" (click)="sendPreset('Quy định đổi trả vé như thế nào?')">Đổi/Hủy vé</button>
+            <button class="chip" (click)="sendPreset('Phim nào đang có suất IMAX hôm nay?')">Suất IMAX hôm nay</button>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-bar">
+            <input
+              type="text"
+              [(ngModel)]="userInput"
+              (keydown.enter)="sendMessage()"
+              placeholder="Nhập câu hỏi của bạn tại đây..."
+            />
+            <button class="btn-send" (click)="sendMessage()" [disabled]="!userInput.trim()">
+              Gửi
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

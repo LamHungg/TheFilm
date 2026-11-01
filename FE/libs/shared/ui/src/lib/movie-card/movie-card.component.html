@@ -1,0 +1,31 @@
+<div class="thefilm-movie-card" (click)="onCardClick()">
+  <!-- Poster Area (Figma Vector Artwork 280x320) -->
+  <div class="poster-artwork" [ngClass]="['theme-' + (movie.figmaTheme || 'navy')]">
+    <!-- Category Tag at top-left -->
+    <span class="category-tag">{{ movie.category || (movie.genres[0] | uppercase) }}</span>
+
+    <!-- Vector Graphic Layout (Sun disc & overlapping hills) -->
+    <div class="vector-scene">
+      <div class="sun-disc"></div>
+      <div class="arc arc-back"></div>
+      <div class="arc arc-front"></div>
+    </div>
+
+    <!-- Bottom Dark Banner with Movie Title -->
+    <div class="poster-title-banner">
+      <span>{{ movie.title | uppercase }}</span>
+    </div>
+  </div>
+
+  <!-- Movie Details Body -->
+  <div class="movie-card-body">
+    <h3 class="movie-title" [title]="movie.title">{{ movie.title }}</h3>
+    <p class="movie-meta">{{ getMetaString() }}</p>
+    <div class="badge-container">
+      <span class="figma-format-chip">{{ getFormatLabel() }}</span>
+    </div>
+    <button class="btn-select-showtime" (click)="onBtnClick($event)">
+      CHỌN SUẤT
+    </button>
+  </div>
+</div>

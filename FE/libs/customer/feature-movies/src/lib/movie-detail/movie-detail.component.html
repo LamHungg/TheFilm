@@ -1,0 +1,122 @@
+<div class="movie-detail-page" *ngIf="movie">
+  <!-- Breadcrumbs -->
+  <div class="breadcrumb-container">
+    <a routerLink="/">Trang chủ</a>
+    <span class="sep">/</span>
+    <a routerLink="/movies">Phim</a>
+    <span class="sep">/</span>
+    <span class="current">{{ movie.title }}</span>
+  </div>
+
+  <div class="detail-container">
+    <!-- 2-Column Split: Media & Info -->
+    <div class="media-column">
+      <div class="banner-box">
+        <thefilm-poster
+          [theme]="movie.figmaTheme"
+          [title]="movie.title"
+          variant="banner"
+        ></thefilm-poster>
+      </div>
+
+      <!-- Quick Specs Card -->
+      <div class="specs-card">
+        <div class="spec-row">
+          <span class="spec-label">Khởi chiếu:</span>
+          <span class="spec-value">{{ movie.releaseDate }}</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Định dạng:</span>
+          <span class="spec-value">{{ movie.formats.join(', ') }}</span>
+        </div>
+        <div class="spec-row">
+          <span class="spec-label">Ngôn ngữ:</span>
+          <span class="spec-value">{{ movie.languages.join(', ') }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-column">
+      <!-- Rating Badge (T13) -->
+      <div class="rating-badge-pill">
+        <span>{{ movie.rating }}</span>
+      </div>
+
+      <!-- Movie Title & Subtitle -->
+      <h1 class="movie-title">{{ movie.title }}</h1>
+      <p class="movie-meta-sub">
+        {{ movie.genres.join(', ') }} &middot; {{ movie.duration }} phút &middot; {{ movie.languages[0] }}
+      </p>
+
+      <!-- Description -->
+      <p class="movie-synopsis">{{ movie.synopsis }}</p>
+
+      <!-- Section: CHỌN RẠP & NGÀY (Figma CUS-F03 / CUS-F05) -->
+      <div class="booking-panel">
+        <div class="section-badge-label">CHỌN RẠP & NGÀY CHIẾU</div>
+
+        <!-- Cinema Selector Card (cbx) -->
+        <div class="cinema-select-card">
+          <div class="cinema-info">
+            <span class="c-label">CỤM RẠP</span>
+            <strong>{{ selectedCinema?.name || 'THEFILM Nguyễn Trãi' }}</strong>
+          </div>
+          <div class="select-change-wrapper">
+            <select [(ngModel)]="selectedCinemaId" (change)="onCinemaChange()" class="figma-select">
+              <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }} ({{ c.city }})</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date Pills (HÔM NAY · 01/11, 02/11...) - 999px radius -->
+        <div class="date-pills-row">
+          <button
+            *ngFor="let d of availableDates"
+            class="date-pill"
+            [class.active]="selectedDate === d.date"
+            (click)="onDateChange(d.date)"
+          >
+            <span *ngIf="d.isToday">HÔM NAY &middot; </span>{{ d.displayDate }}
+          </button>
+        </div>
+
+        <!-- Filter: LỌC LOẠI PHÒNG (Pills) -->
+        <div class="room-filter-block">
+          <span class="filter-label">LỌC LOẠI PHÒNG CHIẾU:</span>
+          <div class="filter-chips">
+            <button
+              *ngFor="let rf of roomFilters"
+              class="room-chip"
+              [class.active]="selectedRoomType === rf.value"
+              (click)="onRoomFilterChange(rf.value)"
+            >
+              {{ rf.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Showtimes by Group -->
+        <div class="showtimes-block">
+          <div class="group-section" *ngFor="let group of groupedShowtimes">
+            <h3 class="group-title">SUẤT CÒN VÉ &middot; {{ group.format }} ({{ group.roomName }})</h3>
+            <div class="slots-grid">
+              <button
+                *ngFor="let st of group.slots"
+                class="slot-chip"
+                (click)="selectShowtimeAndBook(st)"
+              >
+                <span class="time">{{ st.startTime }}</span>
+                <span class="price">{{ formatPrice(st.priceStandard) }}</span>
+                <span class="seats">{{ st.availableSeats }} ghế trống</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="empty-showtimes" *ngIf="filteredShowtimes.length === 0">
+            <p>Hiện tại chưa có suất chiếu phù hợp cho ngày đã chọn tại cụm rạp này.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

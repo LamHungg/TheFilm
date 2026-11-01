@@ -1,0 +1,38 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "strict": false,
+    "paths": {
+      "@the-film/shared/ui": ["./libs/shared/ui/src/index.ts"],
+      "@the-film/shared/util": ["./libs/shared/util/src/index.ts"],
+      "@the-film/customer/data-access": [
+        "./libs/customer/data-access/src/index.ts"
+      ],
+      "@the-film/customer/feature-movies": [
+        "./libs/customer/feature-movies/src/index.ts"
+      ],
+      "@the-film/customer/feature-booking": [
+        "./libs/customer/feature-booking/src/index.ts"
+      ],
+      "@the-film/customer/feature-member": [
+        "./libs/customer/feature-member/src/index.ts"
+      ],
+      "@the-film/customer/feature-support": [
+        "./libs/customer/feature-support/src/index.ts"
+      ]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

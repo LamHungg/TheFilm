@@ -1,0 +1,36 @@
+spring:
+  jpa:
+    open-in-view: false
+  application:
+    name: thefilm-backend
+  profiles:
+    default: local
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: 8080
+  shutdown: graceful
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200,http://localhost:4300
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: false
+
+info:
+  app:
+    name: THEFILM Backend
+    description: API đặt vé và quản lý chuỗi rạp

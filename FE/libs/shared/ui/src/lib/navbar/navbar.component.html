@@ -1,0 +1,98 @@
+<!-- COMPONENT · THEFILM Desktop Header (Height 74px, Exact Figma Specs) -->
+<header class="thefilm-header">
+  <div class="header-inner">
+    <!-- Left: Brand Logo + Desktop Nav Links -->
+    <div class="header-left">
+      <!-- Logo THEFILM (Figma: TF red box + THEFILM text) -->
+      <a routerLink="/" class="brand-link">
+        <div class="logo-sq">TF</div>
+        <span class="brand-name">THEFILM</span>
+      </a>
+
+      <!-- Nav Links (Figma: PHIM, RẠP CHIẾU, THÀNH VIÊN, ƯU ĐÃI, TRỢ GIÚP) -->
+      <nav class="desktop-nav">
+        <a routerLink="/movies" routerLinkActive="active" class="nav-item">PHIM</a>
+        <a routerLink="/cinemas" routerLinkActive="active" class="nav-item">RẠP CHIẾU</a>
+        <a routerLink="/member" routerLinkActive="active" class="nav-item">THÀNH VIÊN</a>
+        <a routerLink="/movies" [fragment]="'uu-dai'" routerLinkActive="active" class="nav-item">ƯU ĐÃI</a>
+        <a routerLink="/support" routerLinkActive="active" class="nav-item">TRỢ GIÚP</a>
+      </nav>
+    </div>
+
+    <!-- Right: Search Bar + Action Buttons -->
+    <div class="header-right">
+      <!-- Ô tìm nhanh (Figma: Pill 999px, Placeholder 'Tìm phim, rạp chiếu...') -->
+      <div class="search-bar-wrap">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="onSearch()"
+          placeholder="Tìm phim, rạp chiếu..."
+        />
+      </div>
+
+      <!-- Actions (Figma: ĐĂNG NHẬP & MUA VÉ Pill Buttons) -->
+      <div class="header-actions">
+        <!-- ĐĂNG NHẬP Button (Figma: White pill, 1px solid #E2E4E9, radius 999px, height 40px) -->
+        <a routerLink="/auth" class="btn-login-figma">
+          <span>ĐĂNG NHẬP</span>
+        </a>
+
+        <!-- Nút · MUA VÉ (Figma: Pill 999px, #C90E29, white bold) -->
+        <a routerLink="/movies" class="btn-buy-figma">
+          <span>MUA VÉ</span>
+        </a>
+
+        <!-- Mobile Hamburger Toggle -->
+        <button class="mobile-toggle-btn" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+          <svg *ngIf="!isMobileMenuOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+          </svg>
+          <svg *ngIf="isMobileMenuOpen" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-drawer-overlay" *ngIf="isMobileMenuOpen" (click)="closeMobileMenu()">
+    <div class="drawer-panel" (click)="$event.stopPropagation()">
+      <div class="drawer-top">
+        <div class="brand-link">
+          <div class="logo-sq">T</div>
+          <span class="brand-name">THEFILM</span>
+        </div>
+        <button class="btn-close" (click)="closeMobileMenu()">✕</button>
+      </div>
+
+      <div class="drawer-search">
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="onSearch(); closeMobileMenu()"
+          placeholder="Tìm nhanh phim, rạp..."
+        />
+      </div>
+
+      <nav class="drawer-nav-list">
+        <a routerLink="/" (click)="closeMobileMenu()" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Trang chủ</a>
+        <a routerLink="/movies" (click)="closeMobileMenu()" routerLinkActive="active">Phim đang chiếu & Sắp chiếu</a>
+        <a routerLink="/cinemas" (click)="closeMobileMenu()" routerLinkActive="active">Cụm rạp chiếu</a>
+        <a routerLink="/my-tickets" (click)="closeMobileMenu()" routerLinkActive="active">Vé của tôi</a>
+        <a routerLink="/member" (click)="closeMobileMenu()" routerLinkActive="active">Thành viên & Điểm thưởng</a>
+        <a routerLink="/support" (click)="closeMobileMenu()" routerLinkActive="active">Trợ giúp & Chatbot AI</a>
+        <a routerLink="/auth" (click)="closeMobileMenu()" routerLinkActive="active">Đăng nhập tài khoản</a>
+      </nav>
+
+      <div class="drawer-bottom">
+        <a routerLink="/movies" (click)="closeMobileMenu()" class="btn-drawer-buy">MUA VÉ NGAY</a>
+      </div>
+    </div>
+  </div>
+</header>

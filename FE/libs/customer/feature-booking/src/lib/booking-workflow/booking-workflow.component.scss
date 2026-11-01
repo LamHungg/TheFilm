@@ -1,0 +1,1035 @@
+.booking-page {
+  min-height: 100vh;
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+// Top Bar & Stepper
+.booking-header {
+  background-color: #1e293b;
+  border-bottom: 1px solid #334155;
+  padding: 1.25rem 1.25rem 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .header-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .movie-brief {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+
+    .back-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.35rem 0.65rem;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+
+      &:hover {
+        color: #ffffff;
+        border-color: #c90e29;
+      }
+    }
+
+    .title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 0 0 0.2rem;
+      color: #ffffff;
+    }
+
+    .meta {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      margin: 0;
+    }
+  }
+
+  .hold-timer-box {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background-color: #0f172a;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    border: 1px solid #334155;
+
+    .timer-label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .timer-countdown {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #38bdf8;
+      font-family: monospace;
+    }
+
+    &.urgent {
+      border-color: #c90e29;
+      background-color: rgba(201, 14, 41, 0.15);
+
+      .timer-countdown {
+        color: #f43f5e;
+        animation: pulse 1s infinite;
+      }
+    }
+  }
+
+  // Stepper Bar
+  .stepper-bar {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 0.5rem;
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0.45;
+      transition: all 0.2s ease;
+
+      .step-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background-color: #334155;
+        color: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+
+      .step-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        display: none;
+
+        @media (min-width: 640px) {
+          display: inline;
+        }
+      }
+
+      &.active {
+        opacity: 1;
+
+        .step-num {
+          background-color: #c90e29;
+          color: #ffffff;
+          box-shadow: 0 0 10px rgba(201, 14, 41, 0.5);
+        }
+
+        .step-title {
+          color: #ffffff;
+        }
+      }
+
+      &.completed {
+        opacity: 0.85;
+
+        .step-num {
+          background-color: #10b981;
+          color: #ffffff;
+        }
+      }
+    }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background-color: #334155;
+      margin: 0 0.85rem;
+
+      &.completed {
+        background-color: #10b981;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// Main Layout
+.booking-main {
+  padding: 2rem 1.25rem 5rem;
+
+  .main-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1fr 380px;
+    }
+  }
+}
+
+// STEP 1: Seat Selection
+.seat-selection-wrapper {
+  background-color: #162032;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+
+  .cinema-screen-box {
+    margin-bottom: 2.5rem;
+    text-align: center;
+
+    .screen-curve {
+      height: 10px;
+      width: 75%;
+      margin: 0 auto 0.75rem;
+      border-top: 4px solid #38bdf8;
+      border-radius: 50% 50% 0 0;
+      box-shadow: 0 -8px 20px rgba(56, 189, 248, 0.35);
+    }
+
+    .screen-text {
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.25em;
+      color: #64748b;
+    }
+  }
+
+  .seats-matrix-scroll {
+    overflow-x: auto;
+    padding-bottom: 1.5rem;
+  }
+
+  .seats-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 580px;
+    align-items: center;
+
+    .seat-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .row-label {
+        font-weight: 800;
+        font-size: 0.85rem;
+        color: #64748b;
+        width: 18px;
+        text-align: center;
+      }
+
+      .row-seats {
+        display: flex;
+        gap: 0.45rem;
+      }
+    }
+  }
+
+  // Seat Buttons
+  .seat-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+
+    // Types
+    &.seat-standard {
+      background-color: #334155;
+      color: #94a3b8;
+
+      &:hover:not(:disabled) {
+        background-color: #475569;
+        color: #fff;
+      }
+    }
+
+    &.seat-vip {
+      background-color: rgba(245, 158, 11, 0.25);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+
+      &:hover:not(:disabled) {
+        background-color: #f59e0b;
+        color: #000;
+      }
+    }
+
+    &.seat-couple {
+      width: 68px;
+      background-color: rgba(244, 63, 94, 0.25);
+      color: #fda4af;
+      border: 1px solid rgba(244, 63, 94, 0.5);
+
+      &:hover:not(:disabled) {
+        background-color: #f43f5e;
+        color: #fff;
+      }
+    }
+
+    // Selected
+    &.is-selected {
+      background-color: #c90e29 !important;
+      color: #ffffff !important;
+      border-color: #c90e29 !important;
+      box-shadow: 0 0 10px rgba(201, 14, 41, 0.7);
+      transform: scale(1.1);
+    }
+
+    // Booked
+    &.status-booked,
+    &:disabled {
+      background-color: #1e293b !important;
+      color: #475569 !important;
+      border: 1px solid #334155 !important;
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+  }
+
+  // Legend
+  .seat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #1e293b;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+
+      .legend-box {
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+
+        &.seat-standard { background-color: #334155; }
+        &.seat-vip { background-color: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; }
+        &.seat-couple { background-color: rgba(244, 63, 94, 0.35); border: 1px solid #f43f5e; }
+        &.is-selected { background-color: #c90e29; }
+        &.status-booked { background-color: #1e293b; border: 1px solid #475569; }
+      }
+    }
+  }
+}
+
+// STEP 2: F&B Combos
+.fnb-section {
+  background-color: #162032;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+
+  .section-title-box {
+    margin-bottom: 2rem;
+
+    h3 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 0.35rem;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 0.88rem;
+      margin: 0;
+    }
+  }
+
+  .fnb-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+
+    @media (min-width: 640px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .fnb-card {
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .fnb-img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+    }
+
+    .fnb-info {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+
+      h4 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0 0 0.4rem;
+      }
+
+      .fnb-desc {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        line-height: 1.4;
+        margin-bottom: 1.25rem;
+        flex: 1;
+      }
+
+      .fnb-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .fnb-price {
+          font-weight: 800;
+          font-size: 1.05rem;
+          color: #fb7185;
+        }
+
+        .qty-control {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          .qty-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background-color: #334155;
+            color: #ffffff;
+            border: none;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+
+            &:disabled {
+              opacity: 0.3;
+              cursor: not-allowed;
+            }
+
+            &:not(:disabled):hover {
+              background-color: #c90e29;
+            }
+          }
+
+          .qty-val {
+            font-weight: 800;
+            font-size: 0.95rem;
+            min-width: 20px;
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+}
+
+// STEP 3: Buyer & Payment
+.buyer-form-card {
+  background-color: #162032;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+
+  h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 0.35rem;
+  }
+
+  .form-desc {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .buyer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1;
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #cbd5e1;
+
+      .required {
+        color: #f43f5e;
+      }
+    }
+
+    input {
+      height: 44px;
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 0 0.85rem;
+      color: #ffffff;
+      font-size: 0.92rem;
+      outline: none;
+
+      &:focus {
+        border-color: #c90e29;
+      }
+    }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    flex-direction: column;
+
+    @media (min-width: 640px) {
+      flex-direction: row;
+    }
+  }
+
+  .vat-invoice-toggle {
+    margin-top: 0.5rem;
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.88rem;
+      color: #e2e8f0;
+      cursor: pointer;
+
+      input {
+        width: 18px;
+        height: 18px;
+        accent-color: #c90e29;
+      }
+    }
+  }
+
+  .vat-fields {
+    background-color: #0f172a;
+    padding: 1.25rem;
+    border-radius: 8px;
+    border: 1px dashed #334155;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .payment-methods-box {
+    h3 {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .methods-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .method-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      padding: 1rem;
+      background-color: #0f172a;
+      border: 1.5px solid #334155;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      input {
+        margin-top: 0.25rem;
+        accent-color: #c90e29;
+      }
+
+      .method-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+
+        strong {
+          color: #ffffff;
+          font-size: 0.95rem;
+        }
+
+        span {
+          font-size: 0.8rem;
+          color: #94a3b8;
+        }
+      }
+
+      &.selected {
+        border-color: #c90e29;
+        background-color: rgba(201, 14, 41, 0.08);
+      }
+    }
+  }
+}
+
+// STEP 4: Success Ticket Card
+.success-ticket-card {
+  max-width: 760px;
+  margin: 0 auto;
+  background-color: #162032;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  overflow: hidden;
+
+  .success-banner {
+    background: linear-gradient(135deg, #065f46 0%, #047857 100%);
+    color: #ffffff;
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+
+    .icon-circle {
+      width: 56px;
+      height: 56px;
+      background-color: #ffffff;
+      color: #047857;
+      font-size: 2rem;
+      font-weight: 900;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem;
+    }
+
+    p {
+      color: #d1fae5;
+      font-size: 0.9rem;
+      margin: 0;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+  }
+
+  .ticket-body {
+    padding: 2.5rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+
+    @media (min-width: 640px) {
+      grid-template-columns: 240px 1fr;
+    }
+  }
+
+  .ticket-qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .qr-img {
+      width: 200px;
+      height: 200px;
+      background-color: #ffffff;
+      padding: 0.5rem;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .booking-code-badge {
+      background-color: #0f172a;
+      border: 1px solid #334155;
+      padding: 0.5rem 0.85rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+
+      .label {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        display: block;
+      }
+
+      .code {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #38bdf8;
+        letter-spacing: 0.05em;
+      }
+    }
+
+    .note {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+  }
+
+  .ticket-details-section {
+    .movie-header {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      margin-bottom: 1.5rem;
+
+      h3 {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+      }
+    }
+
+    .specs-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 2rem;
+
+      .spec-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #1e293b;
+
+        .label {
+          color: #94a3b8;
+        }
+
+        strong {
+          color: #f8fafc;
+        }
+
+        .seats-highlight {
+          color: #f59e0b;
+          font-size: 1.05rem;
+        }
+
+        .price-highlight {
+          color: #f43f5e;
+          font-size: 1.15rem;
+        }
+      }
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      .btn-primary {
+        background-color: #c90e29;
+        color: #fff;
+        text-decoration: none;
+        padding: 0.75rem 1.75rem;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      .btn-outline {
+        border: 1px solid #475569;
+        color: #cbd5e1;
+        text-decoration: none;
+        padding: 0.75rem 1.75rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+// Right Sidebar (Order Summary)
+.booking-sidebar {
+  .sidebar-card {
+    background-color: #162032;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 90px;
+  }
+
+  .movie-summary {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+
+    .summary-poster {
+      width: 65px;
+      height: 95px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .summary-info {
+      h4 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin: 0 0 0.2rem;
+        color: #ffffff;
+      }
+
+      .cinema-name {
+        font-size: 0.8rem;
+        color: #cbd5e1;
+        margin: 0 0 0.2rem;
+      }
+
+      .format-tag {
+        font-size: 0.75rem;
+        color: #38bdf8;
+        font-weight: 700;
+        margin: 0 0 0.2rem;
+      }
+
+      .time-tag {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        margin: 0;
+
+        strong {
+          color: #ffffff;
+        }
+      }
+    }
+  }
+
+  .divider {
+    height: 1px;
+    background-color: #1e293b;
+    margin: 1.25rem 0;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    margin-bottom: 0.5rem;
+
+    .label {
+      color: #94a3b8;
+    }
+
+    .val {
+      color: #f8fafc;
+
+      &.font-bold {
+        font-weight: 700;
+        color: #f59e0b;
+      }
+    }
+  }
+
+  .fnb-mini-list {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    .mini-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+    }
+  }
+
+  .voucher-box {
+    .voucher-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .voucher-input-group {
+      display: flex;
+      gap: 0.5rem;
+
+      input {
+        flex: 1;
+        height: 38px;
+        background-color: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        padding: 0 0.75rem;
+        color: #fff;
+        font-size: 0.85rem;
+        outline: none;
+      }
+
+      button {
+        padding: 0 0.85rem;
+        border-radius: 6px;
+        border: none;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+
+        &.btn-apply-voucher {
+          background-color: #c90e29;
+          color: #fff;
+          border-radius: 999px;
+        }
+
+        &.btn-remove-voucher {
+          background-color: #475569;
+          color: #fff;
+          border-radius: 999px;
+        }
+      }
+    }
+
+    .voucher-msg {
+      font-size: 0.75rem;
+      margin-top: 0.4rem;
+      color: #f43f5e;
+
+      &.success {
+        color: #10b981;
+      }
+    }
+  }
+
+  .calc-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+
+      .label {
+        color: #94a3b8;
+      }
+
+      .val {
+        color: #e2e8f0;
+
+        &.discount {
+          color: #10b981;
+          font-weight: 700;
+        }
+      }
+
+      &.grand-total-row {
+        margin-top: 0.5rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #1e293b;
+        font-size: 1.15rem;
+
+        .label {
+          font-weight: 800;
+          color: #ffffff;
+        }
+
+        .grand-total {
+          font-weight: 900;
+          color: #f43f5e;
+        }
+      }
+    }
+  }
+
+  .step-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+
+    .btn-next,
+    .btn-confirm-pay {
+      width: 100%;
+      height: 48px;
+      background-color: #c90e29;
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+
+      &:disabled {
+        background-color: #334155;
+        color: #64748b;
+        cursor: not-allowed;
+      }
+
+      &:not(:disabled):hover {
+        background-color: #a80b22;
+      }
+    }
+
+    .btn-prev {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.4rem 0;
+
+      &:hover {
+        color: #ffffff;
+      }
+    }
+  }
+}

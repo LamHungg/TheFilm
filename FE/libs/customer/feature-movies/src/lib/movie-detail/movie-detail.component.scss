@@ -1,0 +1,354 @@
+.movie-detail-page {
+  max-width: 1440px;
+  margin: 1.5rem auto 5rem;
+  padding: 0 2rem;
+}
+
+// Breadcrumbs
+.breadcrumb-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: #666b78;
+  margin-bottom: 2rem;
+
+  a {
+    color: #1a1b21;
+    text-decoration: none;
+
+    &:hover {
+      color: #c90e29;
+    }
+  }
+
+  .sep {
+    color: #cbd5e1;
+  }
+
+  .current {
+    color: #c90e29;
+    font-weight: 700;
+  }
+}
+
+// Main 2-Column Detail Container
+.detail-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+
+  @media (min-width: 992px) {
+    grid-template-columns: 420px 1fr;
+    gap: 3.5rem;
+  }
+}
+
+// Left Column: Media & Specs
+.media-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .banner-box {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .specs-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e4e9;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #f1f5f9;
+
+      &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .spec-label {
+        color: #666b78;
+      }
+
+      .spec-value {
+        color: #1a1b21;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+// Right Column: Info & Booking Panel
+.info-column {
+  display: flex;
+  flex-direction: column;
+
+  .rating-badge-pill {
+    align-self: flex-start;
+    display: inline-block;
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 0.25rem 0.65rem;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .movie-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #1a1b21;
+    line-height: 1.2;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .movie-meta-sub {
+    font-size: 14px;
+    color: #666b78;
+    margin: 0 0 1.25rem;
+  }
+
+  .movie-synopsis {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #333640;
+    margin: 0 0 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e4e9;
+  }
+}
+
+// Booking Panel
+.booking-panel {
+  background-color: #ffffff;
+  border: 1px solid #e2e4e9;
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+
+  .section-badge-label {
+    display: inline-block;
+    color: #c90e29;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.25rem;
+  }
+}
+
+// Cinema Select Card
+.cinema-select-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background-color: #f7f8fb;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cinema-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .c-label {
+      font-size: 10px;
+      color: #666b78;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    strong {
+      color: #1a1b21;
+      font-size: 15px;
+    }
+  }
+
+  .select-change-wrapper {
+    min-width: 220px;
+  }
+}
+
+// Date Pills (999px radius)
+.date-pills-row {
+  display: flex;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .date-pill {
+    background-color: #f7f8fb;
+    color: #666b78;
+    border: 1px solid #e2e4e9;
+    border-radius: 999px;
+    padding: 0.55rem 1.25rem;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background-color: #e2e4e9;
+      color: #1a1b21;
+    }
+
+    &.active {
+      background-color: #c90e29;
+      border-color: #c90e29;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(201, 14, 41, 0.35);
+    }
+  }
+}
+
+// Room Type Filter (Pills)
+.room-filter-block {
+  margin-bottom: 1.75rem;
+
+  .filter-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #666b78;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.65rem;
+  }
+
+  .filter-chips {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    .room-chip {
+      background-color: #ffffff;
+      border: 1px solid #e2e4e9;
+      border-radius: 999px;
+      padding: 0.45rem 1.15rem;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: #666b78;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        border-color: #c90e29;
+        color: #c90e29;
+      }
+
+      &.active {
+        background-color: #fee2e2;
+        border-color: #fee2e2;
+        color: #991b1b;
+      }
+    }
+  }
+}
+
+// Showtimes Block
+.showtimes-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .group-section {
+    .group-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #333640;
+      letter-spacing: 0.04em;
+      margin: 0 0 0.85rem;
+    }
+
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+
+      @media (min-width: 640px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      @media (min-width: 1200px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .slot-chip {
+      background-color: #ffffff;
+      border: 1px solid #e2e4e9;
+      border-radius: 12px;
+      padding: 0.85rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #c90e29;
+        box-shadow: 0 4px 12px rgba(201, 14, 41, 0.15);
+        transform: translateY(-2px);
+
+        .time {
+          color: #c90e29;
+        }
+      }
+
+      .time {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #1a1b21;
+      }
+
+      .price {
+        font-size: 12px;
+        font-weight: 700;
+        color: #c90e29;
+      }
+
+      .seats {
+        font-size: 11px;
+        color: #666b78;
+      }
+    }
+  }
+
+  .empty-showtimes {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: #666b78;
+    font-size: 13px;
+    background-color: #f7f8fb;
+    border-radius: 10px;
+    border: 1px dashed #cbd5e1;
+  }
+}
