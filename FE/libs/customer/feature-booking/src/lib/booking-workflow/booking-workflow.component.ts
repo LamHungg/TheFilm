@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BadgeComponent } from '@the-film/shared/ui';
 import { formatVND, formatCountdown } from '@the-film/shared/util';
+import { catchError, finalize, of, switchMap } from 'rxjs';
 import {
   Movie,
   Cinema,
@@ -15,6 +16,8 @@ import {
   PaymentMethod,
   CinemaService,
   BookingService,
+  CreateOrderPayload,
+  Ticket,
 } from '@the-film/customer/data-access';
 
 @Component({
@@ -50,6 +53,11 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   selectedPaymentMethod: PaymentMethod = 'VNPAY_QR';
   isProcessingPayment = false;
   confirmedOrder: Order | null = null;
+  holdExpiresAt: string | null = null;
+  holdSecondsRemaining = 0;
+  seatMessage = '';
+  showHoldExpired = false;
+  private holdTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -70,9 +78,8 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.step < 4) {
-      this.bookingService.stopHoldTimer();
-    }
+    this.stopHoldCountdown();
+    if (this.step < 4) this.bookingService.stopHoldTimer();
   }
 
   private initWorkflow(showtimeId: string): void {
@@ -93,7 +100,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
       if (this.movie && this.cinema) {
         this.bookingService.initShowtime(this.movie, this.cinema, st);
-        this.availableSeats = this.bookingService.availableSeats();
+        this.loadSeats(st.id);
       } else {
         // Fallback if accessed directly by URL
         this.cinemaService.getMovies().subscribe((movies) => {
@@ -101,7 +108,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
           this.cinemaService.getCinemas().subscribe((cinemas) => {
             this.cinema = cinemas.find((c) => c.id === st.cinemaId) || cinemas[0];
             this.bookingService.initShowtime(this.movie!, this.cinema!, st);
-            this.availableSeats = this.bookingService.availableSeats();
+            this.loadSeats(st.id);
           });
         });
       }
@@ -142,7 +149,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   get holdSeconds(): number {
-    return this.bookingService.holdSeconds();
+    return this.holdSecondsRemaining;
   }
 
   get formattedCountdown(): string {
@@ -150,7 +157,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   getSeatsByRow(row: string): Seat[] {
-    return this.bookingService.availableSeats().filter((s) => s.row === row);
+    return this.availableSeats.filter((s) => s.row === row);
   }
 
   isSeatSelected(seat: Seat): boolean {
@@ -158,7 +165,76 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   onSeatClick(seat: Seat): void {
-    this.bookingService.toggleSeat(seat);
+    this.seatMessage = '';
+    if (seat.seatStatus === 'SOLD' || seat.status === 'BOOKED') return;
+    const selected = this.selectedSeats;
+    const isSelected = selected.some((item) => item.id === seat.id);
+    if (isSelected) {
+      const remainingSeats = selected.filter((item) => item.id !== seat.id);
+      // Keep the server's held-seat list in sync when a customer removes a seat.
+      this.bookingService.holdSeats(remainingSeats
+        .map((item) => item.showSeatId)
+        .filter((id): id is number => id != null && Number.isFinite(Number(id)))
+        .map(Number)).subscribe();
+      this.bookingService.selectedSeats.set(remainingSeats);
+      this.bookingService.availableSeats.update((seats) => seats.map((item) => item.id === seat.id
+        ? { ...item, seatStatus: 'AVAILABLE', status: 'AVAILABLE', holdExpiresAt: null }
+        : item));
+      this.availableSeats = this.bookingService.availableSeats();
+      this.startHoldCountdownFromSelection();
+      return;
+    }
+    if (seat.seatStatus === 'HELD') {
+      this.seatMessage = 'Ghế này đang được giữ bởi khách hàng khác. Sơ đồ ghế đã được cập nhật.';
+      this.loadSeats();
+      return;
+    }
+    if (selected.length >= 8) {
+      this.seatMessage = 'Quý khách chỉ có thể chọn tối đa 8 ghế cho mỗi lượt đặt.';
+      return;
+    }
+    const holdSeatLocally = (holdExpiresAt: string) => {
+      const heldSeat = {
+        ...seat,
+        seatStatus: 'HELD' as const,
+        status: 'SELECTED' as const,
+        holdExpiresAt,
+      };
+      this.bookingService.availableSeats.update((seats) => seats.map((item) => item.id === seat.id ? heldSeat : item));
+      this.bookingService.selectedSeats.set([...this.selectedSeats, heldSeat]);
+      this.availableSeats = this.bookingService.availableSeats();
+      this.holdExpiresAt = this.selectedSeats
+        .map((item) => item.holdExpiresAt)
+        .filter((value): value is string => Boolean(value))
+        .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0] || holdExpiresAt;
+      this.updateHoldCountdown();
+      this.startHoldCountdown();
+    };
+
+    if (seat.showSeatId == null) {
+      // Mock/offline seat layouts have no screening-seat key; keep their UX usable.
+      holdSeatLocally(new Date(Date.now() + 600_000).toISOString());
+      return;
+    }
+
+    this.bookingService.holdSeats([Number(seat.showSeatId)]).subscribe((hold) => {
+      const heldSeat = this.bookingService.availableSeats().find((item) => item.id === seat.id);
+      if (heldSeat?.seatStatus === 'HELD') {
+        holdSeatLocally(heldSeat.holdExpiresAt || hold.expiresAt);
+        return;
+      }
+      // holdSeats returns a local fallback on HTTP errors. Refresh before deciding
+      // whether this was a genuine collision so fallback responses do not reject clicks.
+      this.bookingService.fetchSeats(this.showtime!.id).subscribe((seats) => {
+        const refreshed = seats.find((item) => item.id === seat.id);
+        if (refreshed && (refreshed.seatStatus === 'HELD' || refreshed.seatStatus === 'SOLD' || refreshed.status === 'BOOKED')) {
+          this.seatMessage = 'Ghế vừa được người khác giữ. Sơ đồ ghế đã được làm mới.';
+          this.availableSeats = seats;
+          return;
+        }
+        holdSeatLocally(hold.expiresAt || new Date(Date.now() + 600_000).toISOString());
+      });
+    });
   }
 
   getFnbQty(item: FnbCombo): number {
@@ -184,6 +260,10 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       alert('Vui lòng chọn ít nhất 1 ghế để tiếp tục.');
       return;
     }
+    if (this.step === 1 && (this.holdSecondsRemaining <= 0 || !this.holdExpiresAt)) {
+      this.seatMessage = 'Vui lòng giữ ghế thành công trước khi tiếp tục.';
+      return;
+    }
     this.step++;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -196,21 +276,127 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   submitPayment(): void {
-    if (!this.buyer.fullName.trim() || !this.buyer.phone.trim() || !this.buyer.email.trim()) {
-      alert('Vui lòng điền đầy đủ Họ tên, Số điện thoại và Email để nhận vé điện tử.');
+    if (!this.buyer.fullName.trim() || !this.buyer.phone.trim() || !this.buyer.email.trim()
+      || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.buyer.email.trim())
+      || (this.buyer.needInvoice && (!this.buyer.companyName?.trim() || !this.buyer.taxCode?.trim() || !this.buyer.companyAddress?.trim()))) {
+      this.paymentMessage = 'Vui lòng kiểm tra họ tên, số điện thoại, email và thông tin hóa đơn.';
       return;
     }
-
+    if (!this.holdExpiresAt || this.holdSecondsRemaining <= 0) {
+      this.paymentMessage = 'Thời gian giữ ghế đã hết. Vui lòng chọn lại ghế.';
+      this.step = 1;
+      return;
+    }
+    this.paymentMessage = '';
+    const screeningId = Number(String(this.showtime?.id ?? '').match(/\d+/)?.[0]);
+    if (!Number.isSafeInteger(screeningId) || screeningId <= 0) {
+      this.paymentMessage = 'Không xác định được mã suất chiếu. Vui lòng tải lại suất chiếu.';
+      return;
+    }
     this.bookingService.updateBuyerInfo(this.buyer);
     this.isProcessingPayment = true;
-
-    // Simulate safe API payment verification
-    setTimeout(() => {
-      this.confirmedOrder = this.bookingService.createOrder(this.selectedPaymentMethod);
-      this.isProcessingPayment = false;
+    const payload: CreateOrderPayload = {
+      screeningId,
+      showSeatIds: this.selectedSeats.map((seat) => Number(seat.showSeatId)).filter(Number.isFinite),
+      idempotencyKey: `booking-${this.showtime?.id}-${this.selectedSeats.map((seat) => seat.showSeatId).join('-')}-${Date.now()}`,
+      voucherCode: this.bookingService.voucherCode() || undefined,
+      guestName: this.buyer.fullName.trim(),
+      guestEmail: this.buyer.email.trim(),
+      guestPhone: this.buyer.phone.trim(),
+      fnbItems: this.selectedCombos.map((combo) => ({
+        productId: Number(combo.id.match(/\d+/)?.[0]),
+        productName: combo.name,
+        productCode: combo.id,
+        quantity: combo.quantity,
+        unitPrice: combo.price,
+      })).filter((item) => Number.isFinite(item.productId)),
+    };
+    this.bookingService.createOrder(payload).pipe(
+      switchMap((order) => this.bookingService.payOrder(order.orderCode, this.selectedPaymentMethod).pipe(
+        switchMap((payment) => {
+          if (!['SUCCEEDED', 'SUCCESS'].includes(payment.paymentStatus.toUpperCase())) {
+            this.paymentMessage = 'Thanh toán chưa thành công. Vui lòng thử lại.';
+            return of(order);
+          }
+          return this.bookingService.getOrder(order.orderCode).pipe(switchMap((updated) => of(updated || order)));
+        })
+      )),
+      catchError(() => {
+        this.paymentMessage = 'Không thể hoàn tất thanh toán. Vui lòng kiểm tra kết nối và thử lại.';
+        return of(null);
+      }),
+      finalize(() => this.isProcessingPayment = false)
+    ).subscribe((order) => {
+      if (!order || this.paymentMessage) return;
+      this.confirmedOrder = order;
+      this.stopHoldCountdown();
       this.step = 4;
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    });
+  }
+
+  paymentMessage = '';
+
+  get tickets(): Ticket[] {
+    return this.confirmedOrder?.tickets?.length ? this.confirmedOrder.tickets : [];
+  }
+
+  ticketQrSource(ticket: Ticket): string {
+    const qrData = ticket.qrData || ticket.qrTokenHash || ticket.ticketNumber;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`;
+  }
+
+  private loadSeats(showtimeId = this.showtime?.id): void {
+    if (!showtimeId) return;
+    this.bookingService.fetchSeats(showtimeId).subscribe((seats) => {
+      this.availableSeats = seats;
+      this.seatRows = [...new Set(seats.map((seat) => seat.row))];
+    });
+  }
+
+  private updateHoldCountdown(): void {
+    const expiresAt = this.holdExpiresAt ? new Date(this.holdExpiresAt).getTime() : 0;
+    this.holdSecondsRemaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+  }
+
+  private startHoldCountdown(): void {
+    this.stopHoldCountdown();
+    this.holdTimer = setInterval(() => {
+      // BookingService has a legacy timer with a blocking alert; this countdown
+      // uses backend holdExpiresAt and owns the expiry experience.
+      this.bookingService.stopHoldTimer();
+      this.updateHoldCountdown();
+      if (this.holdSecondsRemaining === 0) this.onHoldExpired();
+    }, 1000);
+  }
+
+  private startHoldCountdownFromSelection(): void {
+    const remainingExpiry = this.selectedSeats
+      .map((seat) => seat.holdExpiresAt)
+      .filter((value): value is string => Boolean(value))
+      .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0] || null;
+    this.holdExpiresAt = remainingExpiry;
+    if (remainingExpiry) this.startHoldCountdown();
+    else this.stopHoldCountdown();
+  }
+
+  private onHoldExpired(): void {
+    if (!this.selectedSeats.length) return;
+    this.stopHoldCountdown();
+    const expiredSeatIds = new Set(this.selectedSeats.map((seat) => seat.id));
+    this.bookingService.selectedSeats.set([]);
+    this.bookingService.stopHoldTimer();
+    this.bookingService.availableSeats.update((seats) => seats.map((seat) => expiredSeatIds.has(seat.id)
+      ? { ...seat, seatStatus: 'AVAILABLE', status: 'AVAILABLE', holdExpiresAt: null }
+      : seat));
+    this.holdExpiresAt = null;
+    this.showHoldExpired = true;
+    this.loadSeats();
+  }
+
+  private stopHoldCountdown(): void {
+    if (this.holdTimer) clearInterval(this.holdTimer);
+    this.holdTimer = null;
   }
 
   getSeatCodes(seats: Seat[]): string {

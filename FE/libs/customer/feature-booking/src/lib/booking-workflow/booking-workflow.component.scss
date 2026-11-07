@@ -316,6 +316,14 @@
       cursor: not-allowed;
       opacity: 0.4;
     }
+
+    &.status-held:not(.is-selected) {
+      background-color: #7c2d12 !important;
+      color: #fed7aa !important;
+      border: 1px solid #fb923c !important;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
   }
 
   // Legend
@@ -345,6 +353,7 @@
         &.seat-couple { background-color: rgba(244, 63, 94, 0.35); border: 1px solid #f43f5e; }
         &.is-selected { background-color: #c90e29; }
         &.status-booked { background-color: #1e293b; border: 1px solid #475569; }
+        &.status-held { background-color: #7c2d12; border: 1px solid #fb923c; }
       }
     }
   }
@@ -1032,4 +1041,87 @@
       }
     }
   }
+}
+
+.booking-alert {
+  margin: 0.85rem 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(251, 146, 60, 0.5);
+  border-radius: 8px;
+  background: rgba(124, 45, 18, 0.2);
+  color: #fed7aa;
+  font-size: 0.88rem;
+}
+
+.ticket-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.hold-expired-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(2, 6, 23, 0.78);
+}
+
+.hold-expired-modal {
+  width: min(100%, 420px);
+  padding: 2rem;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  background: #162032;
+  color: #f8fafc;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+
+  .expired-icon {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: rgba(244, 63, 94, 0.15);
+    color: #fb7185;
+    font-size: 1.6rem;
+    font-weight: 900;
+  }
+
+  h2 { margin: 0 0 0.6rem; font-size: 1.25rem; }
+  p { margin: 0 0 1.4rem; color: #cbd5e1; line-height: 1.5; }
+
+  button {
+    min-height: 44px;
+    padding: 0.65rem 1.3rem;
+    border: 0;
+    border-radius: 999px;
+    background: #c90e29;
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 640px) {
+  .booking-header {
+    position: static;
+    padding-inline: 0.8rem;
+    .movie-brief { align-items: flex-start; gap: 0.7rem; }
+    .movie-brief .title { font-size: 1rem; }
+    .movie-brief .meta { font-size: 0.74rem; }
+    .hold-timer-box { width: 100%; justify-content: space-between; }
+  }
+
+  .booking-main { padding: 1rem 0.75rem 3rem; }
+  .success-ticket-card .ticket-body { padding: 1.5rem 1rem; }
 }

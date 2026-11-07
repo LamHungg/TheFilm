@@ -15,7 +15,7 @@
       </div>
 
       <!-- Hold Timer (CUS-F07: 10 min countdown) -->
-      <div class="hold-timer-box" [class.urgent]="holdSeconds <= 120" *ngIf="step < 4">
+      <div class="hold-timer-box" [class.urgent]="holdSeconds <= 120" *ngIf="step < 4 && selectedSeats.length > 0">
         <span class="timer-label">Thời gian giữ vé:</span>
         <span class="timer-countdown">⏳ {{ formattedCountdown }}</span>
       </div>
@@ -68,12 +68,12 @@
                     class="seat-btn"
                     [ngClass]="[
                       'seat-' + s.type.toLowerCase(),
-                      'status-' + s.status.toLowerCase(),
+                      'status-' + (s.seatStatus || s.status).toLowerCase(),
                       isSeatSelected(s) ? 'is-selected' : ''
                     ]"
-                    [disabled]="s.status === 'BOOKED'"
+                    [disabled]="s.status === 'BOOKED' || (s.seatStatus === 'HELD' && !isSeatSelected(s))"
                     (click)="onSeatClick(s)"
-                    [title]="s.code + ' - ' + formatMoney(s.price)"
+                    [title]="s.code + ' - ' + (s.seatStatus === 'SOLD' ? 'Đã bán' : s.seatStatus === 'HELD' && !isSeatSelected(s) ? 'Đang được giữ' : formatMoney(s.price))"
                   >
                     <span class="seat-num">{{ s.col }}</span>
                   </button>
@@ -82,6 +82,7 @@
               </div>
             </div>
           </div>
+          <p class="booking-alert" role="status" *ngIf="seatMessage">{{ seatMessage }}</p>
 
           <!-- Seat Legend (Matching Figma) -->
           <div class="seat-legend">
@@ -104,6 +105,10 @@
             <div class="legend-item">
               <span class="legend-box status-booked"></span>
               <span>Đã bán</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-box status-held"></span>
+              <span>Đang được giữ</span>
             </div>
           </div>
         </div>
@@ -145,20 +150,20 @@
             <h3>Thông tin người nhận vé</h3>
             <p class="form-desc">Mã vé và hóa đơn VAT sẽ được gửi về thông tin liên hệ dưới đây</p>
 
-            <form class="buyer-form">
+            <form class="buyer-form" #buyerForm="ngForm">
               <div class="form-group">
                 <label>Họ và tên người nhận <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="buyer.fullName" name="fullName" placeholder="VD: Nguyễn Văn An" />
+                <input type="text" [(ngModel)]="buyer.fullName" name="fullName" placeholder="VD: Nguyễn Văn An" required />
               </div>
 
               <div class="form-row">
                 <div class="form-group">
                   <label>Số điện thoại <span class="required">*</span></label>
-                  <input type="tel" [(ngModel)]="buyer.phone" name="phone" placeholder="VD: 0909123456" />
+                  <input type="tel" [(ngModel)]="buyer.phone" name="phone" placeholder="VD: 0909123456" required />
                 </div>
                 <div class="form-group">
                   <label>Email nhận vé điện tử <span class="required">*</span></label>
-                  <input type="email" [(ngModel)]="buyer.email" name="email" placeholder="VD: an.nguyen@example.com" />
+                  <input type="email" [(ngModel)]="buyer.email" name="email" placeholder="VD: an.nguyen@example.com" required email />
                 </div>
               </div>
 
@@ -173,16 +178,16 @@
               <div class="vat-fields" *ngIf="buyer.needInvoice">
                 <div class="form-group">
                   <label>Tên công ty / Tổ chức</label>
-                  <input type="text" [(ngModel)]="buyer.companyName" name="companyName" placeholder="Tên doanh nghiệp đầy đủ" />
+                  <input type="text" [(ngModel)]="buyer.companyName" name="companyName" placeholder="Tên doanh nghiệp đầy đủ" [required]="buyer.needInvoice" />
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label>Mã số thuế (MST)</label>
-                    <input type="text" [(ngModel)]="buyer.taxCode" name="taxCode" placeholder="VD: 0101234567" />
+                    <input type="text" [(ngModel)]="buyer.taxCode" name="taxCode" placeholder="VD: 0101234567" [required]="buyer.needInvoice" />
                   </div>
                   <div class="form-group">
                     <label>Địa chỉ công ty</label>
-                    <input type="text" [(ngModel)]="buyer.companyAddress" name="companyAddress" placeholder="Địa chỉ đăng ký kinh doanh" />
+                    <input type="text" [(ngModel)]="buyer.companyAddress" name="companyAddress" placeholder="Địa chỉ đăng ký kinh doanh" [required]="buyer.needInvoice" />
                   </div>
                 </div>
               </div>
@@ -225,6 +230,7 @@
                 </label>
               </div>
             </div>
+            <p class="booking-alert" role="alert" *ngIf="paymentMessage">{{ paymentMessage }}</p>
           </div>
         </div>
       </div>
@@ -241,7 +247,11 @@
           <div class="ticket-body">
             <!-- QR Code Box -->
             <div class="ticket-qr-section">
-              <img [src]="confirmedOrder.qrCodeUrl" [alt]="confirmedOrder.bookingCode" class="qr-img" />
+              <div class="ticket-qr" *ngFor="let ticket of tickets">
+                <img [src]="ticketQrSource(ticket)" [alt]="'Mã QR vé ' + ticket.ticketNumber" class="qr-img" />
+                <strong>{{ ticket.ticketNumber }}<span *ngIf="ticket.seatLabel"> · {{ ticket.seatLabel }}</span></strong>
+              </div>
+              <img *ngIf="tickets.length === 0 && confirmedOrder.qrCodeUrl" [src]="confirmedOrder.qrCodeUrl" [alt]="confirmedOrder.bookingCode" class="qr-img" />
               <div class="booking-code-badge">
                 <span class="label">MÃ LẤY VÉ:</span>
                 <span class="code">{{ confirmedOrder.bookingCode }}</span>
@@ -257,6 +267,10 @@
               </div>
 
               <div class="specs-grid">
+                <div class="spec-item">
+                  <span class="label">Mã đơn hàng:</span>
+                  <strong>{{ confirmedOrder.orderCode }}</strong>
+                </div>
                 <div class="spec-item">
                   <span class="label">Rạp chiếu:</span>
                   <strong>{{ confirmedOrder.cinemaName }}</strong>
@@ -407,7 +421,7 @@
             <button
               class="btn-confirm-pay"
               *ngIf="step === 3"
-              [disabled]="isProcessingPayment"
+              [disabled]="isProcessingPayment || holdSeconds <= 0"
               (click)="submitPayment()"
             >
               {{ isProcessingPayment ? 'ĐANG XỬ LÝ THANH TOÁN...' : 'XÁC NHẬN & THANH TOÁN ' + formatMoney(grandTotal) }}
@@ -421,4 +435,12 @@
       </aside>
     </div>
   </main>
+  <div class="hold-expired-backdrop" *ngIf="showHoldExpired" role="presentation">
+    <section class="hold-expired-modal" role="alertdialog" aria-modal="true" aria-labelledby="hold-expired-title">
+      <span class="expired-icon">!</span>
+      <h2 id="hold-expired-title">Thời gian giữ vé đã hết</h2>
+      <p>Ghế đã được làm mới. Vui lòng chọn lại chỗ ngồi để tiếp tục đặt vé.</p>
+      <button type="button" (click)="showHoldExpired = false; step = 1">Chọn lại ghế</button>
+    </section>
+  </div>
 </div>

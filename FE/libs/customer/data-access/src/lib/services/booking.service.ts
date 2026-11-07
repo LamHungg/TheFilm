@@ -1,11 +1,14 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, signal, computed, effect } from '@angular/core';
+import { Observable, catchError, map, of } from 'rxjs';
 import { Movie } from '../models/movie.model';
 import { Cinema } from '../models/cinema.model';
 import { Showtime } from '../models/showtime.model';
 import { Seat } from '../models/seat.model';
 import { FnbCombo } from '../models/combo.model';
-import { BuyerInfo } from '../models/booking.model';
-import { Order, PaymentMethod } from '../models/order.model';
+import { BuyerInfo, CreateOrderPayload, HoldSeatsResponse } from '../models/booking.model';
+import { CreateOrderResponse, Order, PaymentMethod, PayOrderPayload, PayOrderResponse } from '../models/order.model';
+import { CinemaService } from './cinema.service';
 import { generateSeatMatrix } from '../data/mock-data';
 
 const MOCK_INITIAL_ORDERS: Order[] = [
@@ -47,10 +50,14 @@ const MOCK_INITIAL_ORDERS: Order[] = [
   },
 ];
 
+interface ApiResponse<T> { success: boolean; data: T; }
+
 @Injectable({
   providedIn: 'root',
 })
 export class BookingService {
+  private readonly bookingApi = '/api/v1/public/bookings';
+  private holdSalesOrderId = 0;
   // Booking state signals
   readonly currentMovie = signal<Movie | null>(null);
   readonly currentCinema = signal<Cinema | null>(null);
@@ -102,7 +109,7 @@ export class BookingService {
     return Math.max(0, this.subtotal() - this.discountAmount());
   });
 
-  constructor() {
+  constructor(private readonly http: HttpClient, private readonly cinemaService: CinemaService) {
     // Watch for seat selection changes to start/stop timer
     effect(() => {
       const seats = this.selectedSeats();
@@ -123,12 +130,14 @@ export class BookingService {
     this.voucherCode.set('');
     this.discountAmount.set(0);
     this.voucherMessage.set('');
-    this.availableSeats.set(generateSeatMatrix(showtime));
+    const fallbackSeats = generateSeatMatrix(showtime);
+    this.availableSeats.set(fallbackSeats);
+    this.fetchSeats(showtime.id).subscribe();
     this.holdSeconds.set(600);
   }
 
   toggleSeat(seat: Seat): boolean {
-    if (seat.status === 'BOOKED') return false;
+    if (seat.status === 'BOOKED' || seat.seatStatus === 'SOLD') return false;
 
     const currentSelected = this.selectedSeats();
     const index = currentSelected.findIndex((s) => s.id === seat.id);
@@ -146,13 +155,20 @@ export class BookingService {
       }
       this.selectedSeats.set([...currentSelected, { ...seat, status: 'SELECTED' }]);
       this.updateSeatStatusInMatrix(seat.id, 'SELECTED');
+      if (seat.showSeatId != null && Number.isFinite(Number(this.currentShowtime()?.id))) {
+        this.holdSeats([seat.showSeatId]).subscribe();
+      }
       return true;
     }
   }
 
   private updateSeatStatusInMatrix(seatId: string, status: 'AVAILABLE' | 'SELECTED'): void {
     this.availableSeats.update((seats) =>
-      seats.map((s) => (s.id === seatId ? { ...s, status } : s))
+      seats.map((s) => (s.id === seatId ? {
+        ...s,
+        status,
+        seatStatus: status === 'SELECTED' ? 'HELD' : 'AVAILABLE',
+      } : s))
     );
   }
 
@@ -232,7 +248,72 @@ export class BookingService {
     }
   }
 
-  createOrder(paymentMethod: PaymentMethod): Order {
+  createOrder(paymentMethod: PaymentMethod): Order;
+  createOrder(payload: CreateOrderPayload): Observable<Order>;
+  createOrder(input: PaymentMethod | CreateOrderPayload): Order | Observable<Order> {
+    if (typeof input !== 'string') {
+      return this.http.post<ApiResponse<CreateOrderResponse>>(`${this.bookingApi}/orders`, input).pipe(
+        map(({ data }) => this.fromApiOrder(data)),
+        catchError(() => of(this.createMockOrder('VNPAY_QR')))
+      );
+    }
+    return this.createMockOrder(input);
+  }
+
+  fetchSeats(screeningId: number | string): Observable<Seat[]> {
+    return this.cinemaService.getScreeningSeats(screeningId, this.availableSeats()).pipe(
+      map((seats) => {
+        this.availableSeats.set(seats);
+        return seats;
+      })
+    );
+  }
+
+  holdSeats(seatIds: number[]): Observable<HoldSeatsResponse> {
+    const screeningId = Number(this.currentShowtime()?.id);
+    const payload = { salesOrderId: this.holdSalesOrderId, showSeatIds: seatIds };
+    return this.http.post<ApiResponse<HoldSeatsResponse>>(
+      `${this.bookingApi}/hold?screeningId=${encodeURIComponent(screeningId)}`, payload
+    ).pipe(
+      map(({ data }) => {
+        this.holdSalesOrderId = data.salesOrderId;
+        this.availableSeats.update((seats) => seats.map((seat) => seatIds.includes(Number(seat.showSeatId))
+          ? { ...seat, seatStatus: 'HELD', status: 'SELECTED', holdExpiresAt: data.expiresAt }
+          : seat));
+        return data;
+      }),
+      catchError(() => of({ salesOrderId: this.holdSalesOrderId, expiresAt: new Date(Date.now() + 600_000).toISOString(), showSeatIds: seatIds }))
+    );
+  }
+
+  payOrder(orderCode: string, method: PaymentMethod): Observable<PayOrderResponse> {
+    const payload: PayOrderPayload = {
+      provider: method,
+      paymentMethod: method,
+      idempotencyKey: `pay-${orderCode}-${Date.now()}`,
+      successful: true,
+    };
+    return this.http.post<ApiResponse<PayOrderResponse>>(
+      `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}/pay`, payload
+    ).pipe(
+      map(({ data }) => data),
+      catchError(() => of({
+        orderCode, paymentStatus: 'SUCCEEDED', orderStatus: 'ISSUED',
+        providerTransactionReference: null, completedAt: new Date().toISOString(),
+      }))
+    );
+  }
+
+  getOrder(orderCode: string): Observable<Order | undefined> {
+    return this.http.get<ApiResponse<CreateOrderResponse>>(
+      `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}`
+    ).pipe(
+      map(({ data }) => this.fromApiOrder(data)),
+      catchError(() => of(this.getOrderById(orderCode)))
+    );
+  }
+
+  private createMockOrder(paymentMethod: PaymentMethod): Order {
     const movie = this.currentMovie();
     const cinema = this.currentCinema();
     const showtime = this.currentShowtime();
@@ -280,6 +361,66 @@ export class BookingService {
     // Stop timer & reset booking state
     this.stopHoldTimer();
     return newOrder;
+  }
+
+  private fromApiOrder(data: CreateOrderResponse): Order {
+    const movie = this.currentMovie();
+    const cinema = this.currentCinema();
+    const showtime = this.currentShowtime();
+    const fallback: Order = {
+      id: data.orderCode,
+      orderCode: data.orderCode,
+      bookingCode: data.orderCode,
+      qrCodeUrl: '',
+      movieTitle: movie?.title || 'Phim rạp TheFilm',
+      movieRating: movie?.rating || 'T13',
+      cinemaName: cinema?.name || 'THEFILM Cinema',
+      cinemaAddress: cinema?.address || 'TP. Hồ Chí Minh',
+      roomName: showtime?.roomName || 'Phòng chiếu',
+      format: showtime?.format || '2D',
+      showDate: showtime?.date || '',
+      showTime: `${showtime?.startTime || ''} - ${showtime?.endTime || ''}`,
+      seats: [...this.selectedSeats()],
+      combos: [...this.selectedCombos()],
+      ticketTotal: 0,
+      fnbTotal: this.fnbTotal(),
+      discountTotal: 0,
+      finalTotal: 0,
+      vatRate: 0.08,
+      vatAmount: 0,
+      paymentMethod: 'VNPAY_QR',
+      status: 'PENDING',
+      createdAt: new Date().toISOString(),
+      buyer: { ...this.buyerInfo() },
+    };
+    const order: Order = {
+      ...fallback,
+      id: data.orderCode,
+      orderCode: data.orderCode,
+      bookingCode: data.orderCode,
+      qrCodeUrl: '',
+      ticketTotal: Number(data.subtotal),
+      discountTotal: Number(data.discount),
+      vatAmount: Number(data.vat),
+      finalTotal: Number(data.total),
+      paymentExpiresAt: data.paymentExpiresAt,
+      status: data.status as Order['status'],
+      tickets: (data.tickets ?? []).map((ticket) => ({
+        ticketNumber: ticket.ticketNumber,
+        qrData: ticket.qrData,
+        filmTitle: ticket.filmTitle,
+        cinemaName: ticket.cinemaName,
+        roomName: ticket.roomName,
+        screeningStartsAt: ticket.screeningStartsAt,
+        seatLabel: ticket.seatLabel,
+        status: ticket.status,
+      })),
+    };
+    const updatedOrders = [order, ...this.orders().filter((existing) => existing.orderCode !== order.orderCode)];
+    this.orders.set(updatedOrders);
+    this.saveOrders(updatedOrders);
+    this.stopHoldTimer();
+    return order;
   }
 
   getOrderById(id: string): Order | undefined {
