@@ -9,6 +9,7 @@ import { MOCK_MOVIES, MOCK_CINEMAS, MOCK_SHOWTIMES, MOCK_FNBS } from '../data/mo
 import { Seat, SeatType } from '../models/seat.model';
 
 interface ApiResponse<T> { success: boolean; data: T; }
+interface ScreeningApi { id: number; startsAt: string; endsAt: string; availableSeats: number; totalSeats: number; }
 interface SeatLayoutResponse { screeningId: number; seats: Array<{
   showSeatId: number; seatCode: string; rowLabel: string; seatLabel: string;
   seatTypeCode: string; status: 'AVAILABLE' | 'HELD' | 'SOLD'; basePrice: number; holdExpiresAt: string | null;
@@ -26,12 +27,11 @@ export class CinemaService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getScreeningSeats(screeningId: number | string, fallback: Seat[]): Observable<Seat[]> {
+  getScreeningSeats(screeningId: number | string): Observable<Seat[]> {
     return this.http.get<ApiResponse<SeatLayoutResponse>>(
       `${this.bookingApi}/screenings/${encodeURIComponent(screeningId)}/seats`
     ).pipe(
-      map((response) => response.data.seats.map((seat) => this.toSeat(seat))),
-      catchError(() => of(fallback.map((seat) => ({ ...seat }))))
+      map((response) => response.data.seats.map((seat) => this.toSeat(seat)))
     );
   }
 
@@ -83,7 +83,19 @@ export class CinemaService {
   }
 
   getShowtimeById(id: string): Observable<Showtime | undefined> {
-    return of(this.showtimes.find((s) => s.id === id));
+    const showtime = this.showtimes.find((s) => s.id === id);
+    if (!showtime?.backendScreeningId) return of(showtime);
+    return this.http.get<ApiResponse<ScreeningApi[]>>('/api/v1/public/screenings').pipe(
+      map(({ data }) => {
+        const screening = data.find((item) => item.id === showtime.backendScreeningId);
+        if (!screening) return showtime;
+        const start = new Date(screening.startsAt), end = new Date(screening.endsAt);
+        const date = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+        const time = (value: Date) => `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+        return { ...showtime, date, startTime: time(start), endTime: time(end), availableSeats: screening.availableSeats, totalSeats: screening.totalSeats };
+      }),
+      catchError(() => of(showtime))
+    );
   }
 
   getFnbs(): Observable<FnbCombo[]> {

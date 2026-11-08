@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '@the-film/customer/data-access';
 
 @Component({
   selector: 'thefilm-navbar',
@@ -14,7 +15,20 @@ export class NavbarComponent {
   isMobileMenuOpen = false;
   searchQuery = '';
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    readonly authService: AuthService,
+  ) {}
+
+  login(): void {
+    this.closeMobileMenu();
+    this.authService.login();
+  }
+
+  logout(): void {
+    this.closeMobileMenu();
+    this.authService.logout();
+  }
 
   toggleMobileMenu(): void {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;

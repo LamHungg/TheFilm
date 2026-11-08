@@ -1,36 +1,46 @@
 package vn.thefilm.backend.config;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.core.env.Environment;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import vn.thefilm.backend.security.KeycloakJwtAuthenticationConverter;
+import vn.thefilm.backend.security.UserAccountStatusFilter;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Bean
+    ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
+    }
+
+    @Bean
+    FilterRegistrationBean<UserAccountStatusFilter> userAccountStatusFilterRegistration(
+            UserAccountStatusFilter userAccountStatusFilter) {
+        FilterRegistrationBean<UserAccountStatusFilter> registration =
+                new FilterRegistrationBean<>(userAccountStatusFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(Environment environment) {
@@ -69,7 +79,8 @@ public class SecurityConfig {
     @Profile("oracle")
     SecurityFilterChain oracleSecurityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter keycloakJwtAuthenticationConverter) throws Exception {
+            KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter,
+            UserAccountStatusFilter userAccountStatusFilter) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -80,49 +91,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter)))
+                .addFilterAfter(userAccountStatusFilter, BearerTokenAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    @Profile("oracle")
-    JwtAuthenticationConverter keycloakJwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
-        Converter<Jwt, Collection<GrantedAuthority>> authoritiesConverter = jwt -> {
-            Collection<GrantedAuthority> authorities = new ArrayList<>();
-            Collection<GrantedAuthority> scopes = scopeConverter.convert(jwt);
-            if (scopes != null) {
-                authorities.addAll(scopes);
-            }
-
-            addRoleAuthorities(readRoles(jwt.getClaim("realm_access")), authorities);
-
-            Object resourceAccessClaim = jwt.getClaim("resource_access");
-            if (resourceAccessClaim instanceof Map<?, ?> resourceAccess) {
-                addRoleAuthorities(readRoles(resourceAccess.get("thefilm-api")), authorities);
-            }
-            return authorities;
-        };
-
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
-        return converter;
-    }
-
-    private static Object readRoles(Object accessClaim) {
-        if (accessClaim instanceof Map<?, ?> access) {
-            return access.get("roles");
-        }
-        return null;
-    }
-
-    private static void addRoleAuthorities(Object rolesClaim, Collection<GrantedAuthority> authorities) {
-        if (!(rolesClaim instanceof Collection<?> roles)) {
-            return;
-        }
-        for (Object role : roles) {
-            if (role instanceof String roleName && !roleName.isBlank()) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName.toUpperCase()));
-            }
-        }
     }
 }

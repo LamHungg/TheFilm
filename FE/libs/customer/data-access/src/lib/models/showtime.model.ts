@@ -1,5 +1,7 @@
 export interface Showtime {
   id: string;
+  /** ID suất chiếu thật trong BE, chỉ khai báo khi dữ liệu đã được đối chiếu. */
+  backendScreeningId?: number;
   movieId: string;
   cinemaId: string;
   roomName: string;

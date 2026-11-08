@@ -1,22 +1,21 @@
 <div class="auth-page-container">
   <div class="auth-desktop-card">
-    <!-- Left: Form Column -->
-    <div class="auth-form-column">
+    <section class="auth-form-column" aria-labelledby="auth-title">
       <div class="brand-badge-box">
-        <div class="logo-circle">T</div>
+        <div class="logo-circle" aria-hidden="true">T</div>
         <span class="auth-subtitle-tag">CỔNG THÀNH VIÊN THEFILM</span>
       </div>
 
-      <h1 class="auth-main-title">Chào mừng bạn đến THEFILM</h1>
+      <h1 id="auth-title" class="auth-main-title">Chào mừng bạn đến THEFILM</h1>
       <p class="auth-meta-text">Đăng nhập để quản lý vé đã đặt, tích điểm C-Point và nhận ưu đãi độc quyền.</p>
 
-      <!-- Toggle Tabs (Figma: ĐĂNG NHẬP vs TẠO TÀI KHOẢN) -->
-      <div class="auth-toggle-pills">
+      <div class="auth-toggle-pills" role="group" aria-label="Chọn thao tác tài khoản">
         <button
           type="button"
           class="toggle-pill"
           [class.active]="isLoginMode"
-          (click)="isLoginMode = true"
+          [disabled]="isLoading"
+          (click)="setMode(true)"
         >
           ĐĂNG NHẬP
         </button>
@@ -24,51 +23,81 @@
           type="button"
           class="toggle-pill"
           [class.active]="!isLoginMode"
-          (click)="isLoginMode = false"
+          [disabled]="isLoading"
+          (click)="setMode(false)"
         >
           TẠO TÀI KHOẢN
         </button>
       </div>
 
-      <!-- Auth Form -->
-      <form class="auth-input-form" (submit)="$event.preventDefault(); submitAuth()">
-        <div class="form-group" *ngIf="!isLoginMode">
-          <label>Họ và tên *</label>
-          <input type="text" [(ngModel)]="fullName" name="fullName" placeholder="VD: Nguyễn Văn An" />
-        </div>
+      <p class="auth-provider-note">
+        {{ isLoginMode
+          ? 'Tiếp tục đăng nhập an toàn qua Keycloak.'
+          : 'Tạo tài khoản thành viên mới an toàn qua Keycloak.' }}
+      </p>
 
-        <div class="form-group">
-          <label>Email hoặc số điện thoại *</label>
-          <input type="text" [(ngModel)]="identifier" name="identifier" placeholder="ban@email.com" />
-        </div>
-
-        <div class="form-group">
-          <label>Mật khẩu *</label>
-          <input type="password" [(ngModel)]="password" name="password" placeholder="Nhập mật khẩu của bạn" />
-        </div>
-
-        <div class="form-row-between" *ngIf="isLoginMode">
-          <label class="remember-label">
-            <input type="checkbox" checked /> Ghi nhớ đăng nhập
-          </label>
-          <a href="javascript:void(0)" class="forgot-pwd-link">Quên mật khẩu?</a>
-        </div>
-
-        <button type="submit" class="btn-auth-submit">
-          {{ isLoginMode ? 'ĐĂNG NHẬP AN TOÀN' : 'TẠO TÀI KHOẢN NGAY' }}
-        </button>
-      </form>
-
-      <div class="auth-toggle-footer">
-        <span *ngIf="isLoginMode">Chưa có tài khoản THEFILM? <a href="javascript:void(0)" (click)="isLoginMode = false">Tạo tài khoản mới</a></span>
-        <span *ngIf="!isLoginMode">Đã có tài khoản? <a href="javascript:void(0)" (click)="isLoginMode = true">Đăng nhập</a></span>
+      <div class="auth-feedback" *ngIf="errorMessage" role="alert" aria-live="assertive">
+        {{ errorMessage }}
       </div>
 
-      <p class="auth-security-caption">Bảo mật thông tin đăng nhập theo chuẩn Keycloak OpenID Connect & SSL 256-bit.</p>
-    </div>
+      <div class="auth-feedback auth-feedback-loading" *ngIf="isLoading" role="status" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span>{{ loadingMessage }}</span>
+      </div>
 
-    <!-- Right: Perks Promo Column (Figma Desktop CUS-F06) -->
-    <div class="auth-perks-column">
+      <div class="auth-actions">
+        <button
+          *ngIf="isLoginMode"
+          type="button"
+          class="btn-auth-submit"
+          [disabled]="isLoading"
+          (click)="loginWithOidc()"
+        >
+          ĐĂNG NHẬP QUA KEYCLOAK SSO
+        </button>
+
+        <button
+          *ngIf="!isLoginMode"
+          type="button"
+          class="btn-auth-submit"
+          [disabled]="isLoading"
+          (click)="registerWithOidc()"
+        >
+          ĐĂNG KÝ THÀNH VIÊN MỚI QUA KEYCLOAK
+        </button>
+
+        <button
+          *ngIf="quickTestAvailable"
+          type="button"
+          class="btn-auth-quick-test"
+          [disabled]="isLoading"
+          (click)="quickTestSignIn()"
+        >
+          Đăng nhập nhanh để thử nghiệm (chỉ môi trường phát triển)
+        </button>
+      </div>
+
+      <div class="auth-toggle-footer">
+        <ng-container *ngIf="isLoginMode; else createPrompt">
+          Chưa có tài khoản THEFILM?
+          <button type="button" class="auth-text-button" [disabled]="isLoading" (click)="setMode(false)">
+            Tạo tài khoản mới
+          </button>
+        </ng-container>
+        <ng-template #createPrompt>
+          Đã có tài khoản?
+          <button type="button" class="auth-text-button" [disabled]="isLoading" (click)="setMode(true)">
+            Đăng nhập
+          </button>
+        </ng-template>
+      </div>
+
+      <p class="auth-security-caption">
+        Xác thực qua Keycloak OpenID Connect với kết nối SSL/TLS. THEFILM không thu thập hay lưu mật khẩu trên trang này.
+      </p>
+    </section>
+
+    <aside class="auth-perks-column" aria-label="Quyền lợi thành viên THEFILM">
       <div class="perks-inner">
         <span class="perks-badge">QUYỀN LỢI THÀNH VIÊN</span>
         <h2 class="perks-title">Một tài khoản cho mọi trải nghiệm.</h2>
@@ -76,28 +105,28 @@
 
         <ul class="perks-list">
           <li>
-            <div class="icon-disc">&#10003;</div>
+            <div class="icon-disc" aria-hidden="true">&#10003;</div>
             <div>
               <strong>Tích lũy 5% - 10% C-Point</strong>
               <p>Mỗi vé xem phim và combo bắp nước đều được quy đổi thành điểm thưởng.</p>
             </div>
           </li>
           <li>
-            <div class="icon-disc">&#10003;</div>
+            <div class="icon-disc" aria-hidden="true">&#10003;</div>
             <div>
               <strong>Đổi vé xem phim miễn phí</strong>
               <p>Chỉ từ 1.000 điểm tích lũy để đổi vé 2D bất kỳ ngày trong tuần.</p>
             </div>
           </li>
           <li>
-            <div class="icon-disc">&#10003;</div>
+            <div class="icon-disc" aria-hidden="true">&#10003;</div>
             <div>
-              <strong>Ưu đãi sinh nhật & Suất chiếu sớm</strong>
+              <strong>Ưu đãi sinh nhật &amp; Suất chiếu sớm</strong>
               <p>Nhận combo quà tặng trong tháng sinh nhật và quyền mua vé trước 48h.</p>
             </div>
           </li>
           <li>
-            <div class="icon-disc">&#10003;</div>
+            <div class="icon-disc" aria-hidden="true">&#10003;</div>
             <div>
               <strong>Ví vé QR tiện lợi</strong>
               <p>Check-in vào rạp không cần in vé giấy, lưu trữ lịch sử đặt vé an toàn.</p>
@@ -109,6 +138,6 @@
           <span>Tặng ngay <strong>100 C-Point</strong> cho tài khoản mới kích hoạt!</span>
         </div>
       </div>
-    </div>
+    </aside>
   </div>
 </div>

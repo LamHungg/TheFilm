@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,6 +19,12 @@ import vn.thefilm.backend.dto.ApiResponse;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(SeatUnavailableException.class)
+    ResponseEntity<ApiResponse<Void>> handleSeatUnavailable(SeatUnavailableException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.failure("SEAT_UNAVAILABLE", exception.getMessage()));
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException exception) {
@@ -45,6 +52,12 @@ public class GlobalExceptionHandler {
         log.error("Database operation failed", exception);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ApiResponse.failure("DATABASE_UNAVAILABLE", "Không thể truy cập cơ sở dữ liệu."));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.failure("ACCESS_DENIED", exception.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

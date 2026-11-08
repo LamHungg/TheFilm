@@ -37,10 +37,19 @@
 
       <!-- Actions (Figma: ĐĂNG NHẬP & MUA VÉ Pill Buttons) -->
       <div class="header-actions">
-        <!-- ĐĂNG NHẬP Button (Figma: White pill, 1px solid #E2E4E9, radius 999px, height 40px) -->
-        <a routerLink="/auth" class="btn-login-figma">
-          <span>ĐĂNG NHẬP</span>
-        </a>
+        <ng-container *ngIf="authService.isAuthenticated(); else loginAction">
+          <a routerLink="/member" class="btn-login-figma account-profile" [attr.aria-label]="'Tài khoản ' + (authService.currentUser()?.displayName || '')">
+            <img *ngIf="authService.currentUser()?.avatarUrl" [src]="authService.currentUser()?.avatarUrl" alt="" width="28" height="28" style="border-radius: 50%; object-fit: cover;" />
+            <span *ngIf="!authService.currentUser()?.avatarUrl" aria-hidden="true" style="display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: #fee2e2; color: #c90e29;">
+              {{ (authService.currentUser()?.displayName || authService.currentUser()?.email || 'T').charAt(0) }}
+            </span>
+            <span>{{ authService.currentUser()?.displayName || authService.currentUser()?.email || 'Tài khoản' }}</span>
+          </a>
+          <button type="button" class="btn-login-figma account-logout" (click)="logout()">ĐĂNG XUẤT</button>
+        </ng-container>
+        <ng-template #loginAction>
+          <button type="button" class="btn-login-figma" (click)="login()">ĐĂNG NHẬP</button>
+        </ng-template>
 
         <!-- Nút · MUA VÉ (Figma: Pill 999px, #C90E29, white bold) -->
         <a routerLink="/movies" class="btn-buy-figma">
@@ -87,7 +96,15 @@
         <a routerLink="/my-tickets" (click)="closeMobileMenu()" routerLinkActive="active">Vé của tôi</a>
         <a routerLink="/member" (click)="closeMobileMenu()" routerLinkActive="active">Thành viên & Điểm thưởng</a>
         <a routerLink="/support" (click)="closeMobileMenu()" routerLinkActive="active">Trợ giúp & Chatbot AI</a>
-        <a routerLink="/auth" (click)="closeMobileMenu()" routerLinkActive="active">Đăng nhập tài khoản</a>
+        <ng-container *ngIf="authService.isAuthenticated(); else drawerLogin">
+          <a routerLink="/member" (click)="closeMobileMenu()" routerLinkActive="active">
+            {{ authService.currentUser()?.displayName || authService.currentUser()?.email || 'Tài khoản' }}
+          </a>
+          <a href="#" (click)="$event.preventDefault(); logout()">Đăng xuất</a>
+        </ng-container>
+        <ng-template #drawerLogin>
+          <a href="#" (click)="$event.preventDefault(); login()">ĐĂNG NHẬP</a>
+        </ng-template>
       </nav>
 
       <div class="drawer-bottom">

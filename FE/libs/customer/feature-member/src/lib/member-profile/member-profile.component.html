@@ -1,88 +1,120 @@
 <div class="member-profile-page">
   <div class="page-container">
-    <!-- Header Membership Card (Figma CUS-F17) -->
-    <div class="membership-digital-card">
-      <div class="card-bg-glow"></div>
-      <div class="card-content">
-        <div class="card-top">
-          <div class="brand-mini">
-            <div class="logo-box">T</div>
-            <span>THEFILM MEMBER CLUB</span>
-          </div>
-          <span class="tier-pill">HẠNG GOLD VIP</span>
-        </div>
+    <p *ngIf="loadingProfile" role="status" aria-live="polite">Đang tải hồ sơ thành viên…</p>
 
-        <div class="member-name-block">
-          <span class="greeting">Xin chào,</span>
-          <h2 class="name">Nguyễn Văn An</h2>
-          <span class="member-id">Mã thẻ: <strong>TF-GOLD-889921</strong></span>
-        </div>
-
-        <div class="card-bottom">
-          <div class="point-item">
-            <span class="label">Điểm C-Point tích lũy:</span>
-            <span class="val">1,250 C-Point</span>
-          </div>
-          <div class="point-item">
-            <span class="label">Tổng chi tiêu 2026:</span>
-            <span class="val">3.450.000 ₫</span>
-          </div>
-        </div>
-      </div>
+    <div *ngIf="profileError" role="alert">
+      <p>{{ profileError }}</p>
+      <button type="button" class="btn-action" (click)="loadProfile()">Thử tải lại</button>
     </div>
 
-    <!-- Benefits & Quick Actions -->
-    <div class="benefits-grid">
-      <div class="benefit-box">
-        <div class="icon">🎁</div>
-        <h4>Đổi Voucher Giảm Giá</h4>
-        <p>Dùng 500 điểm C-Point để đổi voucher xem phim 50.000₫</p>
-        <button class="btn-action">Đổi voucher ngay</button>
-      </div>
+    <p *ngIf="saveSuccess" role="status" aria-live="polite">{{ saveSuccess }}</p>
 
-      <div class="benefit-box">
-        <div class="icon">🎂</div>
-        <h4>Ưu Đãi Sinh Nhật</h4>
-        <p>Tặng 1 vé 2D miễn phí và 1 Combo bắp nước trong tháng sinh nhật</p>
-        <span class="badge-status">Sẵn sàng nhận</span>
-      </div>
-
-      <div class="benefit-box">
-        <div class="icon">⭐</div>
-        <h4>Tích Lũy 7% Mọi Giao Dịch</h4>
-        <p>Hạng Gold được hoàn 7% giá trị đơn hàng vào điểm C-Point</p>
-        <span class="badge-status">Đang áp dụng</span>
-      </div>
-    </div>
-
-    <!-- Active Vouchers Wallet -->
-    <div class="vouchers-section">
-      <h3>Kho Voucher Của Bạn</h3>
-      <div class="voucher-cards">
-        <div class="voucher-card">
-          <div class="voucher-left">
-            <span class="disc">20%</span>
-            <span class="label">GIẢM GIÁ</span>
+    <ng-container *ngIf="profile as member">
+      <section class="membership-digital-card" aria-label="Thẻ thành viên THEFILM">
+        <div class="card-bg-glow"></div>
+        <div class="card-content">
+          <div class="card-top">
+            <div class="brand-mini">
+              <div class="logo-box" aria-hidden="true">T</div>
+              <span>THEFILM MEMBER CLUB</span>
+            </div>
+            <span class="tier-pill">Hạng thành viên: Chưa có dữ liệu</span>
           </div>
-          <div class="voucher-right">
-            <h4>Mã THEFILM20</h4>
-            <p>Giảm 20% tối đa 50.000₫ cho tất cả suất chiếu thứ Hai đến thứ Năm</p>
-            <span class="expiry">Hạn dùng: 31/12/2026</span>
+
+          <div class="member-name-block">
+            <span class="greeting">Xin chào,</span>
+            <h2 class="name">{{ member.displayName || 'Chưa cập nhật họ tên' }}</h2>
+            <span *ngIf="member.appUserId != null" class="member-id">
+              ID tài khoản: <strong>#{{ member.appUserId }}</strong>
+            </span>
+          </div>
+
+          <div class="card-bottom">
+            <div class="point-item">
+              <span class="label">Điểm thưởng:</span>
+              <span class="val">Chưa có dữ liệu</span>
+            </div>
+            <div class="point-item">
+              <span class="label">Trạng thái chấp thuận:</span>
+              <span class="val">Chưa có dữ liệu</span>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="voucher-card">
-          <div class="voucher-left">
-            <span class="disc">40K</span>
-            <span class="label">TIỀN MẶT</span>
+      <section *ngIf="!isEditing" class="benefits-grid" aria-label="Thông tin hồ sơ">
+        <article class="benefit-box">
+          <div class="icon" aria-hidden="true">✉️</div>
+          <h4>Email</h4>
+          <p>{{ member.email || 'Chưa cung cấp email' }}</p>
+        </article>
+
+        <article class="benefit-box">
+          <div class="icon" aria-hidden="true">🎬</div>
+          <h4>Rạp yêu thích</h4>
+          <p>{{ favoriteCinemaName }}</p>
+          <p *ngIf="loadingCinemas" aria-live="polite">Đang tải danh sách rạp…</p>
+          <p *ngIf="cinemaError" role="status">{{ cinemaError }}</p>
+        </article>
+
+        <article class="benefit-box">
+          <div class="icon" aria-hidden="true">🎂</div>
+          <h4>Ngày sinh</h4>
+          <p>{{ member.dateOfBirth ? (member.dateOfBirth | date:'dd/MM/yyyy') : 'Chưa cập nhật' }}</p>
+        </article>
+
+        <article class="benefit-box">
+          <div class="icon" aria-hidden="true">👤</div>
+          <h4>Chỉnh sửa hồ sơ</h4>
+          <p>Cập nhật họ tên, ngày sinh và rạp yêu thích của bạn.</p>
+          <button type="button" class="btn-action" (click)="beginEdit()">Chỉnh sửa thông tin</button>
+        </article>
+      </section>
+
+      <section *ngIf="isEditing" class="vouchers-section" aria-labelledby="profile-edit-title">
+        <h3 id="profile-edit-title">Chỉnh sửa hồ sơ</h3>
+        <form #profileForm="ngForm" class="benefit-box" (ngSubmit)="saveProfile()">
+          <label for="display-name">Họ và tên</label>
+          <input
+            id="display-name"
+            name="displayName"
+            type="text"
+            [(ngModel)]="editDisplayName"
+            required
+            maxlength="200"
+            autocomplete="name"
+          />
+
+          <label for="date-of-birth">Ngày sinh</label>
+          <input
+            id="date-of-birth"
+            name="dateOfBirth"
+            type="date"
+            [(ngModel)]="editDateOfBirth"
+            [max]="maxDateOfBirth"
+            autocomplete="bday"
+          />
+
+          <label for="favorite-cinema">Rạp yêu thích</label>
+          <select id="favorite-cinema" name="preferredCinemaId" [(ngModel)]="editPreferredCinemaId">
+            <option [ngValue]="null">Chưa chọn rạp</option>
+            <option *ngIf="savedCinemaOptionId as savedCinemaId" [ngValue]="savedCinemaId">
+              {{ cinemaLabel(savedCinemaId) }}
+            </option>
+            <option *ngFor="let cinema of cinemas" [ngValue]="cinema.id">{{ cinema.name }}</option>
+          </select>
+          <p *ngIf="loadingCinemas" role="status">Đang tải danh sách rạp…</p>
+          <p *ngIf="cinemaError" role="status">{{ cinemaError }}</p>
+
+          <p *ngIf="saveError" role="alert">{{ saveError }}</p>
+          <div>
+            <button type="submit" class="btn-action" [disabled]="saving || profileForm.invalid">
+              {{ saving ? 'Đang lưu…' : 'Lưu thay đổi' }}
+            </button>
+            <button type="button" (click)="cancelEdit()" [disabled]="saving">Hủy</button>
           </div>
-          <div class="voucher-right">
-            <h4>Mã VIPMEMBER</h4>
-            <p>Giảm ngay 40.000₫ khi mua từ 2 vé kèm combo bắp nước</p>
-            <span class="expiry">Hạn dùng: 31/12/2026</span>
-          </div>
-        </div>
-      </div>
-    </div>
+        </form>
+      </section>
+    </ng-container>
   </div>
 </div>

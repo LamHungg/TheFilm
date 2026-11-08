@@ -71,7 +71,7 @@
                       'status-' + (s.seatStatus || s.status).toLowerCase(),
                       isSeatSelected(s) ? 'is-selected' : ''
                     ]"
-                    [disabled]="s.status === 'BOOKED' || (s.seatStatus === 'HELD' && !isSeatSelected(s))"
+                    [disabled]="seatBusy || !seatsOnline || s.status === 'BOOKED' || (s.seatStatus === 'HELD' && !isSeatSelected(s))"
                     (click)="onSeatClick(s)"
                     [title]="s.code + ' - ' + (s.seatStatus === 'SOLD' ? 'Đã bán' : s.seatStatus === 'HELD' && !isSeatSelected(s) ? 'Đang được giữ' : formatMoney(s.price))"
                   >
@@ -195,7 +195,8 @@
 
             <!-- Payment Methods Selection (CUS-F12) -->
             <div class="payment-methods-box">
-              <h3>Phương thức thanh toán an toàn</h3>
+              <h3>Thanh toán giả lập</h3>
+              <p>Đây là giao dịch thử nghiệm, không thu tiền thật.</p>
               <div class="methods-list">
                 <label class="method-option" [class.selected]="selectedPaymentMethod === 'VNPAY_QR'">
                   <input type="radio" name="paymentMethod" value="VNPAY_QR" [(ngModel)]="selectedPaymentMethod" />
@@ -353,7 +354,7 @@
           <!-- Voucher Code Input Box (CUS-F09) -->
           <div class="voucher-box">
             <div class="divider"></div>
-            <label class="voucher-label">Mã giảm giá / Ưu đãi (Demo: THEFILM20, VIPMEMBER)</label>
+            <label class="voucher-label">Mã giảm giá / Ưu đãi</label>
             <div class="voucher-input-group">
               <input
                 type="text"

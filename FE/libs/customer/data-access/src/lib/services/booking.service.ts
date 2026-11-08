@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal, computed, effect } from '@angular/core';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, map, throwError } from 'rxjs';
 import { Movie } from '../models/movie.model';
 import { Cinema } from '../models/cinema.model';
 import { Showtime } from '../models/showtime.model';
@@ -9,7 +9,6 @@ import { FnbCombo } from '../models/combo.model';
 import { BuyerInfo, CreateOrderPayload, HoldSeatsResponse } from '../models/booking.model';
 import { CreateOrderResponse, Order, PaymentMethod, PayOrderPayload, PayOrderResponse } from '../models/order.model';
 import { CinemaService } from './cinema.service';
-import { generateSeatMatrix } from '../data/mock-data';
 
 const MOCK_INITIAL_ORDERS: Order[] = [
   {
@@ -58,6 +57,10 @@ interface ApiResponse<T> { success: boolean; data: T; }
 export class BookingService {
   private readonly bookingApi = '/api/v1/public/bookings';
   private holdSalesOrderId = 0;
+  private holdToken = '';
+  get holdSession(): { salesOrderId: number; holdToken: string } {
+    return { salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken };
+  }
   // Booking state signals
   readonly currentMovie = signal<Movie | null>(null);
   readonly currentCinema = signal<Cinema | null>(null);
@@ -100,13 +103,13 @@ export class BookingService {
   });
 
   readonly vatAmount = computed(() => {
-    // 8% VAT simulation as required by business doc
+    // Thuế giả lập tính trên giá trước thuế, tương ứng với backend.
     const taxableAmount = Math.max(0, this.subtotal() - this.discountAmount());
-    return Math.round((taxableAmount * 0.08) / 1.08);
+    return Math.round(taxableAmount * 0.08);
   });
 
   readonly grandTotal = computed(() => {
-    return Math.max(0, this.subtotal() - this.discountAmount());
+    return Math.max(0, this.subtotal() - this.discountAmount()) + this.vatAmount();
   });
 
   constructor(private readonly http: HttpClient, private readonly cinemaService: CinemaService) {
@@ -130,9 +133,9 @@ export class BookingService {
     this.voucherCode.set('');
     this.discountAmount.set(0);
     this.voucherMessage.set('');
-    const fallbackSeats = generateSeatMatrix(showtime);
-    this.availableSeats.set(fallbackSeats);
-    this.fetchSeats(showtime.id).subscribe();
+    this.holdSalesOrderId = 0;
+    this.holdToken = '';
+    this.availableSeats.set([]);
     this.holdSeconds.set(600);
   }
 
@@ -155,7 +158,7 @@ export class BookingService {
       }
       this.selectedSeats.set([...currentSelected, { ...seat, status: 'SELECTED' }]);
       this.updateSeatStatusInMatrix(seat.id, 'SELECTED');
-      if (seat.showSeatId != null && Number.isFinite(Number(this.currentShowtime()?.id))) {
+      if (seat.showSeatId != null && this.currentShowtime()?.backendScreeningId) {
         this.holdSeats([seat.showSeatId]).subscribe();
       }
       return true;
@@ -199,25 +202,9 @@ export class BookingService {
       return { success: false, message: 'Vui lòng nhập mã giảm giá' };
     }
 
-    if (clean === 'THEFILM20') {
-      const discount = Math.min(50000, Math.round(this.subtotal() * 0.2));
-      this.voucherCode.set(clean);
-      this.discountAmount.set(discount);
-      this.voucherMessage.set('Áp dụng mã THEFILM20 giảm 20% thành công (-' + discount + '₫)');
-      return { success: true, message: this.voucherMessage() };
-    }
-
-    if (clean === 'VIPMEMBER' || clean === 'DATN2026') {
-      const discount = 40000;
-      this.voucherCode.set(clean);
-      this.discountAmount.set(discount);
-      this.voucherMessage.set('Áp dụng mã ưu đãi thành viên giảm 40.000₫ thành công');
-      return { success: true, message: this.voucherMessage() };
-    }
-
     this.voucherCode.set('');
     this.discountAmount.set(0);
-    this.voucherMessage.set('Mã ưu đãi không hợp lệ hoặc đã hết lượt sử dụng.');
+    this.voucherMessage.set('Mã ưu đãi chưa được kết nối với hệ thống thanh toán giả lập.');
     return { success: false, message: this.voucherMessage() };
   }
 
@@ -248,20 +235,14 @@ export class BookingService {
     }
   }
 
-  createOrder(paymentMethod: PaymentMethod): Order;
-  createOrder(payload: CreateOrderPayload): Observable<Order>;
-  createOrder(input: PaymentMethod | CreateOrderPayload): Order | Observable<Order> {
-    if (typeof input !== 'string') {
-      return this.http.post<ApiResponse<CreateOrderResponse>>(`${this.bookingApi}/orders`, input).pipe(
-        map(({ data }) => this.fromApiOrder(data)),
-        catchError(() => of(this.createMockOrder('VNPAY_QR')))
-      );
-    }
-    return this.createMockOrder(input);
+  createOrder(input: CreateOrderPayload): Observable<Order> {
+    return this.http.post<ApiResponse<CreateOrderResponse>>(`${this.bookingApi}/orders`, input).pipe(
+      map(({ data }) => this.fromApiOrder(data))
+    );
   }
 
   fetchSeats(screeningId: number | string): Observable<Seat[]> {
-    return this.cinemaService.getScreeningSeats(screeningId, this.availableSeats()).pipe(
+    return this.cinemaService.getScreeningSeats(screeningId).pipe(
       map((seats) => {
         this.availableSeats.set(seats);
         return seats;
@@ -270,37 +251,40 @@ export class BookingService {
   }
 
   holdSeats(seatIds: number[]): Observable<HoldSeatsResponse> {
-    const screeningId = Number(this.currentShowtime()?.id);
-    const payload = { salesOrderId: this.holdSalesOrderId, showSeatIds: seatIds };
+    const screeningId = this.currentShowtime()?.backendScreeningId;
+    if (!screeningId) return throwError(() => new Error('Suất chiếu chưa được kết nối.'));
+    const payload = { salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken || null, showSeatIds: seatIds };
     return this.http.post<ApiResponse<HoldSeatsResponse>>(
       `${this.bookingApi}/hold?screeningId=${encodeURIComponent(screeningId)}`, payload
     ).pipe(
       map(({ data }) => {
         this.holdSalesOrderId = data.salesOrderId;
+        this.holdToken = data.holdToken;
         this.availableSeats.update((seats) => seats.map((seat) => seatIds.includes(Number(seat.showSeatId))
           ? { ...seat, seatStatus: 'HELD', status: 'SELECTED', holdExpiresAt: data.expiresAt }
           : seat));
         return data;
-      }),
-      catchError(() => of({ salesOrderId: this.holdSalesOrderId, expiresAt: new Date(Date.now() + 600_000).toISOString(), showSeatIds: seatIds }))
+      })
     );
+  }
+
+  releaseSeats(seatIds: number[]): Observable<string> {
+    return this.http.post<ApiResponse<string>>(`${this.bookingApi}/release`, {
+      salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken, showSeatIds: seatIds,
+    }).pipe(map(({ data }) => data));
   }
 
   payOrder(orderCode: string, method: PaymentMethod): Observable<PayOrderResponse> {
     const payload: PayOrderPayload = {
       provider: method,
       paymentMethod: method,
-      idempotencyKey: `pay-${orderCode}-${Date.now()}`,
+      idempotencyKey: `pay-${orderCode}`,
       successful: true,
     };
     return this.http.post<ApiResponse<PayOrderResponse>>(
       `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}/pay`, payload
     ).pipe(
-      map(({ data }) => data),
-      catchError(() => of({
-        orderCode, paymentStatus: 'SUCCEEDED', orderStatus: 'ISSUED',
-        providerTransactionReference: null, completedAt: new Date().toISOString(),
-      }))
+      map(({ data }) => data)
     );
   }
 
@@ -308,8 +292,7 @@ export class BookingService {
     return this.http.get<ApiResponse<CreateOrderResponse>>(
       `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}`
     ).pipe(
-      map(({ data }) => this.fromApiOrder(data)),
-      catchError(() => of(this.getOrderById(orderCode)))
+      map(({ data }) => this.fromApiOrder(data))
     );
   }
 

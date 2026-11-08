@@ -2,8 +2,11 @@ package vn.thefilm.backend.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.time.OffsetDateTime;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,4 +29,25 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeatEntity, Long> 
             @Param("screeningIds") Collection<Long> screeningIds,
             @Param("availableStatus") ShowSeatStatus availableStatus,
             @Param("blockedStatus") ShowSeatStatus blockedStatus);
+
+    /** Locks the requested seats for one screening until the surrounding transaction completes. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ss FROM ShowSeatEntity ss WHERE ss.screening.screeningId = :screeningId "
+            + "AND ss.showSeatId IN :showSeatIds ORDER BY ss.showSeatId")
+    List<ShowSeatEntity> findByScreeningIdAndShowSeatIdsForUpdate(
+            @Param("screeningId") Long screeningId,
+            @Param("showSeatIds") Collection<Long> showSeatIds);
+
+    List<ShowSeatEntity> findByScreening_ScreeningIdOrderByRowLabelSnapshotAscSeatCodeSnapshotAsc(Long screeningId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ss FROM ShowSeatEntity ss WHERE ss.showSeatId IN :showSeatIds ORDER BY ss.showSeatId")
+    List<ShowSeatEntity> findByShowSeatIdsForUpdate(@Param("showSeatIds") Collection<Long> showSeatIds);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT ss FROM ShowSeatEntity ss WHERE ss.seatStatus = :status "
+            + "AND (ss.holdExpiresAt IS NULL OR ss.holdExpiresAt <= :now) ORDER BY ss.showSeatId")
+    List<ShowSeatEntity> findExpiredHeldSeatsForUpdate(
+            @Param("status") ShowSeatStatus status,
+            @Param("now") OffsetDateTime now);
 }

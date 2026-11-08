@@ -5,10 +5,6 @@ spring:
     name: thefilm-backend
   profiles:
     default: local
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-
 server:
   port: 8080
   shutdown: graceful
@@ -34,3 +30,24 @@ info:
   app:
     name: THEFILM Backend
     description: API đặt vé và quản lý chuỗi rạp
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:thefilmlocal;DB_CLOSE_DELAY=-1;MODE=Oracle
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/local/schema.sql
+      data-locations: classpath:db/local/data.sql

@@ -32,6 +32,8 @@ export interface BookingState {
 export interface CreateOrderPayload {
   screeningId: number;
   showSeatIds: number[];
+  salesOrderId: number;
+  holdToken: string;
   idempotencyKey: string;
   voucherCode?: string;
   guestName?: string;
@@ -51,10 +53,12 @@ export interface HoldSeatsPayload {
   showSeatIds: number[];
   /** Existing backend contract requires a sales order before seats can be held. */
   salesOrderId: number;
+  holdToken: string;
 }
 
 export interface HoldSeatsResponse {
   salesOrderId: number;
+  holdToken: string;
   expiresAt: string;
   showSeatIds: number[];
 }

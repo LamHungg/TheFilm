@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -57,11 +57,18 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   holdSecondsRemaining = 0;
   seatMessage = '';
   showHoldExpired = false;
+  seatBusy = false;
+  seatsOnline = false;
+  private seatPollTimer: ReturnType<typeof setInterval> | null = null;
+  private seatRequestVersion = 0;
+  private seatLoadInFlight = false;
+  private pendingOrder: Order | null = null;
   private holdTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private changeDetector: ChangeDetectorRef,
     private cinemaService: CinemaService,
     private bookingService: BookingService
   ) {}
@@ -79,10 +86,13 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopHoldCountdown();
+    if (this.seatPollTimer) clearInterval(this.seatPollTimer);
     if (this.step < 4) this.bookingService.stopHoldTimer();
   }
 
   private initWorkflow(showtimeId: string): void {
+    this.pendingOrder = null;
+    this.seatRequestVersion++;
     this.cinemaService.getShowtimeById(showtimeId).subscribe((st) => {
       if (!st) {
         this.router.navigate(['/movies']);
@@ -100,7 +110,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
       if (this.movie && this.cinema) {
         this.bookingService.initShowtime(this.movie, this.cinema, st);
-        this.loadSeats(st.id);
+        this.loadSeats();
       } else {
         // Fallback if accessed directly by URL
         this.cinemaService.getMovies().subscribe((movies) => {
@@ -108,10 +118,13 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
           this.cinemaService.getCinemas().subscribe((cinemas) => {
             this.cinema = cinemas.find((c) => c.id === st.cinemaId) || cinemas[0];
             this.bookingService.initShowtime(this.movie!, this.cinema!, st);
-            this.loadSeats(st.id);
+            this.loadSeats();
           });
         });
       }
+      if (this.seatPollTimer) clearInterval(this.seatPollTimer);
+      this.seatPollTimer = setInterval(() => { if (!this.seatBusy && this.step < 4) this.loadSeats(); }, 2000);
+      this.changeDetector.markForCheck();
     });
   }
 
@@ -166,22 +179,22 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
   onSeatClick(seat: Seat): void {
     this.seatMessage = '';
+    if (this.seatBusy || !this.seatsOnline) return;
     if (seat.seatStatus === 'SOLD' || seat.status === 'BOOKED') return;
+    this.seatRequestVersion++;
     const selected = this.selectedSeats;
     const isSelected = selected.some((item) => item.id === seat.id);
     if (isSelected) {
-      const remainingSeats = selected.filter((item) => item.id !== seat.id);
-      // Keep the server's held-seat list in sync when a customer removes a seat.
-      this.bookingService.holdSeats(remainingSeats
-        .map((item) => item.showSeatId)
-        .filter((id): id is number => id != null && Number.isFinite(Number(id)))
-        .map(Number)).subscribe();
-      this.bookingService.selectedSeats.set(remainingSeats);
-      this.bookingService.availableSeats.update((seats) => seats.map((item) => item.id === seat.id
-        ? { ...item, seatStatus: 'AVAILABLE', status: 'AVAILABLE', holdExpiresAt: null }
-        : item));
-      this.availableSeats = this.bookingService.availableSeats();
-      this.startHoldCountdownFromSelection();
+      if (seat.showSeatId == null) return;
+      this.seatBusy = true;
+      this.bookingService.releaseSeats([seat.showSeatId]).pipe(finalize(() => { this.seatBusy = false; this.changeDetector.markForCheck(); })).subscribe({
+        next: () => {
+          this.bookingService.selectedSeats.set(this.selectedSeats.filter((item) => item.id !== seat.id));
+          this.startHoldCountdownFromSelection();
+          this.loadSeats();
+        },
+        error: () => { this.seatMessage = 'Không thể bỏ giữ ghế. Vui lòng thử lại.'; this.loadSeats(); }
+      });
       return;
     }
     if (seat.seatStatus === 'HELD') {
@@ -211,29 +224,14 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       this.startHoldCountdown();
     };
 
-    if (seat.showSeatId == null) {
-      // Mock/offline seat layouts have no screening-seat key; keep their UX usable.
-      holdSeatLocally(new Date(Date.now() + 600_000).toISOString());
-      return;
-    }
-
-    this.bookingService.holdSeats([Number(seat.showSeatId)]).subscribe((hold) => {
-      const heldSeat = this.bookingService.availableSeats().find((item) => item.id === seat.id);
-      if (heldSeat?.seatStatus === 'HELD') {
-        holdSeatLocally(heldSeat.holdExpiresAt || hold.expiresAt);
-        return;
+    if (seat.showSeatId == null) { this.seatMessage = 'Ghế chưa được kết nối với hệ thống đặt vé.'; return; }
+    this.seatBusy = true;
+    this.bookingService.holdSeats([Number(seat.showSeatId)]).pipe(finalize(() => { this.seatBusy = false; this.changeDetector.markForCheck(); })).subscribe({
+      next: (hold) => holdSeatLocally(hold.expiresAt),
+      error: (error) => {
+        this.seatMessage = error.status === 409 ? 'Ghế vừa được người khác giữ. Sơ đồ ghế đã được cập nhật.' : 'Không thể giữ ghế. Vui lòng kiểm tra kết nối và thử lại.';
+        this.loadSeats();
       }
-      // holdSeats returns a local fallback on HTTP errors. Refresh before deciding
-      // whether this was a genuine collision so fallback responses do not reject clicks.
-      this.bookingService.fetchSeats(this.showtime!.id).subscribe((seats) => {
-        const refreshed = seats.find((item) => item.id === seat.id);
-        if (refreshed && (refreshed.seatStatus === 'HELD' || refreshed.seatStatus === 'SOLD' || refreshed.status === 'BOOKED')) {
-          this.seatMessage = 'Ghế vừa được người khác giữ. Sơ đồ ghế đã được làm mới.';
-          this.availableSeats = seats;
-          return;
-        }
-        holdSeatLocally(hold.expiresAt || new Date(Date.now() + 600_000).toISOString());
-      });
     });
   }
 
@@ -256,6 +254,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   nextStep(): void {
+    if (this.step === 1 && (this.seatBusy || !this.seatsOnline)) { this.seatMessage = 'Vui lòng chờ kết nối và xác nhận giữ ghế.'; return; }
     if (this.step === 1 && this.selectedSeats.length === 0) {
       alert('Vui lòng chọn ít nhất 1 ghế để tiếp tục.');
       return;
@@ -269,6 +268,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   prevStep(): void {
+    if (this.pendingOrder) { this.paymentMessage = 'Đơn đã được tạo. Vui lòng hoàn tất thanh toán giả lập hoặc chờ đơn hết hạn.'; return; }
     if (this.step > 1) {
       this.step--;
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -288,8 +288,8 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       return;
     }
     this.paymentMessage = '';
-    const screeningId = Number(String(this.showtime?.id ?? '').match(/\d+/)?.[0]);
-    if (!Number.isSafeInteger(screeningId) || screeningId <= 0) {
+    const screeningId = this.showtime?.backendScreeningId;
+    if (!screeningId || !Number.isSafeInteger(screeningId) || screeningId <= 0) {
       this.paymentMessage = 'Không xác định được mã suất chiếu. Vui lòng tải lại suất chiếu.';
       return;
     }
@@ -297,6 +297,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
     this.isProcessingPayment = true;
     const payload: CreateOrderPayload = {
       screeningId,
+      ...this.bookingService.holdSession,
       showSeatIds: this.selectedSeats.map((seat) => Number(seat.showSeatId)).filter(Number.isFinite),
       idempotencyKey: `booking-${this.showtime?.id}-${this.selectedSeats.map((seat) => seat.showSeatId).join('-')}-${Date.now()}`,
       voucherCode: this.bookingService.voucherCode() || undefined,
@@ -311,7 +312,8 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
         unitPrice: combo.price,
       })).filter((item) => Number.isFinite(item.productId)),
     };
-    this.bookingService.createOrder(payload).pipe(
+    (this.pendingOrder ? of(this.pendingOrder) : this.bookingService.createOrder(payload)).pipe(
+      switchMap((order) => { this.pendingOrder = order; return of(order); }),
       switchMap((order) => this.bookingService.payOrder(order.orderCode, this.selectedPaymentMethod).pipe(
         switchMap((payment) => {
           if (!['SUCCEEDED', 'SUCCESS'].includes(payment.paymentStatus.toUpperCase())) {
@@ -325,7 +327,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
         this.paymentMessage = 'Không thể hoàn tất thanh toán. Vui lòng kiểm tra kết nối và thử lại.';
         return of(null);
       }),
-      finalize(() => this.isProcessingPayment = false)
+      finalize(() => { this.isProcessingPayment = false; this.changeDetector.markForCheck(); })
     ).subscribe((order) => {
       if (!order || this.paymentMessage) return;
       this.confirmedOrder = order;
@@ -346,11 +348,27 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
     return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrData)}`;
   }
 
-  private loadSeats(showtimeId = this.showtime?.id): void {
-    if (!showtimeId) return;
-    this.bookingService.fetchSeats(showtimeId).subscribe((seats) => {
-      this.availableSeats = seats;
-      this.seatRows = [...new Set(seats.map((seat) => seat.row))];
+  private loadSeats(): void {
+    const screeningId = this.showtime?.backendScreeningId;
+    if (!screeningId) { this.seatsOnline = false; this.seatMessage = 'Suất chiếu này chưa kết nối với hệ thống đặt vé.'; return; }
+    if (this.seatLoadInFlight) return;
+    this.seatLoadInFlight = true;
+    const version = this.seatRequestVersion;
+    this.bookingService.fetchSeats(screeningId).pipe(finalize(() => { this.seatLoadInFlight = false; this.changeDetector.markForCheck(); })).subscribe({
+      next: (seats) => {
+        if (version !== this.seatRequestVersion) return;
+        this.seatsOnline = true;
+        const selectedIds = new Set(this.selectedSeats.map((seat) => seat.id));
+        const stillHeld = this.selectedSeats.filter((selected) => seats.some((seat) => seat.id === selected.id && seat.seatStatus === 'HELD'));
+        if (stillHeld.length !== this.selectedSeats.length) {
+          this.bookingService.selectedSeats.set(stillHeld);
+          this.seatMessage = 'Một ghế không còn được giữ. Vui lòng chọn lại.';
+          this.startHoldCountdownFromSelection();
+        }
+        this.availableSeats = seats.map((seat) => selectedIds.has(seat.id) && seat.seatStatus === 'HELD' ? { ...seat, status: 'SELECTED' as const } : seat);
+        this.seatRows = [...new Set(seats.map((seat) => seat.row))];
+      },
+      error: () => { if (version === this.seatRequestVersion) { this.seatsOnline = false; this.seatMessage = 'Không tải được sơ đồ ghế. Vui lòng kiểm tra kết nối backend.'; } }
     });
   }
 
@@ -367,6 +385,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       this.bookingService.stopHoldTimer();
       this.updateHoldCountdown();
       if (this.holdSecondsRemaining === 0) this.onHoldExpired();
+      this.changeDetector.markForCheck();
     }, 1000);
   }
 

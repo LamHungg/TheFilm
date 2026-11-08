@@ -267,6 +267,7 @@ export const MOCK_SHOWTIMES: Showtime[] = [
   },
   {
     id: 'st-05',
+    backendScreeningId: 5,
     movieId: 'mov-01',
     cinemaId: 'cin-01',
     roomName: 'Phòng 03 (Gold Class)',
