@@ -29,6 +29,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -42,6 +44,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import vn.thefilm.backend.dto.ApiResponse;
+import vn.thefilm.backend.security.JwtService;
 import vn.thefilm.backend.security.KeycloakJwtAuthenticationConverter;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.security.UserAccountStatusFilter;
@@ -57,6 +60,11 @@ public class SecurityConfig {
                 .findAndRegisterModules()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -95,8 +103,9 @@ public class SecurityConfig {
     SecurityFilterChain localSecurityFilterChain(
             HttpSecurity http,
             ObjectMapper objectMapper,
+            JwtService jwtService,
             UserAccountStatusFilter userAccountStatusFilter) throws Exception {
-        MockCustomerAuthenticationFilter mockAuthenticationFilter = new MockCustomerAuthenticationFilter();
+        MockCustomerAuthenticationFilter mockAuthenticationFilter = new MockCustomerAuthenticationFilter(jwtService);
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -106,7 +115,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(apiAccessDeniedHandler(objectMapper)))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/v1/public/**").permitAll()
+                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         .anyRequest().permitAll())
                 .addFilterBefore(mockAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -131,7 +140,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(apiAccessDeniedHandler(objectMapper)))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/v1/public/**").permitAll()
+                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -170,6 +179,12 @@ public class SecurityConfig {
         private static final String MOCK_EMAIL = "an.nguyen@example.com";
         private static final String MOCK_NAME = "Nguyen Van A";
 
+        private final JwtService jwtService;
+
+        MockCustomerAuthenticationFilter(JwtService jwtService) {
+            this.jwtService = jwtService;
+        }
+
         @Override
         protected boolean shouldNotFilter(HttpServletRequest request) {
             String path = request.getRequestURI();
@@ -185,36 +200,63 @@ public class SecurityConfig {
                 HttpServletResponse response,
                 FilterChain filterChain) throws ServletException, IOException {
             String authorization = request.getHeader("Authorization");
-            MockIdentity identity = mockIdentity(authorization);
-            if (identity != null
+            if (authorization != null && authorization.regionMatches(true, 0, "Bearer ", 0, 7)
                     && SecurityContextHolder.getContext().getAuthentication() == null) {
-                Jwt jwt = Jwt.withTokenValue(authorization.substring(7).trim())
-                        .header("alg", "none")
-                        .issuer(identity.issuer())
-                        .subject(identity.subject())
-                        .issuedAt(Instant.now())
-                        .expiresAt(Instant.now().plusSeconds(3600))
-                        .claim("email", identity.email())
-                        .claim("preferred_username", identity.preferredUsername())
-                        .claim("name", identity.displayName())
-                        .build();
-                List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
-                JwtAuthenticationToken authentication;
-                if (identity.jwtPrincipal()) {
-                    authentication = new JwtAuthenticationToken(jwt, authorities, identity.subject());
-                } else {
-                    TheFilmUserPrincipal principal = new TheFilmUserPrincipal(identity.subject(), identity.issuer(),
-                            identity.email(), identity.preferredUsername(), identity.displayName(), null);
-                    authentication = new JwtAuthenticationToken(jwt, authorities, identity.subject()) {
+                String token = authorization.substring(7).trim();
+                TheFilmUserPrincipal validatedPrincipal = jwtService != null ? jwtService.parseAndValidate(token) : null;
+                if (validatedPrincipal != null) {
+                    Jwt jwt = Jwt.withTokenValue(token)
+                            .header("alg", "HS256")
+                            .issuer(validatedPrincipal.oidcIssuer() != null ? validatedPrincipal.oidcIssuer() : "http://localhost:8080/auth")
+                            .subject(validatedPrincipal.oidcSubject())
+                            .issuedAt(Instant.now())
+                            .expiresAt(Instant.now().plusSeconds(jwtService.getExpirationSeconds()))
+                            .claim("app_user_id", validatedPrincipal.appUserId())
+                            .claim("email", validatedPrincipal.email())
+                            .claim("name", validatedPrincipal.displayName())
+                            .build();
+                    List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+                    JwtAuthenticationToken authentication = new JwtAuthenticationToken(jwt, authorities, validatedPrincipal.oidcSubject()) {
                         @Override
                         public Object getPrincipal() {
-                            return principal;
+                            return validatedPrincipal;
                         }
                     };
+                    SecurityContext context = SecurityContextHolder.createEmptyContext();
+                    context.setAuthentication(authentication);
+                    SecurityContextHolder.setContext(context);
+                } else {
+                    MockIdentity identity = mockIdentity(authorization);
+                    if (identity != null) {
+                        Jwt jwt = Jwt.withTokenValue(token)
+                                .header("alg", "none")
+                                .issuer(identity.issuer())
+                                .subject(identity.subject())
+                                .issuedAt(Instant.now())
+                                .expiresAt(Instant.now().plusSeconds(3600))
+                                .claim("email", identity.email())
+                                .claim("preferred_username", identity.preferredUsername())
+                                .claim("name", identity.displayName())
+                                .build();
+                        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+                        JwtAuthenticationToken authentication;
+                        if (identity.jwtPrincipal()) {
+                            authentication = new JwtAuthenticationToken(jwt, authorities, identity.subject());
+                        } else {
+                            TheFilmUserPrincipal principal = new TheFilmUserPrincipal(identity.subject(), identity.issuer(),
+                                    identity.email(), identity.preferredUsername(), identity.displayName(), null);
+                            authentication = new JwtAuthenticationToken(jwt, authorities, identity.subject()) {
+                                @Override
+                                public Object getPrincipal() {
+                                    return principal;
+                                }
+                            };
+                        }
+                        SecurityContext context = SecurityContextHolder.createEmptyContext();
+                        context.setAuthentication(authentication);
+                        SecurityContextHolder.setContext(context);
+                    }
                 }
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                context.setAuthentication(authentication);
-                SecurityContextHolder.setContext(context);
             }
             filterChain.doFilter(request, response);
         }

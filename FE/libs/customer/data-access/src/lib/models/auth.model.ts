@@ -3,6 +3,7 @@ export interface UserProfile {
   subject?: string;
   email?: string | null;
   displayName: string;
+  phone?: string | null;
   preferredCinemaId?: number | null;
   preferredLocale?: string | null;
   dateOfBirth?: string | null;

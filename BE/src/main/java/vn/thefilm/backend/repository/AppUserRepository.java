@@ -14,4 +14,8 @@ public interface AppUserRepository extends JpaRepository<AppUserEntity, Long> {
     Optional<AppUserEntity> findByOidcIssuerAndOidcSubject(String oidcIssuer, String oidcSubject);
 
     List<AppUserEntity> findByEmail(String email);
+
+    Optional<AppUserEntity> findFirstByEmailIgnoreCase(String email);
+
+    boolean existsByEmailIgnoreCase(String email);
 }

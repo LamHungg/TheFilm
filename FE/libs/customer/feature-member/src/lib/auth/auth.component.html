@@ -30,12 +30,6 @@
         </button>
       </div>
 
-      <p class="auth-provider-note">
-        {{ isLoginMode
-          ? 'Tiếp tục đăng nhập an toàn qua Keycloak.'
-          : 'Tạo tài khoản thành viên mới an toàn qua Keycloak.' }}
-      </p>
-
       <div class="auth-feedback" *ngIf="errorMessage" role="alert" aria-live="assertive">
         {{ errorMessage }}
       </div>
@@ -45,29 +39,138 @@
         <span>{{ loadingMessage }}</span>
       </div>
 
-      <div class="auth-actions">
-        <button
-          *ngIf="isLoginMode"
-          type="button"
-          class="btn-auth-submit"
-          [disabled]="isLoading"
-          (click)="loginWithOidc()"
-        >
-          ĐĂNG NHẬP QUA KEYCLOAK SSO
-        </button>
+      <!-- Form Đăng nhập -->
+      <form *ngIf="isLoginMode" class="auth-form" (ngSubmit)="submitLogin()">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input
+            id="login-email"
+            type="email"
+            name="loginEmail"
+            class="form-control"
+            [(ngModel)]="loginEmail"
+            placeholder="example@thefilm.vn"
+            autocomplete="email"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
 
-        <button
-          *ngIf="!isLoginMode"
-          type="button"
-          class="btn-auth-submit"
-          [disabled]="isLoading"
-          (click)="registerWithOidc()"
-        >
-          ĐĂNG KÝ THÀNH VIÊN MỚI QUA KEYCLOAK
-        </button>
+        <div class="form-group">
+          <label for="login-password">Mật khẩu</label>
+          <input
+            id="login-password"
+            type="password"
+            name="loginPassword"
+            class="form-control"
+            [(ngModel)]="loginPassword"
+            placeholder="Nhập mật khẩu"
+            autocomplete="current-password"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
 
+        <div class="auth-actions">
+          <button
+            type="submit"
+            class="btn-auth-submit"
+            [disabled]="isLoading"
+          >
+            ĐĂNG NHẬP
+          </button>
+        </div>
+      </form>
+
+      <!-- Form Đăng ký -->
+      <form *ngIf="!isLoginMode" class="auth-form" (ngSubmit)="submitRegister()">
+        <div class="form-group">
+          <label for="reg-name">Họ và tên</label>
+          <input
+            id="reg-name"
+            type="text"
+            name="regDisplayName"
+            class="form-control"
+            [(ngModel)]="regDisplayName"
+            placeholder="Nguyễn Văn A"
+            autocomplete="name"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input
+            id="reg-email"
+            type="email"
+            name="regEmail"
+            class="form-control"
+            [(ngModel)]="regEmail"
+            placeholder="example@thefilm.vn"
+            autocomplete="email"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-phone">Số điện thoại <span class="label-optional">(tùy chọn)</span></label>
+          <input
+            id="reg-phone"
+            type="tel"
+            name="regPhone"
+            class="form-control"
+            [(ngModel)]="regPhone"
+            placeholder="0912345678"
+            autocomplete="tel"
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password">Mật khẩu</label>
+          <input
+            id="reg-password"
+            type="password"
+            name="regPassword"
+            class="form-control"
+            [(ngModel)]="regPassword"
+            placeholder="Tối thiểu 6 ký tự"
+            autocomplete="new-password"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirm">Xác nhận mật khẩu</label>
+          <input
+            id="reg-confirm"
+            type="password"
+            name="regConfirmPassword"
+            class="form-control"
+            [(ngModel)]="regConfirmPassword"
+            placeholder="Nhập lại mật khẩu"
+            autocomplete="new-password"
+            required
+            [disabled]="isLoading"
+          />
+        </div>
+
+        <div class="auth-actions">
+          <button
+            type="submit"
+            class="btn-auth-submit"
+            [disabled]="isLoading"
+          >
+            TẠO TÀI KHOẢN
+          </button>
+        </div>
+      </form>
+
+      <div class="auth-quick-action" *ngIf="quickTestAvailable">
         <button
-          *ngIf="quickTestAvailable"
           type="button"
           class="btn-auth-quick-test"
           [disabled]="isLoading"
@@ -93,7 +196,7 @@
       </div>
 
       <p class="auth-security-caption">
-        Xác thực qua Keycloak OpenID Connect với kết nối SSL/TLS. THEFILM không thu thập hay lưu mật khẩu trên trang này.
+        Thông tin của bạn được bảo mật tuyệt đối theo chính sách quyền riêng tư của THEFILM.
       </p>
     </section>
 

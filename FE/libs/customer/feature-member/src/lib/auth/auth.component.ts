@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, inject, isDevMode } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AUTH_CONFIG, AuthService, UserProfile } from '@the-film/customer/data-access';
 
 @Component({
   selector: 'thefilm-auth',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './auth.component.html',
   styleUrl: './auth.component.scss',
 })
@@ -19,6 +20,17 @@ export class AuthComponent implements OnDestroy {
   isLoading = false;
   loadingMessage = '';
   errorMessage = '';
+
+  // Login form model
+  loginEmail = '';
+  loginPassword = '';
+
+  // Register form model
+  regDisplayName = '';
+  regEmail = '';
+  regPhone = '';
+  regPassword = '';
+  regConfirmPassword = '';
 
   private readonly authService = inject(AuthService);
   private readonly authConfig = inject(AUTH_CONFIG);
@@ -41,53 +53,94 @@ export class AuthComponent implements OnDestroy {
     this.errorMessage = '';
   }
 
-  loginWithOidc(): void {
-    void this.startIdentityProviderFlow(true);
-  }
-
-  registerWithOidc(): void {
-    void this.startIdentityProviderFlow(false);
-  }
-
-  private async startIdentityProviderFlow(isLogin: boolean): Promise<void> {
+  submitLogin(): void {
     if (this.isLoading) return;
     this.errorMessage = '';
 
-    if (
-      this.authConfig.mockAuthEnabled !== true &&
-      (!this.authConfig.clientId?.trim() ||
-        !(this.authConfig.authorizationEndpoint?.trim() || this.authConfig.issuer?.trim()))
-    ) {
-      this.errorMessage = 'Đăng nhập chưa được cấu hình. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.';
+    const email = this.loginEmail?.trim();
+    const password = this.loginPassword;
+
+    if (!email) {
+      this.errorMessage = 'Vui lòng nhập địa chỉ email.';
+      return;
+    }
+    if (!password) {
+      this.errorMessage = 'Vui lòng nhập mật khẩu.';
       return;
     }
 
     this.isLoading = true;
-    this.loadingMessage = 'Đang kết nối đến nhà cung cấp danh tính…';
+    this.loadingMessage = 'Đang xác thực thông tin đăng nhập…';
 
-    try {
-      if (isLogin) await this.authService.login();
-      else await this.authService.register();
-    } catch {
-      this.showActionError();
-      return;
-    }
-
-    if (this.authService.isAuthenticated()) {
-      void this.navigateToMember();
-      return;
-    }
-
-    // The service starts a full-page OIDC redirect and reports async setup
-    // failures to its own console. Restore the controls if the page stays here.
-    this.redirectTimeout = setTimeout(() => {
-      this.redirectTimeout = null;
-      if (this.authService.isAuthenticated()) {
+    this.authService.loginWithCredentials({ email, password }).subscribe({
+      next: () => {
         void this.navigateToMember();
-        return;
-      }
-      this.showActionError();
-    }, 12_000);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.loadingMessage = '';
+        const msg = err?.error?.message || err?.message;
+        if (msg && typeof msg === 'string') {
+          this.errorMessage = msg;
+        } else {
+          this.errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu.';
+        }
+      },
+    });
+  }
+
+  submitRegister(): void {
+    if (this.isLoading) return;
+    this.errorMessage = '';
+
+    const displayName = this.regDisplayName?.trim();
+    const email = this.regEmail?.trim();
+    const phone = this.regPhone?.trim();
+    const password = this.regPassword;
+    const confirmPassword = this.regConfirmPassword;
+
+    if (!displayName || displayName.length < 2) {
+      this.errorMessage = 'Họ và tên phải có ít nhất 2 ký tự.';
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      this.errorMessage = 'Vui lòng nhập địa chỉ email hợp lệ.';
+      return;
+    }
+    if (!password || password.length < 6) {
+      this.errorMessage = 'Mật khẩu phải có tối thiểu 6 ký tự.';
+      return;
+    }
+    if (password !== confirmPassword) {
+      this.errorMessage = 'Mật khẩu xác nhận không khớp.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.loadingMessage = 'Đang tạo tài khoản thành viên mới…';
+
+    this.authService
+      .registerWithCredentials({
+        displayName,
+        email,
+        phone: phone || undefined,
+        password,
+      })
+      .subscribe({
+        next: () => {
+          void this.navigateToMember();
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.loadingMessage = '';
+          const msg = err?.error?.message || err?.message;
+          if (msg && typeof msg === 'string') {
+            this.errorMessage = msg;
+          } else {
+            this.errorMessage = 'Đăng ký không thành công. Email này có thể đã được sử dụng.';
+          }
+        },
+      });
   }
 
   async quickTestSignIn(): Promise<void> {
@@ -135,7 +188,7 @@ export class AuthComponent implements OnDestroy {
     this.clearRedirectTimeout();
     this.isLoading = false;
     this.loadingMessage = '';
-    this.errorMessage = 'Không thể bắt đầu đăng nhập. Vui lòng kiểm tra kết nối và thử lại.';
+    this.errorMessage = 'Không thể chuyển hướng đến khu vực thành viên. Vui lòng tải lại trang.';
   }
 
   private clearRedirectTimeout(): void {

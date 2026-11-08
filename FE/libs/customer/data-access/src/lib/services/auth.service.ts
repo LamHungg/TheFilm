@@ -59,6 +59,20 @@ interface ApiResponse<T> {
   data: T;
 }
 
+export interface AuthUserPayload {
+  email: string;
+  displayName: string;
+  phone?: string | null;
+  roles?: string[];
+}
+
+export interface AuthResponseBody {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: AuthUserPayload;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -95,12 +109,61 @@ export class AuthService {
     return this.startOidcFlow();
   }
 
+  loginWithCredentials(credentials: { email: string; password: string }): Observable<UserProfile> {
+    return this.http
+      .post<ApiResponse<AuthResponseBody>>('/api/v1/auth/login', credentials)
+      .pipe(
+        map((res) => res.data),
+        tap((data) => {
+          const userProfile: UserProfile = {
+            displayName: data.user.displayName,
+            email: data.user.email,
+            phone: data.user.phone,
+          };
+          const expiresAt = Date.now() + (data.expiresIn || 86400) * 1000;
+          this.setSession(data.accessToken, userProfile, expiresAt);
+        }),
+        map((data) => ({
+          displayName: data.user.displayName,
+          email: data.user.email,
+          phone: data.user.phone,
+        })),
+      );
+  }
+
   register(): Promise<void> {
     if (this.config.mockAuthEnabled) {
       this.signInWithMockProfile();
       return Promise.resolve();
     }
     return this.startOidcFlow('register');
+  }
+
+  registerWithCredentials(payload: {
+    email: string;
+    password: string;
+    displayName: string;
+    phone?: string;
+  }): Observable<UserProfile> {
+    return this.http
+      .post<ApiResponse<AuthResponseBody>>('/api/v1/auth/register', payload)
+      .pipe(
+        map((res) => res.data),
+        tap((data) => {
+          const userProfile: UserProfile = {
+            displayName: data.user.displayName,
+            email: data.user.email,
+            phone: data.user.phone,
+          };
+          const expiresAt = Date.now() + (data.expiresIn || 86400) * 1000;
+          this.setSession(data.accessToken, userProfile, expiresAt);
+        }),
+        map((data) => ({
+          displayName: data.user.displayName,
+          email: data.user.email,
+          phone: data.user.phone,
+        })),
+      );
   }
 
   logout(): void {

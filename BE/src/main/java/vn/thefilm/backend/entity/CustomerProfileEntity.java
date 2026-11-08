@@ -51,6 +51,15 @@ public class CustomerProfileEntity {
     protected CustomerProfileEntity() {
     }
 
+    public CustomerProfileEntity(AppUserEntity appUser, String preferredLocale, CustomerProfileStatus profileStatus) {
+        this.appUser = appUser;
+        this.appUserId = appUser.getAppUserId();
+        this.preferredLocale = preferredLocale;
+        this.profileStatus = profileStatus;
+        this.createdAt = OffsetDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
+    }
+
     public Long getAppUserId() {
         return appUserId;
     }
