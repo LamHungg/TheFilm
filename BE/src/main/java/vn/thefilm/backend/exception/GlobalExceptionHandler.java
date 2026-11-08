@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,7 +35,8 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure("RESOURCE_NOT_FOUND", exception.getMessage()));
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({IllegalArgumentException.class, MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class})
     ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception exception) {
         return ResponseEntity.badRequest()
                 .body(ApiResponse.failure("INVALID_REQUEST", exception.getMessage()));
