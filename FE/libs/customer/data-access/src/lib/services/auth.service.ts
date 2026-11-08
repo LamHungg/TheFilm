@@ -87,20 +87,20 @@ export class AuthService {
     }
   }
 
-  login(): void {
+  login(): Promise<void> {
     if (this.config.mockAuthEnabled) {
       this.signInWithMockProfile();
-      return;
+      return Promise.resolve();
     }
-    void this.startOidcFlow();
+    return this.startOidcFlow();
   }
 
-  register(): void {
+  register(): Promise<void> {
     if (this.config.mockAuthEnabled) {
       this.signInWithMockProfile();
-      return;
+      return Promise.resolve();
     }
-    void this.startOidcFlow('register');
+    return this.startOidcFlow('register');
   }
 
   logout(): void {
@@ -140,19 +140,32 @@ export class AuthService {
   setSession(
     accessToken: string,
     user: UserProfile | null,
-    expiresAt: number | null = this.readTokenExpiry(accessToken),
+    expiresAt: number | null = typeof accessToken === 'string'
+      ? this.readTokenExpiry(accessToken)
+      : null,
     idToken: string | null = null,
   ): void {
+    const token = typeof accessToken === 'string' ? accessToken.trim() : '';
+    const resolvedExpiry = expiresAt ?? this.readTokenExpiry(token);
+    if (
+      !token ||
+      (resolvedExpiry !== null &&
+        (!Number.isFinite(resolvedExpiry) || resolvedExpiry <= Date.now()))
+    ) {
+      this.clearSession();
+      throw new Error('Cannot create an authenticated session from an invalid or expired token.');
+    }
+
     const state: AuthState = {
       user,
-      accessToken,
+      accessToken: token,
       idToken,
-      expiresAt,
-      isAuthenticated: Boolean(accessToken),
+      expiresAt: resolvedExpiry,
+      isAuthenticated: true,
     };
     this.authState.set(state);
     this.persistSession(state);
-    this.scheduleExpiry(expiresAt);
+    this.scheduleExpiry(resolvedExpiry);
   }
 
   getProfile(): Observable<UserProfile> {
@@ -171,17 +184,17 @@ export class AuthService {
   }
 
   private async startOidcFlow(action?: 'register'): Promise<void> {
-    if (!this.browser) return;
+    if (!this.browser) {
+      throw new Error('OIDC sign-in is available only in a browser.');
+    }
     const endpoint = this.authorizationEndpoint();
     if (!endpoint || !this.config.clientId) {
-      console.error('THEFILM OIDC configuration requires an issuer and clientId.');
-      return;
+      throw new Error('THEFILM OIDC configuration requires an issuer and clientId.');
     }
 
     const storage = this.getStorage();
     if (!storage) {
-      console.error('THEFILM OIDC requires browser session storage for PKCE.');
-      return;
+      throw new Error('THEFILM OIDC requires browser session storage for PKCE.');
     }
 
     try {
@@ -208,8 +221,8 @@ export class AuthService {
       url.searchParams.set('code_challenge_method', 'S256');
       if (action === 'register') url.searchParams.set('kc_action', 'register');
       window.location.assign(url.toString());
-    } catch (error) {
-      console.error('Unable to start THEFILM OIDC authorization.', error);
+    } catch {
+      throw new Error('Unable to start THEFILM OIDC authorization.');
     }
   }
 
@@ -317,13 +330,20 @@ export class AuthService {
       const stored = storage.getItem(SESSION_STORAGE_KEY);
       if (!stored) return;
       const session = JSON.parse(stored) as AuthState;
-      if (!session.accessToken || (session.expiresAt !== null && session.expiresAt <= Date.now())) {
+      if (
+        typeof session.accessToken !== 'string' ||
+        !session.accessToken.trim() ||
+        (session.expiresAt !== null &&
+          (typeof session.expiresAt !== 'number' ||
+            !Number.isFinite(session.expiresAt) ||
+            session.expiresAt <= Date.now()))
+      ) {
         this.clearSession();
         return;
       }
       const restored: AuthState = {
         user: session.user ?? null,
-        accessToken: session.accessToken,
+        accessToken: session.accessToken.trim(),
         idToken: session.idToken ?? null,
         expiresAt: session.expiresAt ?? null,
         isAuthenticated: true,

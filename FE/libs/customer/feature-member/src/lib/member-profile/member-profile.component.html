@@ -1,15 +1,16 @@
 <div class="member-profile-page">
   <div class="page-container">
-    <p *ngIf="loadingProfile" role="status" aria-live="polite">Đang tải hồ sơ thành viên…</p>
+    <ng-container *ngIf="isAuthenticated(); else unauthenticated">
+      <p *ngIf="loadingProfile" role="status" aria-live="polite">Đang tải hồ sơ thành viên…</p>
 
-    <div *ngIf="profileError" role="alert">
-      <p>{{ profileError }}</p>
-      <button type="button" class="btn-action" (click)="loadProfile()">Thử tải lại</button>
-    </div>
+      <div *ngIf="profileError" role="alert">
+        <p>{{ profileError }}</p>
+        <button type="button" class="btn-action" (click)="loadProfile()">Thử tải lại</button>
+      </div>
 
-    <p *ngIf="saveSuccess" role="status" aria-live="polite">{{ saveSuccess }}</p>
+      <p *ngIf="saveSuccess" role="status" aria-live="polite">{{ saveSuccess }}</p>
 
-    <ng-container *ngIf="profile as member">
+      <ng-container *ngIf="profile as member">
       <section class="membership-digital-card" aria-label="Thẻ thành viên THEFILM">
         <div class="card-bg-glow"></div>
         <div class="card-content">
@@ -115,6 +116,17 @@
           </div>
         </form>
       </section>
+      </ng-container>
     </ng-container>
+
+    <ng-template #unauthenticated>
+      <section class="benefits-grid unauthenticated-card" aria-labelledby="member-login-title">
+        <article class="benefit-box">
+          <h1 id="member-login-title">Đăng nhập để xem hồ sơ thành viên</h1>
+          <p>Vui lòng đăng nhập để xem và cập nhật thông tin hồ sơ của bạn.</p>
+          <a routerLink="/auth" class="btn-action">Đăng nhập</a>
+        </article>
+      </section>
+    </ng-template>
   </div>
 </div>

@@ -4,14 +4,19 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.Locale;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import vn.thefilm.backend.dto.ApiResponse;
 import vn.thefilm.backend.dto.CustomerProfileDto;
 import vn.thefilm.backend.dto.UpdateCustomerProfileRequest;
@@ -32,21 +37,21 @@ public class CustomerAccountController {
     }
 
     @GetMapping("/profile")
-    public ApiResponse<CustomerProfileDto> getProfile(@AuthenticationPrincipal TheFilmUserPrincipal principal) {
-        return ApiResponse.success(customer(principal));
+    public ApiResponse<CustomerProfileDto> getProfile(Authentication authentication) {
+        return ApiResponse.success(customer(authentication));
     }
 
     @PutMapping("/profile")
-    public ApiResponse<CustomerProfileDto> updateProfile(@AuthenticationPrincipal TheFilmUserPrincipal principal,
+    public ApiResponse<CustomerProfileDto> updateProfile(Authentication authentication,
             @Valid @RequestBody UpdateCustomerProfileRequest request) {
-        CustomerProfileDto profile = customer(principal);
+        CustomerProfileDto profile = customer(authentication);
         return ApiResponse.success(customerAccountService.updateProfile(profile.appUserId(), request));
     }
 
     @PostMapping("/consent")
-    public ApiResponse<String> recordConsent(@AuthenticationPrincipal TheFilmUserPrincipal principal,
+    public ApiResponse<String> recordConsent(Authentication authentication,
             @Valid @RequestBody ConsentRequest request) {
-        CustomerProfileDto profile = customer(principal);
+        CustomerProfileDto profile = customer(authentication);
         customerAccountService.recordConsent(profile.appUserId(), consentType(request.consentType()),
                 request.policyVersion(), consentStatus(request.consentStatus()), "CUSTOMER_PORTAL");
         return ApiResponse.success("OK");
@@ -72,11 +77,64 @@ public class CustomerAccountController {
         };
     }
 
-    private CustomerProfileDto customer(TheFilmUserPrincipal principal) {
-        if (principal == null) throw new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.UNAUTHORIZED);
+    private CustomerProfileDto customer(Authentication authentication) {
+        TheFilmUserPrincipal principal = customerPrincipal(authentication);
+        if (principal == null || isBlank(principal.oidcSubject()) || isBlank(principal.oidcIssuer())) {
+            throw unauthorized();
+        }
+        String displayName = firstNonBlank(principal.displayName(), principal.preferredUsername(),
+                principal.email(), principal.oidcSubject());
         return customerAccountService.syncOrGetCustomer(principal.oidcIssuer(), principal.oidcSubject(),
-                principal.email(), principal.displayName());
+                principal.email(), displayName);
+    }
+
+    private TheFilmUserPrincipal customerPrincipal(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+
+        Object authenticationPrincipal = authentication.getPrincipal();
+        Jwt jwt = authenticationPrincipal instanceof Jwt token
+                ? token
+                : authentication instanceof JwtAuthenticationToken jwtAuthentication
+                        ? jwtAuthentication.getToken()
+                        : null;
+
+        if (authenticationPrincipal instanceof TheFilmUserPrincipal principal) {
+            if (jwt == null) return principal;
+            return new TheFilmUserPrincipal(
+                    firstNonBlank(principal.oidcSubject(), jwt.getSubject()),
+                    firstNonBlank(principal.oidcIssuer(), jwt.getIssuer() == null ? null : jwt.getIssuer().toString()),
+                    firstNonBlank(principal.email(), jwt.getClaimAsString("email")),
+                    firstNonBlank(principal.preferredUsername(), jwt.getClaimAsString("preferred_username")),
+                    firstNonBlank(principal.displayName(), jwt.getClaimAsString("name")),
+                    principal.appUserId());
+        }
+        if (jwt == null) return null;
+
+        String subject = jwt.getSubject();
+        String email = jwt.getClaimAsString("email");
+        String username = jwt.getClaimAsString("preferred_username");
+        String displayName = firstNonBlank(jwt.getClaimAsString("name"), username, email, subject);
+        return new TheFilmUserPrincipal(subject,
+                jwt.getIssuer() == null ? null : jwt.getIssuer().toString(),
+                email, username, displayName, null);
+    }
+
+    private ResponseStatusException unauthorized() {
+        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Yêu cầu xác thực.");
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (!isBlank(value)) return value;
+        }
+        return null;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     public record ConsentRequest(

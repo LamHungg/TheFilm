@@ -33,37 +33,45 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
     @Override
     @Transactional
     public CustomerProfileDto syncOrGetCustomer(String sub, String email, String name) {
-        return syncOrGetCustomer(configuredIssuer, sub, email, name);
+        String issuer = configuredIssuer == null || configuredIssuer.isBlank()
+                ? DEFAULT_KEYCLOAK_ISSUER
+                : configuredIssuer;
+        return syncOrGetCustomer(issuer, sub, email, name);
     }
 
     @Override
     @Transactional
     public CustomerProfileDto syncOrGetCustomer(String tokenIssuer, String sub, String email, String name) {
         if (sub == null || sub.isBlank()) throw new IllegalArgumentException("Thiếu Keycloak sub.");
-        String issuer = tokenIssuer == null || tokenIssuer.isBlank() ? configuredIssuer : tokenIssuer;
-        issuer = issuer == null || issuer.isBlank() ? DEFAULT_KEYCLOAK_ISSUER : issuer.trim();
-        lockCustomerIdentityUntilTransactionCompletes(issuer, sub);
+        if (tokenIssuer == null || tokenIssuer.isBlank()) {
+            throw new IllegalArgumentException("Thiếu Keycloak issuer.");
+        }
+        String subject = sub.trim();
+        String issuer = normalizeIssuer(tokenIssuer);
+        String displayName = blankToNull(name);
+        if (displayName == null) displayName = subject;
+        lockCustomerIdentityUntilTransactionCompletes(issuer, subject);
 
         List<?> matches = entityManager.createNativeQuery(
                         "SELECT app_user_id FROM app_user WHERE oidc_issuer = :issuer AND oidc_subject = :sub")
-                .setParameter("issuer", issuer).setParameter("sub", sub).getResultList();
+                .setParameter("issuer", issuer).setParameter("sub", subject).getResultList();
         Long appUserId;
         if (matches.isEmpty()) {
             entityManager.createNativeQuery("INSERT INTO app_user "
                             + "(oidc_issuer, oidc_subject, email, display_name, status) "
                             + "VALUES (:issuer, :sub, :email, :name, 'ACTIVE')")
-                    .setParameter("issuer", issuer).setParameter("sub", sub)
-                    .setParameter("email", blankToNull(email)).setParameter("name", blankToNull(name))
+                    .setParameter("issuer", issuer).setParameter("sub", subject)
+                    .setParameter("email", blankToNull(email)).setParameter("name", displayName)
                     .executeUpdate();
             appUserId = ((Number) entityManager.createNativeQuery(
                             "SELECT app_user_id FROM app_user WHERE oidc_issuer = :issuer AND oidc_subject = :sub")
-                    .setParameter("issuer", issuer).setParameter("sub", sub).getSingleResult()).longValue();
+                    .setParameter("issuer", issuer).setParameter("sub", subject).getSingleResult()).longValue();
         } else {
             appUserId = ((Number) matches.get(0)).longValue();
             entityManager.createNativeQuery("UPDATE app_user SET email = COALESCE(:email, email), "
                             + "display_name = COALESCE(:name, display_name), updated_at = CURRENT_TIMESTAMP "
                             + "WHERE app_user_id = :id")
-                    .setParameter("email", blankToNull(email)).setParameter("name", blankToNull(name))
+                    .setParameter("email", blankToNull(email)).setParameter("name", displayName)
                     .setParameter("id", appUserId).executeUpdate();
         }
 
@@ -75,6 +83,15 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
                     .setParameter("id", appUserId).executeUpdate();
         }
         return getProfile(appUserId);
+    }
+
+    private String normalizeIssuer(String issuer) {
+        String normalized = issuer.trim();
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        if (normalized.isBlank()) throw new IllegalArgumentException("Thiếu Keycloak issuer.");
+        return normalized;
     }
 
     private static ReentrantLock[] createCustomerLocks() {

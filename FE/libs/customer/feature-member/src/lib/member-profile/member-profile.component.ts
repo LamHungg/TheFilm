@@ -50,8 +50,18 @@ export class MemberProfileComponent implements OnInit {
   readonly maxDateOfBirth = this.localDateToday();
 
   ngOnInit(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.loadingProfile = false;
+      this.loadingCinemas = false;
+      return;
+    }
+
     this.loadProfile();
     this.loadCinemas();
+  }
+
+  isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
   }
 
   get favoriteCinemaName(): string {
@@ -67,6 +77,13 @@ export class MemberProfileComponent implements OnInit {
   }
 
   loadProfile(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.profile = null;
+      this.isEditing = false;
+      this.loadingProfile = false;
+      return;
+    }
+
     this.loadingProfile = true;
     this.profileError = '';
     this.authService.getProfile().subscribe({
@@ -114,17 +131,33 @@ export class MemberProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.profile = null;
+      this.isEditing = false;
+      this.loadingProfile = false;
+      return;
+    }
     if (!this.profile || this.saving) return;
     const displayName = this.editDisplayName.trim();
     if (!displayName) {
       this.saveError = 'Vui lòng nhập họ tên.';
       return;
     }
+    if (displayName.length > 200) {
+      this.saveError = 'Họ tên không được vượt quá 200 ký tự.';
+      return;
+    }
+
+    const dateOfBirth = this.editDateOfBirth.trim();
+    if (dateOfBirth && (!this.isValidDate(dateOfBirth) || dateOfBirth > this.maxDateOfBirth)) {
+      this.saveError = 'Ngày sinh không được lớn hơn ngày hiện tại.';
+      return;
+    }
 
     const request: UpdateCustomerProfileRequest = {
       displayName,
       preferredCinemaId: this.editPreferredCinemaId,
-      dateOfBirth: this.editDateOfBirth || null,
+      dateOfBirth: dateOfBirth || null,
     };
     this.saving = true;
     this.saveError = '';
@@ -174,6 +207,21 @@ export class MemberProfileComponent implements OnInit {
       return fallback;
     }
     return error instanceof Error && error.message ? error.message : fallback;
+  }
+
+  private isValidDate(value: string): boolean {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return false;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(0);
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCFullYear(year, month - 1, day);
+    return date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day;
   }
 
   private localDateToday(): string {

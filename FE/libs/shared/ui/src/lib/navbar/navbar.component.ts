@@ -14,6 +14,8 @@ import { AuthService } from '@the-film/customer/data-access';
 export class NavbarComponent {
   isMobileMenuOpen = false;
   searchQuery = '';
+  loginErrorMessage = '';
+  private authNavigationPending = false;
 
   constructor(
     private router: Router,
@@ -22,7 +24,23 @@ export class NavbarComponent {
 
   login(): void {
     this.closeMobileMenu();
-    this.authService.login();
+    this.loginErrorMessage = '';
+    if (this.router.url.split(/[?#]/, 1)[0] === '/auth') return;
+    if (this.authNavigationPending) return;
+
+    this.authNavigationPending = true;
+    void this.router.navigate(['/auth'])
+      .then((navigated) => {
+        if (!navigated && this.router.url.split(/[?#]/, 1)[0] !== '/auth') {
+          this.loginErrorMessage = 'Không thể mở trang đăng nhập. Vui lòng thử lại.';
+        }
+      })
+      .catch(() => {
+        this.loginErrorMessage = 'Không thể mở trang đăng nhập. Vui lòng thử lại.';
+      })
+      .finally(() => {
+        this.authNavigationPending = false;
+      });
   }
 
   logout(): void {

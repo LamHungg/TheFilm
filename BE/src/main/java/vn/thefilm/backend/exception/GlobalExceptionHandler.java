@@ -7,11 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import vn.thefilm.backend.dto.ApiResponse;
 
@@ -58,6 +60,22 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException exception) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.failure("ACCESS_DENIED", exception.getMessage()));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.failure("UNAUTHORIZED", exception.getMessage()));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    ResponseEntity<ApiResponse<Void>> handleResponseStatus(ResponseStatusException exception) {
+        var status = exception.getStatusCode();
+        String message = exception.getReason() == null || exception.getReason().isBlank()
+                ? status.toString()
+                : exception.getReason();
+        return ResponseEntity.status(status)
+                .body(ApiResponse.failure(status.toString(), message));
     }
 
     @ExceptionHandler(Exception.class)

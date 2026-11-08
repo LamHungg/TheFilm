@@ -48,8 +48,9 @@
           <button type="button" class="btn-login-figma account-logout" (click)="logout()">ĐĂNG XUẤT</button>
         </ng-container>
         <ng-template #loginAction>
-          <button type="button" class="btn-login-figma" (click)="login()">ĐĂNG NHẬP</button>
+          <a routerLink="/auth" class="btn-login-figma">ĐĂNG NHẬP</a>
         </ng-template>
+        <span *ngIf="loginErrorMessage" role="alert" aria-live="assertive">{{ loginErrorMessage }}</span>
 
         <!-- Nút · MUA VÉ (Figma: Pill 999px, #C90E29, white bold) -->
         <a routerLink="/movies" class="btn-buy-figma">
@@ -103,7 +104,7 @@
           <a href="#" (click)="$event.preventDefault(); logout()">Đăng xuất</a>
         </ng-container>
         <ng-template #drawerLogin>
-          <a href="#" (click)="$event.preventDefault(); login()">ĐĂNG NHẬP</a>
+          <a routerLink="/auth" (click)="closeMobileMenu()">ĐĂNG NHẬP</a>
         </ng-template>
       </nav>
 

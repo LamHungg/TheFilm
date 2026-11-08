@@ -11,7 +11,9 @@ import { AUTH_CONFIG, AuthService, UserProfile } from '@the-film/customer/data-a
   styleUrl: './auth.component.scss',
 })
 export class AuthComponent implements OnDestroy {
-  readonly quickTestAvailable = isDevMode();
+  get quickTestAvailable(): boolean {
+    return isDevMode() && this.authConfig.mockAuthEnabled === true;
+  }
 
   isLoginMode = true;
   isLoading = false;
@@ -40,14 +42,14 @@ export class AuthComponent implements OnDestroy {
   }
 
   loginWithOidc(): void {
-    this.startIdentityProviderFlow(true);
+    void this.startIdentityProviderFlow(true);
   }
 
   registerWithOidc(): void {
-    this.startIdentityProviderFlow(false);
+    void this.startIdentityProviderFlow(false);
   }
 
-  private startIdentityProviderFlow(isLogin: boolean): void {
+  private async startIdentityProviderFlow(isLogin: boolean): Promise<void> {
     if (this.isLoading) return;
     this.errorMessage = '';
 
@@ -64,8 +66,8 @@ export class AuthComponent implements OnDestroy {
     this.loadingMessage = 'Đang kết nối đến nhà cung cấp danh tính…';
 
     try {
-      if (isLogin) this.authService.login();
-      else this.authService.register();
+      if (isLogin) await this.authService.login();
+      else await this.authService.register();
     } catch {
       this.showActionError();
       return;
@@ -89,6 +91,10 @@ export class AuthComponent implements OnDestroy {
   }
 
   async quickTestSignIn(): Promise<void> {
+    if (this.authService.isAuthenticated()) {
+      await this.navigateToMember();
+      return;
+    }
     if (!this.quickTestAvailable || this.isLoading) return;
     this.clearRedirectTimeout();
     this.errorMessage = '';

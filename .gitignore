@@ -7,6 +7,7 @@ out-tsc
 
 # dependencies
 node_modules
+.pnpm-store
 
 # IDEs and editors
 /.idea
@@ -48,3 +49,5 @@ Thumbs.db
 
 # Local Oracle credentials
 /BE/src/main/resources/application-local.yml
+/.agents/mcp_config.json
+/tools/ai-dev-orchestrator/ui-qa-artifacts/
