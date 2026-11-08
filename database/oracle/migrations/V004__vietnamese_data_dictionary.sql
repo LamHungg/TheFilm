@@ -863,3 +863,7 @@ COMMENT ON COLUMN app_setting.description IS 'Mô tả của Cấu hình nghiệ
 COMMENT ON COLUMN app_setting.updated_by IS 'Mã tham chiếu tới Hồ sơ người dùng nghiệp vụ liên kết Keycloak; không lưu mật khẩu';
 COMMENT ON COLUMN app_setting.updated_at IS 'Thời điểm cập nhật gần nhất của bản ghi';
 COMMENT ON COLUMN sales_order_line.inventory_location_id IS 'Kho/quầy xuất sản phẩm F&B cho dòng đơn; không dùng cho dòng vé.';
+
+COMMENT ON COLUMN room_capability.valid_from_utc IS 'Thời điểm bắt đầu hiệu lực quy đổi UTC, tự sinh từ valid_from để tạo khóa và chống trùng cùng thời điểm giữa các múi giờ.';
+COMMENT ON COLUMN fnb_recipe_component.valid_from_utc IS 'Thời điểm bắt đầu hiệu lực quy đổi UTC, tự sinh từ valid_from để tạo khóa và chống trùng cùng thời điểm giữa các múi giờ.';
+COMMENT ON COLUMN app_setting.valid_from_utc IS 'Thời điểm bắt đầu hiệu lực quy đổi UTC, tự sinh từ valid_from để tạo khóa và chống trùng cùng thời điểm giữa các múi giờ.';

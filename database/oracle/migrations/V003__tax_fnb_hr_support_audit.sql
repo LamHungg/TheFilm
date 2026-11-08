@@ -226,7 +226,10 @@ CREATE TABLE fnb_recipe_component (
     quantity          NUMBER(12,3) NOT NULL,
     valid_from        TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
     valid_to          TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT pk_fnb_recipe PRIMARY KEY (combo_product_id, component_product_id, valid_from),
+    -- Khóa dùng thời gian UTC để so sánh cùng thời điểm giữa các múi giờ.
+    valid_from_utc TIMESTAMP GENERATED ALWAYS AS (SYS_EXTRACT_UTC(valid_from)) VIRTUAL,
+
+    CONSTRAINT pk_fnb_recipe PRIMARY KEY (combo_product_id, component_product_id, valid_from_utc),
     CONSTRAINT fk_fnb_recipe_combo FOREIGN KEY (combo_product_id) REFERENCES fnb_product (fnb_product_id),
     CONSTRAINT fk_fnb_recipe_component FOREIGN KEY (component_product_id) REFERENCES fnb_product (fnb_product_id),
     CONSTRAINT ck_fnb_recipe_qty CHECK (quantity > 0),
@@ -735,8 +738,11 @@ CREATE TABLE app_setting (
     description    VARCHAR2(500 CHAR),
     updated_by     NUMBER(19),
     updated_at     TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
+    -- Khóa dùng thời gian UTC để so sánh cùng thời điểm giữa các múi giờ.
+    valid_from_utc TIMESTAMP GENERATED ALWAYS AS (SYS_EXTRACT_UTC(valid_from)) VIRTUAL,
+
     CONSTRAINT pk_app_setting PRIMARY KEY (app_setting_id),
-    CONSTRAINT uq_app_setting_version UNIQUE (setting_key, scope_type, scope_id, valid_from),
+    CONSTRAINT uq_app_setting_version UNIQUE (setting_key, scope_type, scope_id, valid_from_utc),
     CONSTRAINT fk_app_setting_actor FOREIGN KEY (updated_by) REFERENCES app_user (app_user_id),
     CONSTRAINT ck_app_setting_scope CHECK (scope_type IN ('GLOBAL', 'CHAIN', 'ENTITY', 'CINEMA')),
     CONSTRAINT ck_app_setting_type CHECK (value_type IN ('STRING', 'NUMBER', 'BOOLEAN', 'JSON')),

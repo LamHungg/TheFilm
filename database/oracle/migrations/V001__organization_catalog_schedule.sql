@@ -180,7 +180,10 @@ CREATE TABLE room_capability (
     capability_value   VARCHAR2(200 CHAR),
     valid_from         TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
     valid_to           TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT pk_room_capability PRIMARY KEY (room_id, capability_type_id, valid_from),
+    -- Khóa dùng thời gian UTC để so sánh cùng thời điểm giữa các múi giờ.
+    valid_from_utc TIMESTAMP GENERATED ALWAYS AS (SYS_EXTRACT_UTC(valid_from)) VIRTUAL,
+
+    CONSTRAINT pk_room_capability PRIMARY KEY (room_id, capability_type_id, valid_from_utc),
     CONSTRAINT fk_room_cap_room FOREIGN KEY (room_id) REFERENCES cinema_room (room_id),
     CONSTRAINT fk_room_cap_type FOREIGN KEY (capability_type_id) REFERENCES room_capability_type (capability_type_id),
     CONSTRAINT ck_room_cap_dates CHECK (valid_to IS NULL OR valid_to > valid_from)
