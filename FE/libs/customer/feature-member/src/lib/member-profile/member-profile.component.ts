@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
@@ -33,6 +33,7 @@ interface UpdateCustomerProfileRequest {
 export class MemberProfileComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   profile: UserProfile | null = null;
   cinemas: CinemaOption[] = [];
@@ -91,10 +92,12 @@ export class MemberProfileComponent implements OnInit {
         this.profile = profile;
         this.loadingProfile = false;
         if (this.isEditing) this.beginEdit();
+        this.cdr.markForCheck();
       },
       error: (error: unknown) => {
         this.loadingProfile = false;
         this.profileError = this.friendlyError(error, 'Chưa thể tải hồ sơ lúc này. Vui lòng thử lại.');
+        this.cdr.markForCheck();
       },
     });
   }
@@ -111,6 +114,7 @@ export class MemberProfileComponent implements OnInit {
     ).subscribe((cinemas) => {
       this.cinemas = cinemas;
       this.loadingCinemas = false;
+      this.cdr.markForCheck();
     });
   }
 
@@ -170,10 +174,12 @@ export class MemberProfileComponent implements OnInit {
         this.saving = false;
         this.isEditing = false;
         this.saveSuccess = 'Hồ sơ của bạn đã được cập nhật.';
+        this.cdr.markForCheck();
       },
       error: (error: unknown) => {
         this.saving = false;
         this.saveError = this.friendlyError(error, 'Chưa thể lưu hồ sơ. Vui lòng kiểm tra thông tin và thử lại.');
+        this.cdr.markForCheck();
       },
     });
   }
