@@ -37,9 +37,6 @@ public class AppUserEntity {
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AppUserStatus status;
@@ -57,13 +54,12 @@ public class AppUserEntity {
     }
 
     public AppUserEntity(String oidcIssuer, String oidcSubject, String displayName, String email, String phone,
-            String passwordHash, AppUserStatus status) {
+            AppUserStatus status) {
         this.oidcIssuer = oidcIssuer;
         this.oidcSubject = oidcSubject;
         this.displayName = displayName;
         this.email = email;
         this.phone = phone;
-        this.passwordHash = passwordHash;
         this.status = status;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
@@ -91,14 +87,6 @@ public class AppUserEntity {
 
     public String getPhone() {
         return phone;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
     }
 
     public AppUserStatus getStatus() {

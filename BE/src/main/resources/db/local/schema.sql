@@ -217,7 +217,6 @@ CREATE TABLE sales_order_line (
     screening_type_snapshot VARCHAR(40),
     room_type_snapshot VARCHAR(120),
     seat_type_snapshot VARCHAR(120),
-    seat_code_snapshot VARCHAR(20),
     unit_price DECIMAL(18,2) NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
     discount_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
@@ -294,7 +293,6 @@ CREATE TABLE app_user (
     display_name VARCHAR(200),
     email VARCHAR(320),
     phone VARCHAR(30),
-    password_hash VARCHAR(255),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -302,6 +300,14 @@ CREATE TABLE app_user (
     CONSTRAINT ck_app_user_status CHECK (status IN ('ACTIVE', 'BLOCKED', 'ANONYMIZED'))
 );
 CREATE INDEX ix_app_user_email ON app_user (email);
+
+-- Chỉ có ở profile local (H2): mật khẩu đăng nhập thử nghiệm, tách khỏi app_user để khớp schema Oracle.
+-- Ở profile oracle, đăng nhập do Keycloak đảm nhiệm và không có bảng này.
+CREATE TABLE local_credential (
+    app_user_id BIGINT PRIMARY KEY,
+    password_hash VARCHAR(255) NOT NULL,
+    CONSTRAINT fk_local_credential_user FOREIGN KEY (app_user_id) REFERENCES app_user (app_user_id)
+);
 
 CREATE TABLE customer_profile (
     app_user_id BIGINT PRIMARY KEY,

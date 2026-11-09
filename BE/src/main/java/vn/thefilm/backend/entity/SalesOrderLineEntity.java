@@ -35,7 +35,6 @@ public class SalesOrderLineEntity {
     @Column(name = "screening_type_snapshot", length = 40) private String screeningTypeSnapshot;
     @Column(name = "room_type_snapshot", length = 120) private String roomTypeSnapshot;
     @Column(name = "seat_type_snapshot", length = 120) private String seatTypeSnapshot;
-    @Column(name = "seat_code_snapshot", length = 20) private String seatCodeSnapshot;
     @Column(name = "quantity", nullable = false) private Integer quantity;
     @Column(name = "unit_price", nullable = false, precision = 18, scale = 2) private BigDecimal unitPrice;
     @Column(name = "discount_amount", nullable = false, precision = 18, scale = 2) private BigDecimal discountAmount = BigDecimal.ZERO;
@@ -63,7 +62,7 @@ public class SalesOrderLineEntity {
         this.salesOrder = order; this.lineNo = lineNo; this.itemType = OrderLineType.TICKET;
         this.screening = screening; this.showSeat = seat; this.productNameSnapshot = productName;
         this.screeningTypeSnapshot = screeningType; this.roomTypeSnapshot = roomType;
-        this.seatTypeSnapshot = seatType; this.seatCodeSnapshot = seat == null ? null : seat.getSeatCodeSnapshot();
+        this.seatTypeSnapshot = seatType;
         this.quantity = 1; this.unitPrice = unitPrice;
         this.discountAmount = discountAmount;
         this.taxCategoryCode = "SIMULATED_VAT"; this.taxRateSnapshot = taxRate;
@@ -97,7 +96,6 @@ public class SalesOrderLineEntity {
     public String getScreeningTypeSnapshot() { return screeningTypeSnapshot; }
     public String getRoomTypeSnapshot() { return roomTypeSnapshot; }
     public String getSeatTypeSnapshot() { return seatTypeSnapshot; }
-    public String getSeatCodeSnapshot() { return seatCodeSnapshot; }
     public Integer getQuantity() { return quantity; }
     public BigDecimal getUnitPrice() { return unitPrice; }
     public BigDecimal getDiscountAmount() { return discountAmount; }
