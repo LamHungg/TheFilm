@@ -3,6 +3,9 @@ package vn.thefilm.backend.entity;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,6 +36,7 @@ public class PaymentTxnEntity {
     @Column(name = "idempotency_key", nullable = false, length = 120) private String idempotencyKey;
     @Column(name = "payment_method", nullable = false, length = 30) private String paymentMethod;
     @Column(name = "amount", nullable = false, precision = 18, scale = 2) private BigDecimal amount;
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode = "VND";
     @Enumerated(EnumType.STRING) @Column(name = "payment_status", nullable = false, length = 20) private PaymentStatus paymentStatus = PaymentStatus.INITIATED;
     @Column(name = "initiated_at", nullable = false) private OffsetDateTime initiatedAt;

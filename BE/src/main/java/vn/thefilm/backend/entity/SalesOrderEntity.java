@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -44,6 +47,7 @@ public class SalesOrderEntity {
     @Column(name = "guest_name", length = 200) private String guestName;
     @Column(name = "guest_email", length = 320) private String guestEmail;
     @Column(name = "guest_phone", length = 30) private String guestPhone;
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "currency_code", nullable = false, length = 3) private String currencyCode = "VND";
     @Column(name = "subtotal_amount", nullable = false, precision = 18, scale = 2) private BigDecimal subtotalAmount = BigDecimal.ZERO;
     @Column(name = "discount_amount", nullable = false, precision = 18, scale = 2) private BigDecimal discountAmount = BigDecimal.ZERO;
