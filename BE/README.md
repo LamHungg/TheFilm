@@ -92,3 +92,5 @@ Keycloak cần phát role realm hoặc role client THEFILM_API vào claim roles.
 - Danh sách suất chiếu chỉ trả trạng thái ON_SALE. API đang trả số ghế trống và tổng ghế không bị chặn.
 - Chưa triển khai giữ ghế, thanh toán, vé, nhân viên, CSKH, hóa đơn/thuế giả lập, F&B hoặc báo cáo trong phần đầu này. Những luồng này cần được làm ở Service/Repository với transaction và khóa dữ liệu tương ứng, không tạo API giả.
 - Schema local H2 chỉ phục vụ xem API catalog. Schema đầy đủ và nguồn migration Oracle vẫn nằm trong thư mục database/oracle.
+## Lệnh chạy BE local
+mvn spring-boot:run -Dspring-boot.run.profiles=oracle,devauth
