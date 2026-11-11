@@ -1,246 +1,289 @@
-<div class="auth-page-container">
-  <div class="auth-desktop-card">
-    <section class="auth-form-column" aria-labelledby="auth-title">
-      <div class="brand-badge-box">
-        <div class="logo-circle" aria-hidden="true">T</div>
-        <span class="auth-subtitle-tag">CỔNG THÀNH VIÊN THEFILM</span>
+<div class="tix-auth-page" data-node-id="142:1443">
+  <!-- Cinema Backdrop Image -->
+  <div class="tix-backdrop-container" data-node-id="206:1360">
+    <img
+      src="/assets/auth/bg-cinema.png"
+      alt="Cinema Theater"
+      class="tix-backdrop-img"
+    />
+    <div class="tix-backdrop-overlay"></div>
+  </div>
+
+  <!-- Top-Left Back Button -->
+  <button
+    type="button"
+    class="tix-back-btn"
+    (click)="goBack()"
+    aria-label="Quay lại"
+    data-node-id="427:4318"
+  >
+    <img
+      src="/assets/auth/arrow-left.svg"
+      alt=""
+      class="tix-back-icon"
+      aria-hidden="true"
+    />
+    <span class="tix-back-text">Quay lại</span>
+  </button>
+
+  <!-- Login / Register Card Container -->
+  <main class="tix-card-wrapper">
+    <div class="tix-card" data-node-id="475:4932">
+      <!-- Title -->
+      <h1 class="tix-card-title">
+        {{ isLoginMode ? 'Đăng nhập TIX ID' : 'Đăng ký TIX ID' }}
+      </h1>
+
+      <!-- Feedback / Error messages -->
+      <div
+        class="tix-alert tix-alert-error"
+        *ngIf="errorMessage"
+        role="alert"
+        aria-live="assertive"
+      >
+        <span class="tix-alert-dot"></span>
+        <span>{{ errorMessage }}</span>
       </div>
 
-      <h1 id="auth-title" class="auth-main-title">Chào mừng bạn đến THEFILM</h1>
-      <p class="auth-meta-text">Đăng nhập để quản lý vé đã đặt, tích điểm C-Point và nhận ưu đãi độc quyền.</p>
-
-      <div class="auth-toggle-pills" role="group" aria-label="Chọn thao tác tài khoản">
-        <button
-          type="button"
-          class="toggle-pill"
-          [class.active]="isLoginMode"
-          [disabled]="isLoading"
-          (click)="setMode(true)"
-        >
-          ĐĂNG NHẬP
-        </button>
-        <button
-          type="button"
-          class="toggle-pill"
-          [class.active]="!isLoginMode"
-          [disabled]="isLoading"
-          (click)="setMode(false)"
-        >
-          TẠO TÀI KHOẢN
-        </button>
-      </div>
-
-      <div class="auth-feedback" *ngIf="errorMessage" role="alert" aria-live="assertive">
-        {{ errorMessage }}
-      </div>
-
-      <div class="auth-feedback auth-feedback-loading" *ngIf="isLoading" role="status" aria-live="polite">
-        <span class="loading-spinner" aria-hidden="true"></span>
+      <div
+        class="tix-alert tix-alert-loading"
+        *ngIf="isLoading"
+        role="status"
+        aria-live="polite"
+      >
+        <span class="tix-spinner" aria-hidden="true"></span>
         <span>{{ loadingMessage }}</span>
       </div>
 
-      <!-- Form Đăng nhập -->
-      <form *ngIf="isLoginMode" class="auth-form" (ngSubmit)="submitLogin()">
-        <div class="form-group">
-          <label for="login-email">Email</label>
-          <input
-            id="login-email"
-            type="email"
-            name="loginEmail"
-            class="form-control"
-            [(ngModel)]="loginEmail"
-            placeholder="example@thefilm.vn"
-            autocomplete="email"
-            required
-            [disabled]="isLoading"
-          />
+      <!-- FORM: ĐĂNG NHẬP (LOGIN) -->
+      <form
+        *ngIf="isLoginMode"
+        class="tix-form"
+        (ngSubmit)="submitLogin()"
+        autocomplete="on"
+      >
+        <!-- Field: Số điện thoại / Email -->
+        <div class="tix-field-group">
+          <label for="login-account" class="tix-label">SỐ ĐIỆN THOẠI / EMAIL</label>
+          <div class="tix-input-box">
+            <span class="tix-prefix" *ngIf="showPhonePrefix">{{ phonePrefix }}</span>
+            <span class="tix-divider" *ngIf="showPhonePrefix"></span>
+            <input
+              id="login-account"
+              type="text"
+              name="loginEmail"
+              class="tix-input"
+              [(ngModel)]="loginEmail"
+              placeholder="Nhập email hoặc số điện thoại"
+              autocomplete="username"
+              required
+              [disabled]="isLoading"
+            />
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="login-password">Mật khẩu</label>
-          <input
-            id="login-password"
-            type="password"
-            name="loginPassword"
-            class="form-control"
-            [(ngModel)]="loginPassword"
-            placeholder="Nhập mật khẩu"
-            autocomplete="current-password"
-            required
-            [disabled]="isLoading"
-          />
+        <!-- Field: Mật khẩu -->
+        <div class="tix-field-group">
+          <label for="login-pwd" class="tix-label">MẬT KHẨU</label>
+          <div class="tix-input-box">
+            <input
+              id="login-pwd"
+              [type]="showPassword ? 'text' : 'password'"
+              name="loginPassword"
+              class="tix-input"
+              [(ngModel)]="loginPassword"
+              placeholder="Nhập thông tin mật khẩu"
+              autocomplete="current-password"
+              required
+              [disabled]="isLoading"
+            />
+            <button
+              type="button"
+              class="tix-eye-btn"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+            >
+              <img
+                [src]="showPassword ? '/assets/auth/eye-hide.svg' : '/assets/auth/eye-show.svg'"
+                alt=""
+                class="tix-eye-icon"
+              />
+            </button>
+          </div>
         </div>
 
-        <div class="auth-actions">
+        <!-- Buttons: Submit & Switch -->
+        <div class="tix-actions">
           <button
             type="submit"
-            class="btn-auth-submit"
+            class="tix-btn-primary"
             [disabled]="isLoading"
           >
-            ĐĂNG NHẬP
+            Đăng nhập ngay
+          </button>
+
+          <p class="tix-switch-hint">Chưa có tài khoản?</p>
+
+          <button
+            type="button"
+            class="tix-btn-secondary"
+            [disabled]="isLoading"
+            (click)="setMode(false)"
+          >
+            Đăng ký ngay
           </button>
         </div>
       </form>
 
-      <!-- Form Đăng ký -->
-      <form *ngIf="!isLoginMode" class="auth-form" (ngSubmit)="submitRegister()">
-        <div class="form-group">
-          <label for="reg-name">Họ và tên</label>
-          <input
-            id="reg-name"
-            type="text"
-            name="regDisplayName"
-            class="form-control"
-            [(ngModel)]="regDisplayName"
-            placeholder="Nguyễn Văn A"
-            autocomplete="name"
-            required
-            [disabled]="isLoading"
-          />
+      <!-- FORM: ĐĂNG KÝ (REGISTER) -->
+      <form
+        *ngIf="!isLoginMode"
+        class="tix-form"
+        (ngSubmit)="submitRegister()"
+        autocomplete="on"
+      >
+        <!-- Field: Họ và tên -->
+        <div class="tix-field-group">
+          <label for="reg-name" class="tix-label">HỌ VÀ TÊN</label>
+          <div class="tix-input-box">
+            <input
+              id="reg-name"
+              type="text"
+              name="regDisplayName"
+              class="tix-input"
+              [(ngModel)]="regDisplayName"
+              placeholder="Nguyễn Văn A"
+              autocomplete="name"
+              required
+              [disabled]="isLoading"
+            />
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="reg-email">Email</label>
-          <input
-            id="reg-email"
-            type="email"
-            name="regEmail"
-            class="form-control"
-            [(ngModel)]="regEmail"
-            placeholder="example@thefilm.vn"
-            autocomplete="email"
-            required
-            [disabled]="isLoading"
-          />
+        <!-- Field: Email -->
+        <div class="tix-field-group">
+          <label for="reg-email" class="tix-label">ĐỊA CHỈ EMAIL</label>
+          <div class="tix-input-box">
+            <input
+              id="reg-email"
+              type="email"
+              name="regEmail"
+              class="tix-input"
+              [(ngModel)]="regEmail"
+              placeholder="example@thefilm.vn"
+              autocomplete="email"
+              required
+              [disabled]="isLoading"
+            />
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="reg-phone">Số điện thoại <span class="label-optional">(tùy chọn)</span></label>
-          <input
-            id="reg-phone"
-            type="tel"
-            name="regPhone"
-            class="form-control"
-            [(ngModel)]="regPhone"
-            placeholder="0912345678"
-            autocomplete="tel"
-            [disabled]="isLoading"
-          />
+        <!-- Field: Số điện thoại -->
+        <div class="tix-field-group">
+          <label for="reg-phone" class="tix-label">SỐ ĐIỆN THOẠI</label>
+          <div class="tix-input-box">
+            <span class="tix-prefix">{{ phonePrefix }}</span>
+            <span class="tix-divider"></span>
+            <input
+              id="reg-phone"
+              type="tel"
+              name="regPhone"
+              class="tix-input"
+              [(ngModel)]="regPhone"
+              placeholder="912345678"
+              autocomplete="tel"
+              [disabled]="isLoading"
+            />
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="reg-password">Mật khẩu</label>
-          <input
-            id="reg-password"
-            type="password"
-            name="regPassword"
-            class="form-control"
-            [(ngModel)]="regPassword"
-            placeholder="Tối thiểu 6 ký tự"
-            autocomplete="new-password"
-            required
-            [disabled]="isLoading"
-          />
+        <!-- Field: Mật khẩu -->
+        <div class="tix-field-group">
+          <label for="reg-pwd" class="tix-label">MẬT KHẨU</label>
+          <div class="tix-input-box">
+            <input
+              id="reg-pwd"
+              [type]="showRegPassword ? 'text' : 'password'"
+              name="regPassword"
+              class="tix-input"
+              [(ngModel)]="regPassword"
+              placeholder="Tối thiểu 6 ký tự"
+              autocomplete="new-password"
+              required
+              [disabled]="isLoading"
+            />
+            <button
+              type="button"
+              class="tix-eye-btn"
+              (click)="toggleRegPasswordVisibility()"
+              [attr.aria-label]="showRegPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'"
+            >
+              <img
+                [src]="showRegPassword ? '/assets/auth/eye-hide.svg' : '/assets/auth/eye-show.svg'"
+                alt=""
+                class="tix-eye-icon"
+              />
+            </button>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="reg-confirm">Xác nhận mật khẩu</label>
-          <input
-            id="reg-confirm"
-            type="password"
-            name="regConfirmPassword"
-            class="form-control"
-            [(ngModel)]="regConfirmPassword"
-            placeholder="Nhập lại mật khẩu"
-            autocomplete="new-password"
-            required
-            [disabled]="isLoading"
-          />
+        <!-- Field: Xác nhận mật khẩu -->
+        <div class="tix-field-group">
+          <label for="reg-pwd-confirm" class="tix-label">XÁC NHẬN MẬT KHẨU</label>
+          <div class="tix-input-box">
+            <input
+              id="reg-pwd-confirm"
+              [type]="showRegPassword ? 'text' : 'password'"
+              name="regConfirmPassword"
+              class="tix-input"
+              [(ngModel)]="regConfirmPassword"
+              placeholder="Nhập lại mật khẩu"
+              autocomplete="new-password"
+              required
+              [disabled]="isLoading"
+            />
+          </div>
         </div>
 
-        <div class="auth-actions">
+        <!-- Buttons: Submit & Switch -->
+        <div class="tix-actions">
           <button
             type="submit"
-            class="btn-auth-submit"
+            class="tix-btn-primary"
             [disabled]="isLoading"
           >
-            TẠO TÀI KHOẢN
+            Đăng ký ngay
+          </button>
+
+          <p class="tix-switch-hint">Đã có tài khoản?</p>
+
+          <button
+            type="button"
+            class="tix-btn-secondary"
+            [disabled]="isLoading"
+            (click)="setMode(true)"
+          >
+            Đăng nhập ngay
           </button>
         </div>
       </form>
 
-      <div class="auth-quick-action" *ngIf="quickTestAvailable">
+      <!-- Quick dev test button if enabled -->
+      <div class="tix-quick-test" *ngIf="quickTestAvailable">
         <button
           type="button"
-          class="btn-auth-quick-test"
+          class="tix-btn-quick-test"
           [disabled]="isLoading"
           (click)="quickTestSignIn()"
         >
-          Đăng nhập nhanh để thử nghiệm (chỉ môi trường phát triển)
+          ⚡ Đăng nhập nhanh để thử nghiệm (Dev Mode)
         </button>
       </div>
 
-      <div class="auth-toggle-footer">
-        <ng-container *ngIf="isLoginMode; else createPrompt">
-          Chưa có tài khoản THEFILM?
-          <button type="button" class="auth-text-button" [disabled]="isLoading" (click)="setMode(false)">
-            Tạo tài khoản mới
-          </button>
-        </ng-container>
-        <ng-template #createPrompt>
-          Đã có tài khoản?
-          <button type="button" class="auth-text-button" [disabled]="isLoading" (click)="setMode(true)">
-            Đăng nhập
-          </button>
-        </ng-template>
-      </div>
-
-      <p class="auth-security-caption">
-        Thông tin của bạn được bảo mật tuyệt đối theo chính sách quyền riêng tư của THEFILM.
-      </p>
-    </section>
-
-    <aside class="auth-perks-column" aria-label="Quyền lợi thành viên THEFILM">
-      <div class="perks-inner">
-        <span class="perks-badge">QUYỀN LỢI THÀNH VIÊN</span>
-        <h2 class="perks-title">Một tài khoản cho mọi trải nghiệm.</h2>
-        <p class="perks-desc">Trở thành thành viên THEFILM ngay hôm nay để nhận trọn bộ đặc quyền giải trí đỉnh cao:</p>
-
-        <ul class="perks-list">
-          <li>
-            <div class="icon-disc" aria-hidden="true">&#10003;</div>
-            <div>
-              <strong>Tích lũy 5% - 10% C-Point</strong>
-              <p>Mỗi vé xem phim và combo bắp nước đều được quy đổi thành điểm thưởng.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon-disc" aria-hidden="true">&#10003;</div>
-            <div>
-              <strong>Đổi vé xem phim miễn phí</strong>
-              <p>Chỉ từ 1.000 điểm tích lũy để đổi vé 2D bất kỳ ngày trong tuần.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon-disc" aria-hidden="true">&#10003;</div>
-            <div>
-              <strong>Ưu đãi sinh nhật &amp; Suất chiếu sớm</strong>
-              <p>Nhận combo quà tặng trong tháng sinh nhật và quyền mua vé trước 48h.</p>
-            </div>
-          </li>
-          <li>
-            <div class="icon-disc" aria-hidden="true">&#10003;</div>
-            <div>
-              <strong>Ví vé QR tiện lợi</strong>
-              <p>Check-in vào rạp không cần in vé giấy, lưu trữ lịch sử đặt vé an toàn.</p>
-            </div>
-          </li>
-        </ul>
-
-        <div class="perks-bottom-card">
-          <span>Tặng ngay <strong>100 C-Point</strong> cho tài khoản mới kích hoạt!</span>
-        </div>
-      </div>
-    </aside>
-  </div>
+      <!-- Footer Copyright -->
+      <footer class="tix-card-footer">
+        <p>2024 TIX ID - TheFilm Cinema System</p>
+      </footer>
+    </div>
+  </main>
 </div>

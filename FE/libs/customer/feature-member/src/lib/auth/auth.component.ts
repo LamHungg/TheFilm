@@ -24,6 +24,7 @@ export class AuthComponent implements OnDestroy {
   // Login form model
   loginEmail = '';
   loginPassword = '';
+  showPassword = false;
 
   // Register form model
   regDisplayName = '';
@@ -31,6 +32,15 @@ export class AuthComponent implements OnDestroy {
   regPhone = '';
   regPassword = '';
   regConfirmPassword = '';
+  showRegPassword = false;
+
+  phonePrefix = '+84';
+
+  get showPhonePrefix(): boolean {
+    const val = this.loginEmail?.trim();
+    if (!val) return true;
+    return !val.includes('@') && !/[a-zA-Z]/.test(val);
+  }
 
   private readonly authService = inject(AuthService);
   private readonly authConfig = inject(AUTH_CONFIG);
@@ -53,6 +63,22 @@ export class AuthComponent implements OnDestroy {
     this.errorMessage = '';
   }
 
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleRegPasswordVisibility(): void {
+    this.showRegPassword = !this.showRegPassword;
+  }
+
+  goBack(): void {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    } else {
+      void this.router.navigate(['/']);
+    }
+  }
+
   submitLogin(): void {
     if (this.isLoading) return;
     this.errorMessage = '';
@@ -61,7 +87,7 @@ export class AuthComponent implements OnDestroy {
     const password = this.loginPassword;
 
     if (!email) {
-      this.errorMessage = 'Vui lòng nhập địa chỉ email.';
+      this.errorMessage = 'Vui lòng nhập email hoặc số điện thoại.';
       return;
     }
     if (!password) {

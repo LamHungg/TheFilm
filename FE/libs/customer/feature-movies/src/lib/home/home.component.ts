@@ -29,6 +29,9 @@ export class HomeComponent implements OnInit {
   cinemas: Cinema[] = [];
   selectedArea = '';
 
+  heroIndex = 0;
+  spotlightImageErrors = new Set<string>();
+
   constructor(
     private cinemaService: CinemaService,
     private router: Router
@@ -44,6 +47,28 @@ export class HomeComponent implements OnInit {
     this.cinemaService.getCinemas().subscribe((cinemas) => {
       this.cinemas = cinemas;
     });
+  }
+
+  get spotlightMovies(): Movie[] {
+    if (this.nowShowingMovies.length <= 2) return this.nowShowingMovies;
+    const first = this.nowShowingMovies[this.heroIndex % this.nowShowingMovies.length];
+    const second = this.nowShowingMovies[(this.heroIndex + 1) % this.nowShowingMovies.length];
+    return [first, second];
+  }
+
+  prevSpotlight(): void {
+    if (this.nowShowingMovies.length <= 1) return;
+    this.heroIndex =
+      (this.heroIndex - 1 + this.nowShowingMovies.length) % this.nowShowingMovies.length;
+  }
+
+  nextSpotlight(): void {
+    if (this.nowShowingMovies.length <= 1) return;
+    this.heroIndex = (this.heroIndex + 1) % this.nowShowingMovies.length;
+  }
+
+  onSpotlightImgError(movieId: string): void {
+    this.spotlightImageErrors.add(movieId);
   }
 
   handleQuickSearch(params: QuickBookingSearchParams): void {

@@ -1,438 +1,516 @@
-.auth-page-container {
-  max-width: 1100px;
-  margin: 3.5rem auto 5rem;
-  padding: 0 1.5rem;
+/* ==========================================================================
+   TIX ID / THEFILM AUTHENTICATION - FIGMA FRAME 142:1443
+   ========================================================================== */
+
+:host {
+  display: block;
+  min-height: 100vh;
+  width: 100%;
 }
 
-.auth-desktop-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+.tix-auth-page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: #0b0f19;
+  overflow-x: hidden;
+  box-sizing: border-box;
+
+  @media (max-width: 1024px) {
+    justify-content: center;
+    padding: 80px 20px 40px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Backdrop Cinema Image
+   -------------------------------------------------------------------------- */
+.tix-backdrop-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  background: #ffffff;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
 
-  @media (min-width: 900px) {
-    grid-template-columns: 1.15fr 0.85fr;
-  }
-}
-
-.auth-form-column {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  padding: 3rem 2.5rem;
-
-  .brand-badge-box {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1.5rem;
-
-    .logo-circle {
-      display: flex;
-      width: 44px;
-      height: 44px;
-      flex: 0 0 44px;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: #c90e29;
-      color: #ffffff;
-      font-size: 1.35rem;
-      font-weight: 900;
-    }
-
-    .auth-subtitle-tag {
-      color: #c90e29;
-      font-size: 0.75rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-    }
-  }
-
-  .auth-main-title {
-    margin: 0 0 0.5rem;
-    color: #1a1b21;
-    font-size: 1.85rem;
-    font-weight: 900;
-    line-height: 1.25;
-  }
-
-  .auth-meta-text {
-    margin: 0 0 2rem;
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.55;
-  }
-
-  .auth-toggle-pills {
-    display: flex;
-    gap: 0.25rem;
-    margin-bottom: 1.25rem;
-    padding: 0.35rem;
-    border-radius: 50px;
-    background: #f1f5f9;
-
-    .toggle-pill {
-      flex: 1;
-      min-height: 42px;
-      padding: 0.6rem 0.5rem;
-      border: 0;
-      border-radius: 50px;
-      background: transparent;
-      color: #64748b;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 800;
-      transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-
-      &.active {
-        background: #c90e29;
-        color: #ffffff;
-        box-shadow: 0 2px 8px rgba(201, 14, 41, 0.3);
-      }
-
-      &:focus-visible {
-        outline: 3px solid rgba(201, 14, 41, 0.35);
-        outline-offset: 2px;
-      }
-
-      &:disabled {
-        cursor: not-allowed;
-        opacity: 0.65;
-      }
-    }
-  }
-
-  .auth-provider-note {
-    margin: 0 0 1.25rem;
-    color: #475569;
-    font-size: 0.9rem;
-    line-height: 1.55;
-  }
-
-  .auth-feedback {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1rem;
-    padding: 0.85rem 1rem;
-    border: 1px solid #fecaca;
-    border-radius: 10px;
-    background: #fef2f2;
-    color: #991b1b;
-    font-size: 0.86rem;
-    line-height: 1.45;
-
-    &.auth-feedback-loading {
-      border-color: #dbeafe;
-      background: #eff6ff;
-      color: #1e40af;
-    }
-  }
-
-  .loading-spinner {
-    width: 17px;
-    height: 17px;
-    flex: 0 0 17px;
-    border: 2px solid rgba(30, 64, 175, 0.25);
-    border-top-color: #1e40af;
-    border-radius: 50%;
-    animation: auth-spin 0.75s linear infinite;
-  }
-
-  .auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.15rem;
-    margin-bottom: 0.5rem;
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-
-      label {
-        color: #1e293b;
-        font-size: 0.85rem;
-        font-weight: 700;
-
-        .label-optional {
-          color: #94a3b8;
-          font-weight: 400;
-          font-size: 0.8rem;
-        }
-      }
-
-      .form-control {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0.75rem 1rem;
-        border: 1.5px solid #cbd5e1;
-        border-radius: 10px;
-        background: #f8fafc;
-        color: #0f172a;
-        font-size: 0.92rem;
-        outline: none;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-
-        &::placeholder {
-          color: #94a3b8;
-        }
-
-        &:focus {
-          border-color: #c90e29;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
-        }
-
-        &:disabled {
-          background: #f1f5f9;
-          cursor: not-allowed;
-          opacity: 0.7;
-        }
-      }
-    }
-  }
-
-  .auth-quick-action {
-    margin-bottom: 1.5rem;
-  }
-
-  .auth-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: 0.5rem 0 1rem;
-  }
-
-  .btn-auth-submit,
-  .btn-auth-quick-test {
+  .tix-backdrop-img {
     width: 100%;
-    min-height: 46px;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 0.88rem;
-    font-weight: 800;
-    transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
-
-    &:focus-visible {
-      outline: 3px solid rgba(201, 14, 41, 0.3);
-      outline-offset: 3px;
-    }
-
-    &:disabled {
-      cursor: wait;
-      opacity: 0.65;
-    }
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transform: scale(1.02);
+    transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .btn-auth-submit {
-    margin-top: 0.25rem;
-    border: 0;
-    background: #c90e29;
-    color: #ffffff;
-    letter-spacing: 0.04em;
+  .tix-backdrop-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(10, 10, 15, 0.4) 0%,
+      rgba(10, 10, 15, 0.65) 50%,
+      rgba(10, 10, 15, 0.85) 100%
+    );
 
-    &:hover:not(:disabled) {
-      background: #a80b22;
+    @media (max-width: 1024px) {
+      background: rgba(10, 10, 15, 0.75);
     }
-  }
-
-  .btn-auth-quick-test {
-    padding: 0.65rem 1rem;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #334155;
-
-    &:hover:not(:disabled) {
-      border-color: #94a3b8;
-      background: #f8fafc;
-    }
-  }
-
-  .auth-toggle-footer {
-    margin-bottom: 1.5rem;
-    color: #64748b;
-    font-size: 0.88rem;
-    text-align: center;
-  }
-
-  .auth-text-button {
-    padding: 0.25rem;
-    border: 0;
-    background: transparent;
-    color: #c90e29;
-    cursor: pointer;
-    font: inherit;
-    font-weight: 800;
-
-    &:hover:not(:disabled) {
-      text-decoration: underline;
-    }
-
-    &:focus-visible {
-      border-radius: 3px;
-      outline: 2px solid #c90e29;
-      outline-offset: 2px;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.65;
-    }
-  }
-
-  .auth-security-caption {
-    margin: 0;
-    color: #64748b;
-    font-size: 0.75rem;
-    line-height: 1.5;
-    text-align: center;
   }
 }
 
-.auth-perks-column {
+/* --------------------------------------------------------------------------
+   Back Button (Top Left)
+   -------------------------------------------------------------------------- */
+.tix-back-btn {
+  position: absolute;
+  top: 48px;
+  left: 64px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  text-decoration: none;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+
+  .tix-back-icon {
+    width: 32px;
+    height: 32px;
+    display: block;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .tix-back-text {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: #ffffff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  }
+
+  &:hover {
+    opacity: 0.9;
+
+    .tix-back-icon {
+      transform: translateX(-5px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 768px) {
+    top: 20px;
+    left: 20px;
+
+    .tix-back-text {
+      font-size: 18px;
+    }
+
+    .tix-back-icon {
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Card Wrapper & Card (Right side)
+   -------------------------------------------------------------------------- */
+.tix-card-wrapper {
+  position: relative;
+  z-index: 5;
+  margin-right: calc((100vw - 1440px) / 2 + 64px);
+  padding: 48px 0;
+  display: flex;
+  align-items: center;
+
+  @media (max-width: 1440px) {
+    margin-right: 64px;
+  }
+
+  @media (max-width: 1024px) {
+    margin-right: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+.tix-card {
+  width: 680px;
+  min-height: 760px;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 72px 80px 48px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  padding: 3rem 2.5rem;
-  background: linear-gradient(145deg, #162032 0%, #0b1322 100%);
-  color: #ffffff;
+  animation: cardEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-  .perks-inner {
-    display: flex;
-    height: 100%;
-    flex-direction: column;
-  }
-
-  .perks-badge {
-    margin-bottom: 0.75rem;
-    color: #f3a738;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-  }
-
-  .perks-title {
-    margin: 0 0 0.85rem;
-    font-size: 1.85rem;
-    font-weight: 900;
-    line-height: 1.25;
-  }
-
-  .perks-desc {
-    margin: 0 0 2rem;
-    color: #cbd5e1;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-
-  .perks-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.35rem;
-    margin: 0 0 2.5rem;
-    padding: 0;
-    list-style: none;
-
-    li {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.85rem;
-
-      .icon-disc {
-        display: flex;
-        width: 22px;
-        height: 22px;
-        flex: 0 0 22px;
-        align-items: center;
-        justify-content: center;
-        margin-top: 2px;
-        border-radius: 50%;
-        background: rgba(243, 167, 56, 0.2);
-        color: #f3a738;
-        font-size: 0.8rem;
-        font-weight: 900;
-      }
-
-      strong {
-        display: block;
-        margin-bottom: 0.2rem;
-        color: #ffffff;
-        font-size: 0.92rem;
-      }
-
-      p {
-        margin: 0;
-        color: #cbd5e1;
-        font-size: 0.82rem;
-        line-height: 1.45;
-      }
-    }
-  }
-
-  .perks-bottom-card {
-    margin-top: auto;
-    padding: 0.85rem 1.25rem;
-    border: 1px dashed rgba(243, 167, 56, 0.4);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
-    color: #e2e8f0;
-    font-size: 0.82rem;
-    text-align: center;
-
-    strong {
-      color: #f3a738;
-    }
+  @media (max-width: 768px) {
+    width: 100%;
+    min-height: auto;
+    padding: 40px 24px 32px;
+    border-radius: 12px;
   }
 }
 
-@keyframes auth-spin {
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Card Content
+   -------------------------------------------------------------------------- */
+.tix-card-title {
+  margin: 0 0 36px;
+  font-size: 36px;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+
+  @media (max-width: 768px) {
+    font-size: 28px;
+    margin-bottom: 24px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Alerts (Feedback / Error / Loading)
+   -------------------------------------------------------------------------- */
+.tix-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.3s ease;
+
+  &.tix-alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+
+    .tix-alert-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #dc2626;
+      flex-shrink: 0;
+    }
+  }
+
+  &.tix-alert-loading {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+  }
+}
+
+.tix-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #bbf7d0;
+  border-top-color: #16a34a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@media (max-width: 599px) {
-  .auth-page-container {
-    margin: 1.5rem auto 2.5rem;
-    padding: 0 1rem;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-
-  .auth-desktop-card {
-    border-radius: 18px;
-  }
-
-  .auth-form-column,
-  .auth-perks-column {
-    padding: 2rem 1.25rem;
-  }
-
-  .auth-form-column {
-    .auth-main-title {
-      font-size: 1.55rem;
-    }
-
-    .auth-toggle-pills .toggle-pill {
-      padding-right: 0.25rem;
-      padding-left: 0.25rem;
-      font-size: 0.74rem;
-    }
-  }
-
-  .auth-perks-column .perks-title {
-    font-size: 1.55rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .loading-spinner {
-    animation: none;
+/* --------------------------------------------------------------------------
+   Form Controls (Figma Underline Inputs)
+   -------------------------------------------------------------------------- */
+.tix-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.tix-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .tix-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333333;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+}
+
+.tix-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid #9da8be;
+  transition: border-color 0.25s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1.5px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #1a2c50;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .auth-form-column button {
-    transition: none;
+  &:focus-within {
+    border-bottom-color: transparent;
+
+    &::after {
+      width: 100%;
+    }
+
+    .tix-prefix {
+      color: #1a2c50;
+    }
+  }
+
+  .tix-prefix {
+    font-size: 19px;
+    font-weight: 400;
+    color: #9da8be;
+    user-select: none;
+    transition: color 0.25s ease;
+  }
+
+  .tix-divider {
+    width: 1px;
+    height: 18px;
+    background-color: #9da8be;
+    flex-shrink: 0;
+  }
+
+  .tix-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 18px;
+    color: #1a2c50;
+    font-weight: 400;
+    font-family: inherit;
+
+    &::placeholder {
+      color: #9da8be;
+      font-size: 17px;
+      font-weight: 400;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+  }
+
+  .tix-eye-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+
+    .tix-eye-icon {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Action Buttons
+   -------------------------------------------------------------------------- */
+.tix-actions {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+  gap: 16px;
+}
+
+.tix-btn-primary {
+  width: 100%;
+  height: 52px;
+  background-color: #1a2c50;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 19px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(26, 44, 80, 0.25);
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #12203d;
+    box-shadow: 0 6px 16px rgba(26, 44, 80, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.tix-switch-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #5a637a;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.tix-btn-secondary {
+  width: 100%;
+  height: 52px;
+  background-color: #ffffff;
+  color: #1a2c50;
+  border: 1.5px solid #5a637a;
+  border-radius: 6px;
+  font-size: 19px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #1a2c50;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Quick Test & Footer
+   -------------------------------------------------------------------------- */
+.tix-quick-test {
+  margin-top: 20px;
+  text-align: center;
+
+  .tix-btn-quick-test {
+    background: transparent;
+    border: 1px dashed #9da8be;
+    color: #5a637a;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #f1f5f9;
+      color: #1a2c50;
+    }
+  }
+}
+
+.tix-card-footer {
+  margin-top: auto;
+  padding-top: 36px;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+    letter-spacing: 0.01em;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility: Reduced Motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .tix-card,
+  .tix-backdrop-img,
+  .tix-back-btn,
+  .tix-btn-primary,
+  .tix-btn-secondary,
+  .tix-input-box::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

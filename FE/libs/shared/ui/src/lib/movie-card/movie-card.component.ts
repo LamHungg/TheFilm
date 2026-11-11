@@ -15,15 +15,24 @@ export class MovieCardComponent {
   @Output() selectShowtime = new EventEmitter<Movie>();
   @Output() cardClick = new EventEmitter<Movie>();
 
+  imageError = false;
+
   getMetaString(): string {
     const genre = this.movie.genres?.[0] || 'Điện ảnh';
     const duration = this.movie.duration || 120;
     return `${genre} · ${duration} phút`;
   }
 
-  getFormatLabel(): string {
-    const format = this.movie.formats?.[0] || '2D';
-    return `${format} · VIETSUB`;
+  getPrimaryFormat(): string {
+    return this.movie.formats?.[0] || '2D';
+  }
+
+  getSecondaryBadge(): string {
+    return this.movie.formats?.[1] || 'VIETSUB';
+  }
+
+  onImageError(): void {
+    this.imageError = true;
   }
 
   onCardClick(): void {

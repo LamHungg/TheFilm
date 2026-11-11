@@ -1,44 +1,57 @@
-/* Core Design System & CSS Reset - 100% Figma Specifications */
+/* Core Design System & CSS Reset - Exact TIX ID Figma Design Tokens */
 :root {
-  /* Exact Figma Brand Colors */
-  --primary: #C90E29;
-  --primary-hover: #A80B22;
-  --primary-active: #8E091C;
-  --primary-light: #FEE2E2;
-  --primary-light-text: #991B1B;
-  
-  --wine-dark: #23080E;
-  --wine-hero: #2D0A12;
-  --gold: #F3A738;
-  --gold-glow: rgba(243, 167, 56, 0.4);
-  
-  /* Exact Figma Neutrals */
-  --text-dark: #1A1B21;
-  --text-body: #333640;
-  --text-muted: #666B78;
+  /* Figma Main Brand Colors (Màu chủ đạo & Trạng thái nút) */
+  --primary: #1A2C50;         /* Xanh hoàng gia */
+  --primary-hover: #282764;   /* Xanh hoàng gia (Rê chuột) */
+  --primary-active: #383782;  /* Xanh hoàng gia (Đang nhấn) */
+  --primary-blue: #118EEA;    /* Xanh da trời */
+  --primary-light: #EBF5FF;
+  --primary-light-text: #1A2C50;
+
+  --wine-dark: #1A2C50;
+  --wine-hero: #1A2C50;
+  --gold: #FFBE00;            /* Vàng nắng - Màu chữ trên nút */
+  --gold-light: #F2C46F;      /* Vàng pastel - Màu vé / Avatar */
+  --gold-dark: #C6943F;       /* Dải màu XXI end */
+  --gold-glow: rgba(242, 196, 111, 0.35);
+
+  /* Cinema Brand Badges (Màu thương hiệu) */
+  --badge-crimson: #EC1E2B;   /* Đỏ CGV */
+  --badge-navy: #000E62;      /* Xanh Cinépolis */
+  --badge-gold: #F2C46F;
+
+  /* Figma Grayscale (Sắc độ 900 -> 100) */
+  --text-dark: #333333;       /* Shade/900 */
+  --text-800: #333D58;        /* Shade/800 */
+  --text-body: #414A62;       /* Shade/700 */
+  --text-muted: #5A637A;      /* Shade/600 */
+  --text-500: #8F98AA;        /* Shade/500 */
+  --text-400: #9DA8BE;        /* Shade/400 */
   --text-light: #FFFFFF;
-  
-  --bg-white: #FFFFFF;
-  --bg-subtle: #F7F8FB;
-  --bg-page: #F8FAFC;
-  --border-light: #E2E4E9;
-  --border-focus: #C90E29;
-  
+
+  --bg-white: #FFFFFF;        /* Shade/100 */
+  --bg-subtle: #F3F3F3;       /* Promo banner neutral gray */
+  --bg-page: #FFFFFF;
+  --border-light: #DADFE8;    /* Shade/200 */
+  --border-divider: #BDC5D4;  /* Shade/300 */
+  --border-focus: #118EEA;
+
   /* Status Colors */
   --success: #10B981;
   --success-light: #D1FAE5;
-  --warning: #F59E0B;
-  
-  /* Exact Figma Corner Radii */
+  --warning: #FFBE00;
+  --error-red: #FF6B6B;       /* Đỏ tươi */
+
+  /* Corner Radii */
   --radius-pill: 999px;
   --radius-card: 16px;
-  --radius-card-lg: 20px;
-  --radius-input: 10px;
-  --radius-btn: 12px;
-  --radius-sm: 6px;
-  
-  /* Global Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --radius-card-lg: 16px;
+  --radius-input: 6px;
+  --radius-btn: 6px;
+  --radius-sm: 4px;
+
+  /* Global Typography (Figma uses Roboto) */
+  --font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
 *, *::before, *::after {
@@ -93,44 +106,46 @@ button, input, select, textarea {
    GLOBAL FIGMA UI COMPONENTS: BUTTONS (btn), COMBOBOXES (cbx), CHECKBOXES
    ======================================================== */
 
-/* Figma Pill Primary Button */
+/* Figma Primary Button (Soft Calm Navy-Blue + Crisp White Text) */
 .figma-btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  height: 40px;
-  padding: 0 1.5rem;
-  background-color: var(--primary);
-  color: #FFFFFF !important;
+  height: 44px;
+  padding: 0 1.65rem;
+  background: linear-gradient(135deg, #2b4b87 0%, #1e3562 100%);
+  background-color: #223b6b;
+  color: #ffffff !important;
   font-family: var(--font-family);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(30, 53, 98, 0.16);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 6px rgba(201, 14, 41, 0.25);
 
   &:hover {
-    background-color: var(--primary-hover);
+    background: linear-gradient(135deg, #355a9e 0%, #244075 100%);
+    color: #ffffff !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(201, 14, 41, 0.35);
+    box-shadow: 0 6px 16px rgba(30, 53, 98, 0.24);
   }
 
   &:active {
-    background-color: var(--primary-active);
+    background: #1a2c50;
     transform: translateY(0);
   }
 
   &:disabled {
-    background-color: #CBD5E1;
-    color: #94A3B8 !important;
-    cursor: not-allowed;
+    background: #dadfe8;
+    color: #8f98aa !important;
     box-shadow: none;
+    cursor: not-allowed;
     transform: none;
   }
 }
@@ -141,14 +156,14 @@ button, input, select, textarea {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  height: 40px;
+  height: 42px;
   padding: 0 1.25rem;
   background-color: var(--bg-white);
-  color: var(--text-dark) !important;
+  color: var(--primary) !important;
   font-family: var(--font-family);
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid var(--border-light);
+  border: 1.5px solid var(--border-light);
   border-radius: var(--radius-btn);
   cursor: pointer;
   text-decoration: none;
@@ -156,7 +171,7 @@ button, input, select, textarea {
   transition: all 0.15s ease;
 
   &:hover {
-    border-color: #CBD5E1;
+    border-color: var(--primary);
     background-color: var(--bg-subtle);
     color: var(--primary) !important;
   }
@@ -175,7 +190,7 @@ button, input, select, textarea {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-dark);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666B78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   cursor: pointer;
@@ -187,9 +202,9 @@ button, input, select, textarea {
   }
 
   &:focus {
-    border-color: var(--primary);
+    border-color: var(--primary-blue);
     background-color: var(--bg-white);
-    box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
+    box-shadow: 0 0 0 3px rgba(17, 142, 234, 0.14);
   }
 }
 
@@ -217,9 +232,9 @@ button, input, select, textarea {
   }
 
   &:focus {
-    border-color: var(--primary);
+    border-color: var(--primary-blue);
     background-color: var(--bg-white);
-    box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
+    box-shadow: 0 0 0 3px rgba(17, 142, 234, 0.14);
   }
 }
 
@@ -264,12 +279,12 @@ button, input, select, textarea {
     }
 
     &:focus {
-      box-shadow: 0 0 0 2px rgba(201, 14, 41, 0.2);
+      box-shadow: 0 0 0 2px rgba(17, 142, 234, 0.2);
     }
   }
 }
 
-/* Figma Pink Filter Pill Chip (.figma-chip-pink) */
+/* Figma Filter Pill Chip (.figma-chip-pink) */
 .figma-chip-pink {
   appearance: none;
   display: inline-flex;
@@ -290,6 +305,6 @@ button, input, select, textarea {
   transition: all 0.15s ease;
 
   &:hover {
-    background-color: #FECACA;
+    background-color: #DBEAFE;
   }
 }
