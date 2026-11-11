@@ -124,7 +124,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile("oracle")
+    @Profile("devauth")
+    SecurityFilterChain devAuthSecurityFilterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(apiAuthenticationEntryPoint(objectMapper))
+                        .accessDeniedHandler(apiAccessDeniedHandler(objectMapper)))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
+                        .anyRequest().authenticated())
+                .addFilterBefore(new DevAdminAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
+
+    @Bean
+    @Profile("oracle & !devauth")
     SecurityFilterChain oracleSecurityFilterChain(
             HttpSecurity http,
             KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter,
