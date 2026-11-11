@@ -1,5 +1,6 @@
 package vn.thefilm.backend.entity;
 
+import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -16,6 +17,8 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import vn.thefilm.backend.enums.FilmApprovalStatus;
@@ -66,7 +69,61 @@ public class FilmEntity {
             inverseJoinColumns = @JoinColumn(name = "genre_id"))
     private Set<FilmGenreEntity> genres = new LinkedHashSet<>();
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
     protected FilmEntity() {
+    }
+
+    public FilmEntity(String filmCode, String titleLocal, String titleOriginal, String synopsis,
+            Integer runtimeMinutes, AgeClassificationEntity ageClassification, String posterUri,
+            String trailerUri) {
+        this.filmCode = filmCode;
+        this.titleLocal = titleLocal;
+        this.titleOriginal = titleOriginal;
+        this.synopsis = synopsis;
+        this.runtimeMinutes = runtimeMinutes;
+        this.ageClassification = ageClassification;
+        this.posterUri = posterUri;
+        this.trailerUri = trailerUri;
+        this.approvalStatus = FilmApprovalStatus.DRAFT;
+    }
+
+    @PrePersist
+    void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
+
+    public void updateDetails(String titleLocal, String titleOriginal, String synopsis, Integer runtimeMinutes,
+            AgeClassificationEntity ageClassification, String posterUri, String trailerUri) {
+        this.titleLocal = titleLocal;
+        this.titleOriginal = titleOriginal;
+        this.synopsis = synopsis;
+        this.runtimeMinutes = runtimeMinutes;
+        this.ageClassification = ageClassification;
+        this.posterUri = posterUri;
+        this.trailerUri = trailerUri;
+    }
+
+    public void replaceGenres(Set<FilmGenreEntity> newGenres) {
+        this.genres.clear();
+        this.genres.addAll(newGenres);
+    }
+
+    public void changeApprovalStatus(FilmApprovalStatus status) {
+        this.approvalStatus = status;
     }
 
     public Long getFilmId() {

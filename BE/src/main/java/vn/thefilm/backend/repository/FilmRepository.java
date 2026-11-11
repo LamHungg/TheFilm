@@ -122,4 +122,32 @@ public interface FilmRepository extends JpaRepository<FilmEntity, Long> {
     List<FilmCatalogStatusProjection> findCatalogStatuses(
             @Param("filmIds") Collection<Long> filmIds,
             @Param("now") OffsetDateTime now);
+
+    boolean existsByFilmCode(String filmCode);
+
+    @Query(
+            value = """
+                    SELECT f.filmId
+                    FROM FilmEntity f
+                    WHERE (:keyword IS NULL
+                           OR LOWER(f.titleLocal) LIKE :keyword
+                           OR LOWER(f.titleOriginal) LIKE :keyword
+                           OR LOWER(f.filmCode) LIKE :keyword)
+                      AND (:allStatuses = TRUE OR f.approvalStatus = :status)
+                    ORDER BY f.filmId DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(f.filmId)
+                    FROM FilmEntity f
+                    WHERE (:keyword IS NULL
+                           OR LOWER(f.titleLocal) LIKE :keyword
+                           OR LOWER(f.titleOriginal) LIKE :keyword
+                           OR LOWER(f.filmCode) LIKE :keyword)
+                      AND (:allStatuses = TRUE OR f.approvalStatus = :status)
+                    """)
+    Page<Long> searchAdminFilmIds(
+            @Param("keyword") String keyword,
+            @Param("allStatuses") boolean allStatuses,
+            @Param("status") FilmApprovalStatus status,
+            Pageable pageable);
 }
