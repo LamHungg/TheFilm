@@ -86,12 +86,12 @@ public interface FilmRepository extends JpaRepository<FilmEntity, Long> {
             Pageable pageable);
 
     @EntityGraph(attributePaths = {"ageClassification", "genres"})
-    @Query("SELECT DISTINCT f FROM FilmEntity f WHERE f.filmId IN :filmIds")
+    @Query("SELECT f FROM FilmEntity f WHERE f.filmId IN :filmIds")
     List<FilmEntity> findDetailedByFilmIds(@Param("filmIds") Collection<Long> filmIds);
 
     @EntityGraph(attributePaths = {"ageClassification", "genres"})
     @Query("""
-            SELECT DISTINCT f
+            SELECT f
             FROM FilmEntity f
             WHERE f.filmId = :filmId AND f.approvalStatus = :approvedFilmStatus
             """)
