@@ -141,7 +141,7 @@ public class BookingServiceImpl implements BookingService {
                     + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             holdToken = UUID.randomUUID().toString();
             order = salesOrderRepository.save(SalesOrderEntity.createHoldDraft(draftNumber, holdToken,
-                    cinemaId, cinemaId, expiresAt));
+                    cinemaId, screening.getCinema().getLegalEntityId(), expiresAt));
         }
         for (ShowSeatEntity seat : seats) {
             seat.hold(order, expiresAt);
@@ -233,7 +233,7 @@ public class BookingServiceImpl implements BookingService {
         String code = "TF" + now.toLocalDate().toString().replace("-", "") + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Long cinemaId = screening.getCinema().getCinemaId();
         SalesOrderEntity order = new SalesOrderEntity(code, request.idempotencyKey(), cinemaId,
-                cinemaId, request.guestName(), request.guestEmail(), request.guestPhone(), subtotal,
+                screening.getCinema().getLegalEntityId(), request.guestName(), request.guestEmail(), request.guestPhone(), subtotal,
                 discount, vat, subtotal.subtract(discount).add(vat), expires);
         BigDecimal remainingDiscount = discount;
         BigDecimal remainingBase = subtotal;
