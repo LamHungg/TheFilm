@@ -50,4 +50,13 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeatEntity, Long> 
     List<ShowSeatEntity> findExpiredHeldSeatsForUpdate(
             @Param("status") ShowSeatStatus status,
             @Param("now") OffsetDateTime now);
+
+    @Query("""
+            SELECT COUNT(ss) FROM ShowSeatEntity ss
+            WHERE ss.screening.screeningId = :screeningId
+              AND ss.seatStatus IN :statuses
+            """)
+    long countByScreeningAndStatuses(
+            @Param("screeningId") Long screeningId,
+            @Param("statuses") Collection<ShowSeatStatus> statuses);
 }

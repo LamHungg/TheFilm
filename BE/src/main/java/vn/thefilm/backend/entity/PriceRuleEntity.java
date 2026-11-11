@@ -55,6 +55,7 @@ public class PriceRuleEntity {
         this.approvalStatus = approvalStatus == null ? ApprovalStatus.DRAFT : approvalStatus;
         this.createdBy = createdBy;
     }
+    public void changeApprovalStatus(ApprovalStatus status) { this.approvalStatus = status; }
     public Long getPriceRuleId() { return priceRuleId; }
     public String getRuleCode() { return ruleCode; }
     public Long getCinemaId() { return cinemaId; }

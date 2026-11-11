@@ -12,6 +12,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import vn.thefilm.backend.enums.ScreeningStatus;
@@ -59,7 +61,75 @@ public class ScreeningEntity {
     @Column(name = "status")
     private ScreeningStatus status;
 
+    @Column(name = "layout_id", nullable = false)
+    private Long layoutId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "film_version_id", nullable = false)
+    private FilmVersionEntity filmVersion;
+
+    @Column(name = "cleanup_minutes", nullable = false)
+    private Integer cleanupMinutes = 0;
+
+    @Column(name = "created_by")
+    private Long createdBy;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
     protected ScreeningEntity() {
+    }
+
+    public ScreeningEntity(CinemaEntity cinema, CinemaRoomEntity room, Long layoutId, FilmVersionEntity filmVersion,
+            String roomTypeCodeSnapshot, String roomTypeNameSnapshot, String screeningTypeCode,
+            OffsetDateTime startsAt, OffsetDateTime endsAt, Integer cleanupMinutes, Long createdBy) {
+        this.cinema = cinema;
+        this.room = room;
+        this.layoutId = layoutId;
+        this.filmVersion = filmVersion;
+        this.film = filmVersion.getFilm();
+        this.formatCode = filmVersion.getFormatCode();
+        this.roomTypeCodeSnapshot = roomTypeCodeSnapshot;
+        this.roomTypeNameSnapshot = roomTypeNameSnapshot;
+        this.screeningTypeCode = screeningTypeCode;
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.cleanupMinutes = cleanupMinutes;
+        this.createdBy = createdBy;
+        this.status = ScreeningStatus.DRAFT;
+    }
+
+    @PrePersist
+    void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
+
+    public Long getLayoutId() {
+        return layoutId;
+    }
+
+    public FilmVersionEntity getFilmVersion() {
+        return filmVersion;
+    }
+
+    public Integer getCleanupMinutes() {
+        return cleanupMinutes;
+    }
+
+    public void changeStatus(ScreeningStatus newStatus) {
+        this.status = newStatus;
     }
 
     public Long getScreeningId() {

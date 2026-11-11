@@ -33,4 +33,6 @@ public interface PriceRuleRepository extends JpaRepository<PriceRuleEntity, Long
     List<SeatBasePriceProjection> findBasePricesForScreening(
             @Param("screeningId") Long screeningId,
             @Param("atTime") OffsetDateTime atTime);
+
+    List<PriceRuleEntity> findAllByOrderByPriorityNoAscRuleCodeAsc();
 }
