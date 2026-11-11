@@ -1,5 +1,7 @@
 package vn.thefilm.backend.entity;
 
+import java.time.OffsetDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import vn.thefilm.backend.enums.CinemaStatus;
@@ -19,6 +23,12 @@ public class CinemaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cinema_id")
     private Long cinemaId;
+
+    @Column(name = "chain_id", nullable = false, updatable = false)
+    private Long chainId;
+
+    @Column(name = "legal_entity_id", nullable = false)
+    private Long legalEntityId;
 
     @Column(name = "cinema_code")
     private String cinemaCode;
@@ -51,7 +61,69 @@ public class CinemaEntity {
     @Column(name = "status")
     private CinemaStatus status;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+
     protected CinemaEntity() {
+    }
+
+    public CinemaEntity(Long chainId, Long legalEntityId, String cinemaCode, String cinemaName,
+            String addressLine, String provinceName, String districtName, String wardName, String phone,
+            String email, String timeZone) {
+        this.chainId = chainId;
+        this.legalEntityId = legalEntityId;
+        this.cinemaCode = cinemaCode;
+        this.cinemaName = cinemaName;
+        this.addressLine = addressLine;
+        this.provinceName = provinceName;
+        this.districtName = districtName;
+        this.wardName = wardName;
+        this.phone = phone;
+        this.email = email;
+        this.timeZone = timeZone;
+        this.status = CinemaStatus.ACTIVE;
+    }
+
+    @PrePersist
+    void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
+
+    public void updateDetails(Long legalEntityId, String cinemaName, String addressLine, String provinceName,
+            String districtName, String wardName, String phone, String email, String timeZone) {
+        this.legalEntityId = legalEntityId;
+        this.cinemaName = cinemaName;
+        this.addressLine = addressLine;
+        this.provinceName = provinceName;
+        this.districtName = districtName;
+        this.wardName = wardName;
+        this.phone = phone;
+        this.email = email;
+        this.timeZone = timeZone;
+    }
+
+    public void changeStatus(CinemaStatus newStatus) {
+        this.status = newStatus;
+    }
+
+    public Long getChainId() {
+        return chainId;
+    }
+
+    public Long getLegalEntityId() {
+        return legalEntityId;
     }
 
     public Long getCinemaId() {
