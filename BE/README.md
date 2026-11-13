@@ -1,5 +1,7 @@
 # THEFILM Backend
 
+API nhân viên, tra cứu/soát vé và kho ghế theo suất: xem [tài liệu tích hợp quản trị](docs/admin-operations.md). Các module này dùng schema Oracle hiện có, không bổ sung bảng/cột/migration; các API đặt vé và tìm kiếm nhân viên hiện có được giữ tương thích.
+
 Backend đặt vé và quản lý chuỗi rạp, xây dựng bằng Java 21 và Spring Boot theo Layered Architecture.
 
 ## Kiến trúc hiện tại
@@ -28,7 +30,7 @@ Controller -> Service -> Repository -> Oracle Database
 - Response JSON thống nhất và xử lý lỗi tập trung.
 - Cấu hình JWT Resource Server đọc access token do Keycloak phát hành; public catalog mở đọc, các API nghiệp vụ khác yêu cầu token.
 - Profile local dùng H2 và dữ liệu demo; profile oracle dùng Oracle, Flyway và migration hiện có.
-- Migrations V001-V004 được đóng gói từ thư mục database/oracle/migrations; không tạo bản sao migration trong BE.
+- Migrations V001-V005 có sẵn được đóng gói từ thư mục database/oracle/migrations; không bổ sung hoặc sửa migration cho module này.
 
 ## Enum nghiệp vụ
 
@@ -70,7 +72,7 @@ Response thành công có dạng:
 
 ## Dùng Oracle và Keycloak
 
-Profile Oracle tự chạy migration V001-V004. Chỉ trỏ đến schema mới, sạch và đã cấp quyền chạy DDL; không dùng schema cũ CINEMA_DB vì nó có bộ bảng khác và migration này không chuyển đổi dữ liệu cũ.
+Profile Oracle giữ cơ chế Flyway hiện có cho V001-V005. Module nhân viên/vé/kho vé không yêu cầu thay đổi schema. Không dùng schema cũ CINEMA_DB vì nó có bộ bảng khác và các migration hiện có không chuyển đổi dữ liệu cũ.
 
 Trong PowerShell, khai báo thông tin kết nối qua biến môi trường trước khi chạy:
 
@@ -90,7 +92,8 @@ Keycloak cần phát role realm hoặc role client THEFILM_API vào claim roles.
 
 - Status phim NOW_SHOWING/COMING_SOON được suy ra từ suất chiếu trong database; APPROVED là phim được duyệt nhưng chưa có suất phù hợp.
 - Danh sách suất chiếu chỉ trả trạng thái ON_SALE. API đang trả số ghế trống và tổng ghế không bị chặn.
-- Chưa triển khai giữ ghế, thanh toán, vé, nhân viên, CSKH, hóa đơn/thuế giả lập, F&B hoặc báo cáo trong phần đầu này. Những luồng này cần được làm ở Service/Repository với transaction và khóa dữ liệu tương ứng, không tạo API giả.
-- Schema local H2 chỉ phục vụ xem API catalog. Schema đầy đủ và nguồn migration Oracle vẫn nằm trong thư mục database/oracle.
+- Đã có luồng giữ ghế, đơn hàng, thanh toán demo, phát hành vé, quản lý hồ sơ/phân công nhân viên, tra cứu/soát vé và kho ghế theo suất. Các thao tác soát vé và khóa/mở ghế dùng transaction và khóa dữ liệu ở database.
+- Ca làm/chấm công/lương, hủy/hoàn vé, CSKH, hóa đơn/thuế và báo cáo chưa thuộc phạm vi module quản trị này. Không dùng thanh toán demo thay cho cổng thanh toán thật.
+- Schema/seed local H2 được giữ nguyên. Chạy các module quản trị trên schema Oracle hiện có; fixture H2 đầy đủ hơn chỉ nằm trong src/test/resources và chỉ dùng cho kiểm thử, không được profile chạy ứng dụng nạp.
 ## Lệnh chạy BE local
 mvn spring-boot:run -Dspring-boot.run.profiles=oracle,devauth

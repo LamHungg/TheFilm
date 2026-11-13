@@ -49,6 +49,9 @@ public class TicketEntity {
         this.filmTitleSnapshot = film; this.cinemaNameSnapshot = cinema; this.roomNameSnapshot = room;
         this.screeningStartsAt = startsAt; this.seatLabelSnapshot = seatLabel;
     }
+    public void use(Long actor, OffsetDateTime at) {
+        this.ticketStatus=TicketStatus.USED; this.scannedBy=actor; this.scannedAt=at;
+    }
     public Long getTicketId() { return ticketId; }
     public SalesOrderLineEntity getOrderLine() { return orderLine; }
     public String getTicketNumber() { return ticketNumber; }

@@ -53,8 +53,8 @@ import vn.thefilm.backend.service.AuditLogService;
         "spring.flyway.enabled=false",
         "spring.jpa.hibernate.ddl-auto=none",
         "spring.sql.init.mode=always",
-        "spring.sql.init.schema-locations=classpath:db/local/schema.sql",
-        "spring.sql.init.data-locations=classpath:db/local/data.sql",
+        "spring.sql.init.schema-locations=classpath:db/admin-fixture/schema.sql",
+        "spring.sql.init.data-locations=classpath:db/admin-fixture/data.sql",
         "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://identity.thefilm.local/realms/thefilm",
         "thefilm.booking.hold-expiry-scan-ms=3600000"
 })

@@ -63,6 +63,15 @@ public class EmployeeEntity {
     protected EmployeeEntity() {
     }
 
+    public EmployeeEntity(Long chainId, String employeeCode, String fullName, LocalDate dateOfBirth,
+            String phone, String email, LocalDate hiredOn) {
+        this.chainId = chainId; this.employeeCode = employeeCode; this.status = EmployeeStatus.PENDING;
+        this.createdAt = OffsetDateTime.now(); updateProfile(fullName, dateOfBirth, phone, email, hiredOn);
+    }
+    public void updateProfile(String fullName, LocalDate dateOfBirth, String phone, String email, LocalDate hiredOn) {
+        this.fullName=fullName; this.dateOfBirth=dateOfBirth; this.phone=phone; this.email=email; this.hiredOn=hiredOn;
+    }
+
     public Long getEmployeeId() {
         return employeeId;
     }

@@ -13,9 +13,11 @@ import vn.thefilm.backend.entity.EmployeeAssignmentEntity;
 @Repository
 public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssignmentEntity, Long> {
 
+    List<EmployeeAssignmentEntity> findByEmployee_EmployeeIdOrderByValidFromDesc(Long employeeId);
+
     @Query("SELECT a FROM EmployeeAssignmentEntity a WHERE a.employee.employeeId = :employeeId "
             + "AND a.assignmentStatus = vn.thefilm.backend.enums.EmployeeAssignmentStatus.ACTIVE AND a.validFrom <= :today "
-            + "AND (a.validTo IS NULL OR a.validTo >= :today)")
+            + "AND (a.validTo IS NULL OR a.validTo > :today)")
     List<EmployeeAssignmentEntity> findActiveAssignments(@Param("employeeId") Long employeeId,
             @Param("today") LocalDate today);
 }
