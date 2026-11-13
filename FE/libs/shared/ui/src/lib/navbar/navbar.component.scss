@@ -3,329 +3,318 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  width: 100%;
 }
 
 .thefilm-header {
-  width: 100%;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e4e9;
-  height: 74px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid #E2E8F0;
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.05);
 }
 
 .header-inner {
-  max-width: 1440px;
-  width: 100%;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 2.5rem;
+  padding: 0 32px;
+  height: 76px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
 }
 
-// Left side: Brand + Desktop Navigation
 .header-left {
   display: flex;
   align-items: center;
-  gap: 2.75rem;
+  gap: 32px;
 }
 
-// Right side: Search + CTA Actions
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-// Logo THEFILM (Figma: TF red box 36x36 + 'THEFILM' 18px 800)
 .brand-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
   text-decoration: none;
-  cursor: pointer;
   flex-shrink: 0;
 
   .logo-sq {
-    width: 36px;
-    height: 36px;
-    background-color: #c90e29;
-    color: #ffffff;
-    font-weight: 800;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+    color: #FFFFFF;
+    font-family: var(--font-display);
     font-size: 15px;
-    border-radius: 8px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
     display: flex;
     align-items: center;
     justify-content: center;
-    letter-spacing: -0.01em;
+    box-shadow: 0 8px 18px -4px rgba(225, 29, 72, 0.4);
   }
 
   .brand-name {
-    font-size: 19px;
+    font-family: var(--font-display);
+    font-size: 20px;
     font-weight: 800;
-    color: #111827;
-    letter-spacing: -0.02em;
+    color: #0F172A;
+    letter-spacing: -0.03em;
   }
 }
 
-// Desktop Nav Links (Figma: PHIM, RẠP CHIẾU, THÀNH VIÊN, ƯU ĐÃI, TRỢ GIÚP - Uppercase, 13px, SemiBold)
 .desktop-nav {
-  display: none;
+  display: flex;
   align-items: center;
-  gap: 1.85rem;
-
-  @media (min-width: 992px) {
-    display: flex;
-  }
+  gap: 4px;
+  background: #F1F5F9;
+  padding: 5px;
+  border-radius: 999px;
+  border: 1px solid #E2E8F0;
 
   .nav-item {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: #4b5563;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #475569;
     text-decoration: none;
-    padding: 0.5rem 0.15rem;
-    position: relative;
-    transition: color 0.15s ease;
+    transition: all 0.2s ease;
+    white-space: nowrap;
 
     &:hover {
-      color: #c90e29;
+      color: #0F172A;
+      background: rgba(255, 255, 255, 0.7);
     }
 
     &.active {
-      color: #111827;
-      font-weight: 700;
+      color: #E11D48;
+      background: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
     }
   }
 }
 
-// Search Bar (Figma: Width 320px, Height 40px, Pill 999px, #F4F5F7, Placeholder 'Tìm phim, rạp chiếu...')
-.search-bar-wrap {
-  display: none;
-  position: relative;
-  width: 320px;
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
 
-  @media (min-width: 1200px) {
-    display: flex;
-    align-items: center;
-  }
+.search-bar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 240px;
 
   .search-icon {
     position: absolute;
-    left: 1.1rem;
-    color: #6b7280;
+    left: 14px;
+    color: #64748B;
     pointer-events: none;
   }
 
   input {
     width: 100%;
     height: 40px;
-    background-color: #f4f5f7;
-    border: 1px solid #e5e7eb;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
     border-radius: 999px;
-    padding: 0 1.25rem 0 2.65rem;
+    padding: 0 16px 0 38px;
     font-size: 13px;
-    color: #111827;
-    outline: none;
-    transition: all 0.15s ease;
+    font-weight: 500;
+    color: #0F172A;
+    transition: all 0.2s ease;
 
     &::placeholder {
-      color: #6b7280;
-      font-size: 13px;
+      color: #94A3B8;
     }
 
     &:focus {
-      background-color: #ffffff;
-      border-color: #c90e29;
-      box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.1);
+      outline: none;
+      background: #FFFFFF;
+      border-color: #E11D48;
+      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
     }
   }
 }
 
-// Header Actions (Figma: ĐĂNG NHẬP & MUA VÉ Pill Buttons)
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-shrink: 0;
+  gap: 10px;
+}
 
-  // ĐĂNG NHẬP Button (Figma: White pill, 1px solid #E2E4E9, radius 999px, height 40px)
-  .btn-login-figma {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    padding: 0 1.45rem;
-    background-color: #ffffff;
-    border: 1px solid #e2e4e9;
-    border-radius: 999px;
-    color: #111827;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-decoration: none;
-    cursor: pointer;
-    transition: all 0.15s ease;
+.btn-login-figma {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  color: #0F172A;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 
-    @media (min-width: 640px) {
-      display: inline-flex;
-    }
-
-    &:hover {
-      border-color: #cbd5e1;
-      background-color: #f9fafb;
-      color: #c90e29;
-    }
-  }
-
-  // Nút · MUA VÉ (Figma: Pill 999px, #C90E29, white bold)
-  .btn-buy-figma {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    padding: 0 1.65rem;
-    background-color: #c90e29;
-    color: #ffffff;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    box-shadow: none;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background-color: #a80b22;
-      box-shadow: 0 3px 10px rgba(201, 14, 41, 0.25);
-    }
-  }
-
-  .mobile-toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: #1a1b21;
-    cursor: pointer;
-    padding: 0.35rem;
-    border-radius: 6px;
-
-    @media (min-width: 992px) {
-      display: none;
-    }
-
-    &:hover {
-      background-color: #f7f8fb;
-    }
+  &:hover {
+    background: #FFF1F2;
+    border-color: #FDA4AF;
+    color: #E11D48;
   }
 }
 
-// Mobile Menu Drawer
+.btn-buy-figma {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  box-shadow: 0 8px 18px -4px rgba(225, 29, 72, 0.38);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -4px rgba(225, 29, 72, 0.48);
+  }
+}
+
+.mobile-toggle-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #0F172A;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Mobile Drawer */
 .mobile-drawer-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(15, 23, 42, 0.5);
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(4px);
-  z-index: 1100;
   display: flex;
   justify-content: flex-end;
+}
 
-  .drawer-panel {
-    width: 82%;
-    max-width: 320px;
-    height: 100%;
-    background-color: #ffffff;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-    animation: slideDrawer 0.25s ease-out;
-  }
+.drawer-panel {
+  width: min(340px, 88vw);
+  height: 100%;
+  background: #FFFFFF;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: -12px 0 36px rgba(15, 23, 42, 0.15);
 
   .drawer-top {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #f1f5f9;
+    justify-content: space-between;
 
     .btn-close {
-      background: none;
-      border: none;
-      font-size: 1.25rem;
-      color: #666b78;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #0F172A;
+      font-size: 16px;
       cursor: pointer;
     }
   }
 
-  .drawer-search {
-    margin-bottom: 1.25rem;
-
-    input {
-      width: 100%;
-      height: 40px;
-      background-color: #f7f8fb;
-      border: 1px solid #e2e4e9;
-      border-radius: 999px;
-      padding: 0 1rem;
-      font-size: 13px;
-      outline: none;
-    }
+  .drawer-search input {
+    width: 100%;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+    padding: 0 14px;
+    font-size: 14px;
+    color: #0F172A;
   }
 
   .drawer-nav-list {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 6px;
     flex: 1;
 
     a {
-      padding: 0.75rem 0.85rem;
-      color: #1a1b21;
-      text-decoration: none;
-      font-size: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
       font-weight: 600;
-      border-radius: 8px;
+      font-size: 14px;
+      color: #334155;
+      text-decoration: none;
 
       &:hover,
       &.active {
-        background-color: #fee2e2;
-        color: #c90e29;
+        background: #FFF1F2;
+        color: #E11D48;
       }
     }
   }
 
   .drawer-bottom {
-    padding-top: 1.25rem;
-    border-top: 1px solid #f1f5f9;
-
     .btn-drawer-buy {
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 44px;
-      background-color: #c90e29;
-      color: #ffffff;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 13px;
+      width: 100%;
+      height: 46px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+      color: #FFFFFF;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 13.5px;
       text-decoration: none;
     }
   }
 }
 
-@keyframes slideDrawer {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+@media (max-width: 1120px) {
+  .desktop-nav {
+    display: none;
+  }
+  .mobile-toggle-btn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 720px) {
+  .header-inner {
+    padding: 0 18px;
+    height: 68px;
+  }
+  .search-bar-wrap,
+  .btn-buy-figma {
+    display: none;
+  }
 }

@@ -1,0 +1,45 @@
+<button
+  type="button"
+  class="ts-trigger"
+  role="combobox"
+  aria-haspopup="listbox"
+  [id]="inputId"
+  [attr.aria-label]="ariaLabel"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="listId"
+  [attr.aria-activedescendant]="open() && activeIndex() >= 0 ? listId + '-' + activeIndex() : null"
+  [disabled]="disabled"
+  (click)="toggle()"
+  (keydown)="onKeydown($event)"
+  (blur)="onBlur()"
+>
+  <span class="ts-value" [class.is-empty]="isEmpty">{{ selectedLabel }}</span>
+  <svg class="ts-chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+    <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+</button>
+
+@if (open()) {
+  <ul class="ts-list" role="listbox" tabindex="-1" [id]="listId" [attr.aria-labelledby]="inputId">
+    @for (option of options; track $index; let i = $index) {
+      <li
+        role="option"
+        class="ts-option"
+        [id]="listId + '-' + i"
+        [attr.aria-selected]="option.value === value()"
+        [class.is-active]="i === activeIndex()"
+        [class.is-selected]="option.value === value()"
+        (pointerdown)="$event.preventDefault()"
+        (pointerenter)="activeIndex.set(i)"
+        (click)="choose(i)"
+      >
+        <span>{{ option.label }}</span>
+        @if (option.value === value()) {
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        }
+      </li>
+    }
+  </ul>
+}

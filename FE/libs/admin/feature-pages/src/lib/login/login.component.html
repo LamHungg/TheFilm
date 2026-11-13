@@ -1,0 +1,70 @@
+<div class="login-page">
+  <section class="showcase">
+    <div class="grain"></div>
+    <div class="content">
+      <div class="mark" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p class="eyebrow">THEFILM · Operations</p>
+      <h1>Console vận hành chuỗi rạp chiếu phim.</h1>
+      <p class="lead">
+        Một nơi để duyệt phim, mở suất, theo dõi doanh thu và xử lý CSKH —
+        gọn như Halcyon, mang bản sắc THEFILM.
+      </p>
+      <div class="stats">
+        <div><strong>4</strong><span>rạp active</span></div>
+        <div><strong>78%</strong><span>lấp đầy</span></div>
+        <div><strong>1.2k</strong><span>vé hôm nay</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-pane">
+    <div class="login-card">
+      <p class="welcome">Đăng nhập</p>
+      <h2>Vào THEFILM Admin</h2>
+      <p class="sub">Tài khoản nội bộ chuỗi rạp</p>
+
+      @if (error()) {
+        <nz-alert nzType="error" [nzMessage]="error()" nzShowIcon class="mb"></nz-alert>
+      }
+
+      <form nz-form nzLayout="vertical" (ngSubmit)="submit()">
+        <nz-form-item>
+          <nz-form-label>Email quản trị</nz-form-label>
+          <nz-form-control>
+            <nz-input-wrapper>
+              <span nzInputPrefix nz-icon nzType="mail"></span>
+              <input
+                nz-input
+                name="email"
+                [(ngModel)]="email"
+                placeholder="admin@thefilm.vn"
+                autocomplete="username"
+              />
+            </nz-input-wrapper>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label>Mật khẩu</nz-form-label>
+          <nz-form-control>
+            <nz-input-wrapper>
+              <span nzInputPrefix nz-icon nzType="lock"></span>
+              <input
+                nz-input
+                type="password"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+              />
+            </nz-input-wrapper>
+          </nz-form-control>
+        </nz-form-item>
+
+        <button nz-button nzType="primary" nzBlock nzSize="large" [nzLoading]="loading()">
+          Tiếp tục
+        </button>
+      </form>
+    </div>
+  </section>
+</div>

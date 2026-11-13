@@ -1,0 +1,54 @@
+<div class="page">
+  <div class="table-card">
+    <nz-table [nzData]="rows()" [nzPageSize]="8" nzHideOnSinglePage nzSize="middle">
+      <thead>
+        <tr>
+          <th>Mã</th>
+          <th>Chủ đề</th>
+          <th>Khách</th>
+          <th>Kênh</th>
+          <th>Ưu tiên</th>
+          <th>Trạng thái</th>
+          <th>Cập nhật</th>
+          <th nzWidth="64px" nzAlign="center"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td>{{ row.ticketCode }}</td>
+            <td>{{ row.subject }}</td>
+            <td>{{ row.customerName }}</td>
+            <td>{{ statusLabel(row.channel) }}</td>
+            <td><nz-tag [nzColor]="priorityColor(row.priority)">{{ statusLabel(row.priority) }}</nz-tag></td>
+            <td><nz-tag [nzColor]="statusColor(row.status)">{{ statusLabel(row.status) }}</nz-tag></td>
+            <td>{{ formatDateTime(row.updatedAt) }}</td>
+            <td nzAlign="center">
+              @if (row.status !== 'CLOSED') {
+                <button
+                  nz-button
+                  nzType="text"
+                  class="row-more-btn"
+                  nz-dropdown
+                  [nzDropdownMenu]="supportMenu"
+                  nzTrigger="click"
+                  nzPlacement="bottomRight"
+                >
+                  <span nz-icon nzType="ellipsis"></span>
+                </button>
+                <nz-dropdown-menu #supportMenu="nzDropdownMenu">
+                  <ul nz-menu class="row-more-menu">
+                    <li nz-menu-item (click)="advance(row)">
+                      <span nz-icon nzType="forward"></span>
+                      Chuyển bước
+                    </li>
+                  </ul>
+                </nz-dropdown-menu>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>

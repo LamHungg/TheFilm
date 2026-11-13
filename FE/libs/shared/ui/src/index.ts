@@ -4,3 +4,4 @@ export * from './lib/badge/badge.component';
 export * from './lib/poster/poster.component';
 export * from './lib/movie-card/movie-card.component';
 export * from './lib/quick-booking/quick-booking.component';
+export * from './lib/select/select.component';

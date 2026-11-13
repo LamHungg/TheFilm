@@ -1,0 +1,10 @@
+{
+  "name": "admin-feature-pages",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/admin/feature-pages/src",
+  "prefix": "admin",
+  "tags": [],
+  "projectType": "library",
+  "// targets": "to see all targets run: nx show project admin-feature-pages --web",
+  "targets": {}
+}

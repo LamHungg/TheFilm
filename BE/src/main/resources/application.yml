@@ -7,6 +7,10 @@ spring:
     name: thefilm-backend
   profiles:
     default: local
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 210MB
 server:
   port: 8080
   shutdown: graceful
@@ -14,6 +18,8 @@ server:
 app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4300}
+  media:
+    dir: ${APP_MEDIA_DIR:uploads}
 
 management:
   endpoints:

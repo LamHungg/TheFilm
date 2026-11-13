@@ -1,154 +1,153 @@
 .footer-wrapper {
-  background-color: #16161a;
-  color: #94a3b8;
-  margin-top: 5rem;
-  padding: 4rem 0 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  padding: 64px 0 32px;
+  margin-top: 80px;
+  color: #475569;
 }
 
 .footer-container {
-  max-width: 1440px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 0 4rem;
-
-  @media (max-width: 768px) {
-    padding: 0 1.5rem;
-  }
+  padding: 0 32px;
 }
 
 .footer-main-row {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 3rem;
-  margin-bottom: 3.5rem;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1.5fr 1fr 1fr;
-    gap: 4rem;
-  }
+  grid-template-columns: 1.4fr 1fr 1.2fr;
+  gap: 48px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .footer-brand-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
   .brand-logo {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1.25rem;
+    gap: 12px;
 
     .logo-box {
-      width: 36px;
-      height: 36px;
-      background-color: #c90e29;
-      color: #ffffff;
-      font-weight: 800;
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+      color: #FFFFFF;
+      font-family: var(--font-display);
       font-size: 14px;
-      border-radius: 8px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
-      letter-spacing: -0.01em;
+      box-shadow: 0 6px 14px -4px rgba(225, 29, 72, 0.35);
     }
 
     .logo-text {
-      font-size: 1.35rem;
+      font-family: var(--font-display);
+      font-size: 20px;
       font-weight: 800;
-      color: #ffffff;
-      letter-spacing: -0.02em;
+      color: #0F172A;
+      letter-spacing: -0.03em;
     }
   }
 
   .brand-slogan {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #94a3b8;
-    margin: 0;
+    font-size: 14.5px;
+    color: #64748B;
+    line-height: 1.7;
   }
 }
 
 .footer-links-col {
   .col-heading {
-    color: #f8fafc;
-    font-size: 0.82rem;
+    font-family: var(--font-display);
+    font-size: 12.5px;
     font-weight: 800;
-    margin-bottom: 1.25rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: #0F172A;
+    margin-bottom: 18px;
   }
 
   .col-links {
     list-style: none;
-    padding: 0;
-    margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 12px;
 
     li {
+      font-size: 14px;
+      color: #64748B;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.88rem;
-      color: #94a3b8;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-      &.notice-item {
-        color: #64748b;
-        font-size: 0.82rem;
-        margin-top: 0.5rem;
+    a {
+      color: #475569;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #E11D48;
       }
+    }
 
-      .sep {
-        color: #475569;
-      }
+    .sep {
+      color: #CBD5E1;
+    }
 
-      a {
-        color: #94a3b8;
-        text-decoration: none;
-        transition: color 0.15s ease;
-
-        &:hover {
-          color: #c90e29;
-        }
-      }
+    .notice-item {
+      margin-top: 4px;
+      font-size: 12.5px;
+      color: #94A3B8;
     }
   }
 }
 
 .footer-bottom-bar {
-  padding-top: 1.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 24px;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.82rem;
-  color: #64748b;
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-  }
-
-  .copyright-text {
-    color: #64748b;
-  }
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #64748B;
 
   .legal-links {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 10px;
 
     a {
-      color: #64748b;
+      color: #475569;
+      font-weight: 600;
       text-decoration: none;
-      transition: color 0.15s ease;
 
       &:hover {
-        color: #94a3b8;
+        color: #E11D48;
       }
     }
 
     .sep {
-      color: #334155;
+      color: #CBD5E1;
     }
+  }
+}
+
+@media (max-width: 900px) {
+  .footer-main-row {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .footer-bottom-bar {
+    flex-direction: column;
+    text-align: center;
   }
 }

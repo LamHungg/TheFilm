@@ -115,7 +115,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(apiAccessDeniedHandler(objectMapper)))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**", "/media/**").permitAll()
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         .anyRequest().permitAll())
@@ -136,7 +136,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(apiAccessDeniedHandler(objectMapper)))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**", "/media/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new DevAdminAuthFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -159,7 +159,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(apiAccessDeniedHandler(objectMapper)))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/public/**", "/api/v1/auth/**", "/media/**").permitAll()
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

@@ -1,0 +1,318 @@
+<div class="page">
+  <div class="toolbar">
+    <div class="filters">
+      <input
+        nz-input
+        placeholder="Tìm theo tên phim, đạo diễn..."
+        [ngModel]="keyword()"
+        (ngModelChange)="keyword.set($event)"
+      />
+      <nz-select
+        style="width: 200px"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      >
+        <nz-option nzValue="ALL" nzLabel="Tất cả trạng thái"></nz-option>
+        @for (s of statuses; track s) {
+          <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+        }
+      </nz-select>
+    </div>
+    <button nz-button nzType="primary" (click)="openCreate()">
+      <span nz-icon nzType="plus"></span>
+      Thêm phim
+    </button>
+  </div>
+
+  <div class="table-card">
+    <nz-table [nzData]="films()" [nzPageSize]="8" nzHideOnSinglePage nzSize="middle">
+      <thead>
+        <tr>
+          <th>Phim</th>
+          <th>Thể loại</th>
+          <th>Thời lượng</th>
+          <th>Khởi chiếu</th>
+          <th>Trạng thái</th>
+          <th nzWidth="64px" nzAlign="center"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (film of films(); track film.id) {
+          <tr>
+            <td>
+              <div class="film-cell">
+                <img [src]="film.posterUrl" [alt]="film.title" />
+                <div>
+                  <strong>{{ film.title }}</strong>
+                  <small>{{ film.ageRating }} · {{ film.director }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              @for (g of film.genres; track g) {
+                <nz-tag>{{ g }}</nz-tag>
+              }
+            </td>
+            <td>{{ film.durationMin }} phút</td>
+            <td>{{ formatDate(film.releaseDate) }}</td>
+            <td><nz-tag [nzColor]="statusColor(film.status)">{{ statusLabel(film.status) }}</nz-tag></td>
+            <td nzAlign="center">
+              <button
+                nz-button
+                nzType="text"
+                class="row-more-btn"
+                nz-dropdown
+                [nzDropdownMenu]="filmMenu"
+                nzTrigger="click"
+                nzPlacement="bottomRight"
+              >
+                <span nz-icon nzType="ellipsis"></span>
+              </button>
+              <nz-dropdown-menu #filmMenu="nzDropdownMenu">
+                <ul nz-menu class="row-more-menu">
+                  <li nz-menu-item (click)="openEdit(film)">
+                    <span nz-icon nzType="edit"></span>
+                    Sửa
+                  </li>
+                  @if (film.status === 'PENDING_REVIEW' || film.status === 'DRAFT') {
+                    <li nz-menu-item (click)="approve(film)">
+                      <span nz-icon nzType="check"></span>
+                      Duyệt
+                    </li>
+                  }
+                  <li nz-menu-divider></li>
+                  <li nz-menu-item nzDanger (click)="remove(film)">
+                    <span nz-icon nzType="delete"></span>
+                    Xoá
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>
+
+<nz-modal
+  class="film-modal"
+  [nzVisible]="modalOpen()"
+  [nzTitle]="editingId() ? 'Cập nhật phim' : 'Thêm phim mới'"
+  [nzWidth]="960"
+  [nzFooter]="modalFooter"
+  (nzOnCancel)="modalOpen.set(false)"
+>
+  <ng-container *nzModalContent>
+    <form nz-form nzLayout="vertical" class="film-form">
+      <aside class="media-pane">
+        <div class="media-block">
+          <div class="media-label">
+            <span>Poster</span>
+            <small>Ảnh dọc 2:3</small>
+          </div>
+          <div class="poster-frame" [class.empty]="!posterPreview || posterBroken()">
+            @if (posterPreview && !posterBroken()) {
+              <img
+                [src]="posterPreview"
+                [alt]="form.title || 'Poster'"
+                (error)="posterBroken.set(true)"
+              />
+            } @else {
+              <div class="placeholder">
+                <span nz-icon nzType="picture" nzTheme="outline"></span>
+                <p>Chưa có poster</p>
+              </div>
+            }
+          </div>
+          <nz-upload
+            class="media-drop"
+            nzType="drag"
+            nzName="file"
+            nzAccept="image/jpeg,image/png,image/webp"
+            [nzAction]="uploadUrl"
+            [nzShowUploadList]="false"
+            [nzBeforeUpload]="beforePosterUpload"
+            [nzDisabled]="uploading() !== null"
+            (nzChange)="onUpload($event, 'poster')"
+          >
+            <span nz-icon nzType="cloud-upload" nzTheme="outline" class="drop-icon"></span>
+            <p class="drop-title">Kéo thả hoặc bấm để tải ảnh</p>
+            <p class="drop-hint">JPG, PNG, WebP · tối đa 5 MB</p>
+          </nz-upload>
+          @if (uploading() === 'poster') {
+            <nz-progress [nzPercent]="uploadPercent()" nzSize="small" [nzStrokeColor]="'#c48a14'"></nz-progress>
+          }
+          <label class="source-field">
+            <span>Hoặc dán URL ảnh</span>
+            <input
+              type="url"
+              [ngModel]="form.posterUrl"
+              (ngModelChange)="onPosterUrlChange($event)"
+              name="poster"
+              placeholder="https://..."
+            />
+          </label>
+        </div>
+
+        <div class="media-block">
+          <div class="media-label">
+            <span>Trailer</span>
+            <small>Video hoặc YouTube</small>
+          </div>
+          <div class="trailer-frame" [class.empty]="!trailerEmbed && !trailerVideo">
+            @if (trailerVideo; as video) {
+              <video [src]="video" controls preload="metadata"></video>
+            } @else if (trailerEmbed; as embed) {
+              <iframe
+                [src]="embed"
+                title="Trailer preview"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              ></iframe>
+            } @else {
+              <div class="placeholder">
+                <span nz-icon nzType="play-circle" nzTheme="outline"></span>
+                <p>Chưa có trailer</p>
+              </div>
+            }
+          </div>
+          <nz-upload
+            class="media-drop"
+            nzType="drag"
+            nzName="file"
+            nzAccept="video/mp4,video/webm"
+            [nzAction]="uploadUrl"
+            [nzShowUploadList]="false"
+            [nzBeforeUpload]="beforeTrailerUpload"
+            [nzDisabled]="uploading() !== null"
+            (nzChange)="onUpload($event, 'trailer')"
+          >
+            <span nz-icon nzType="cloud-upload" nzTheme="outline" class="drop-icon"></span>
+            <p class="drop-title">Kéo thả hoặc bấm để tải video</p>
+            <p class="drop-hint">MP4, WebM · tối đa 200 MB</p>
+          </nz-upload>
+          @if (uploading() === 'trailer') {
+            <nz-progress [nzPercent]="uploadPercent()" nzSize="small" [nzStrokeColor]="'#c48a14'"></nz-progress>
+          }
+          <label class="source-field">
+            <span>Hoặc dán link YouTube</span>
+            <input
+              type="url"
+              [(ngModel)]="form.trailerUrl"
+              name="trailer"
+              placeholder="https://youtube.com/watch?v=..."
+            />
+          </label>
+        </div>
+      </aside>
+
+      <div class="fields-pane">
+        <div class="grid-2">
+          <nz-form-item>
+            <nz-form-label>Tên phim</nz-form-label>
+            <nz-form-control>
+              <input nz-input [(ngModel)]="form.title" name="title" placeholder="Tên tiếng Việt" />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label>Tên gốc</nz-form-label>
+            <nz-form-control>
+              <input
+                nz-input
+                [(ngModel)]="form.originalTitle"
+                name="originalTitle"
+                placeholder="Original title"
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+
+        <div class="grid-2">
+          <nz-form-item>
+            <nz-form-label>Đạo diễn</nz-form-label>
+            <nz-form-control>
+              <input nz-input [(ngModel)]="form.director" name="director" />
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label>Thể loại</nz-form-label>
+            <nz-form-control>
+              <input
+                nz-input
+                [(ngModel)]="form.genresText"
+                name="genres"
+                placeholder="Hành động, Tình cảm..."
+              />
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+
+        <div class="grid-3">
+          <nz-form-item>
+            <nz-form-label>Thời lượng</nz-form-label>
+            <nz-form-control>
+              <nz-input-wrapper>
+                <input
+                  nz-input
+                  type="number"
+                  [(ngModel)]="form.durationMin"
+                  name="duration"
+                />
+                <span nzInputSuffix>phút</span>
+              </nz-input-wrapper>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label>Độ tuổi</nz-form-label>
+            <nz-form-control>
+              <nz-select [(ngModel)]="form.ageRating" name="age">
+                @for (r of ratings; track r) {
+                  <nz-option [nzValue]="r" [nzLabel]="r"></nz-option>
+                }
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+          <nz-form-item>
+            <nz-form-label>Trạng thái</nz-form-label>
+            <nz-form-control>
+              <nz-select [(ngModel)]="form.status" name="status">
+                @for (s of statuses; track s) {
+                  <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+                }
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
+        </div>
+
+        <nz-form-item>
+          <nz-form-label>Ngày khởi chiếu</nz-form-label>
+          <nz-form-control>
+            <input nz-input type="date" [(ngModel)]="form.releaseDate" name="releaseDate" />
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label>Tóm tắt</nz-form-label>
+          <nz-form-control>
+            <textarea
+              nz-input
+              rows="5"
+              [(ngModel)]="form.synopsis"
+              name="synopsis"
+              placeholder="Mô tả ngắn cho trang chi tiết phim..."
+            ></textarea>
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<ng-template #modalFooter>
+  <button nz-button nzType="default" (click)="modalOpen.set(false)">Huỷ</button>
+  <button nz-button nzType="primary" (click)="save()">
+    {{ editingId() ? 'Lưu thay đổi' : 'Thêm phim' }}
+  </button>
+</ng-template>

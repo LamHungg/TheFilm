@@ -1,0 +1,115 @@
+<div class="shell">
+  <aside class="sider">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">TF</div>
+      <div>
+        <strong>THEFILM</strong>
+        <span>Quản trị chuỗi rạp</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <p class="nav-label">Vận hành</p>
+      @for (item of navMain; track item.path) {
+        <a
+          class="nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+        >
+          <span nz-icon [nzType]="item.icon"></span>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+
+      <p class="nav-label">Kinh doanh</p>
+      @for (item of navOps; track item.path) {
+        <a
+          class="nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+        >
+          <span nz-icon [nzType]="item.icon"></span>
+          <span>{{ item.label }}</span>
+          @if (item.badge && openSupport() > 0) {
+            <em>{{ openSupport() }}</em>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sider-bottom">
+      <div class="quota">
+        <div class="quota-top">
+          <span>Công suất ghế hôm nay</span>
+          <strong>78%</strong>
+        </div>
+        <div class="quota-bar"><span style="width: 78%"></span></div>
+        <small>1.248 / 1.600 ghế đã bán</small>
+      </div>
+
+      <div class="sider-user" nz-dropdown [nzDropdownMenu]="userMenu" nzPlacement="topLeft">
+        <nz-avatar
+          [nzSize]="36"
+          nzText="{{ user()?.name?.charAt(0) || 'A' }}"
+          style="background:#e2a93b;color:#17181c;font-weight:700"
+        ></nz-avatar>
+        <div>
+          <strong>{{ user()?.name }}</strong>
+          <span>{{ user()?.email }}</span>
+        </div>
+        <span nz-icon nzType="down"></span>
+      </div>
+      <nz-dropdown-menu #userMenu="nzDropdownMenu">
+        <ul nz-menu>
+          <li nz-menu-item disabled>{{ user()?.role }} · {{ user()?.cinemaScope }}</li>
+          <li nz-menu-divider></li>
+          <li nz-menu-item (click)="logout()">
+            <span nz-icon nzType="logout"></span>
+            Đăng xuất
+          </li>
+        </ul>
+      </nz-dropdown-menu>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs">
+        THEFILM <span>/</span> {{ pageMeta().title }}
+      </div>
+
+      <div class="search">
+        <span nz-icon nzType="search"></span>
+        <input
+          type="search"
+          placeholder="Tìm phim, rạp, đơn hàng..."
+          [(ngModel)]="search"
+        />
+        <kbd>/</kbd>
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-btn" type="button" nz-tooltip nzTooltipTitle="Thông báo">
+          <span nz-icon nzType="bell"></span>
+          @if (openSupport() > 0) {
+            <i>{{ openSupport() }}</i>
+          }
+        </button>
+        <button nz-button nzType="default">
+          <span nz-icon nzType="download"></span>
+          Export
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h1>{{ pageMeta().title }}</h1>
+          <p>{{ pageMeta().subtitle }}</p>
+        </div>
+      </div>
+      <router-outlet />
+    </main>
+  </div>
+</div>

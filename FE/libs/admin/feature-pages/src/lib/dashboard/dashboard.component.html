@@ -1,0 +1,141 @@
+<div class="dash">
+  <div class="dash-toolbar">
+    <div class="range">
+      @for (r of ranges; track r) {
+        <button
+          type="button"
+          [class.active]="range() === r"
+          (click)="range.set(r)"
+        >
+          {{ r.toUpperCase() }}
+        </button>
+      }
+    </div>
+    <div class="actions">
+      <a nz-button nzType="default" routerLink="/films">Duyệt phim</a>
+      <a nz-button nzType="primary" routerLink="/screenings">
+        <span nz-icon nzType="plus"></span>
+        Tạo suất chiếu
+      </a>
+    </div>
+  </div>
+
+  <section class="kpi-grid">
+    @for (kpi of kpis(); track kpi.id; let i = $index) {
+      <article class="kpi" [style.animation-delay.ms]="i * 60">
+        <div class="kpi-top">
+          <span>{{ kpi.label }}</span>
+          <em [class.up]="kpi.up" [class.down]="!kpi.up">{{ kpi.delta }}</em>
+        </div>
+        <strong>{{ kpi.value }}</strong>
+        <svg viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+          <polyline
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            [attr.points]="sparkPoints(kpi.spark)"
+          />
+        </svg>
+      </article>
+    }
+  </section>
+
+  <section class="chart-panel">
+    <div class="panel-head">
+      <div>
+        <h3>Doanh thu theo ngày</h3>
+        <p>So sánh kỳ hiện tại với kỳ trước · đơn vị triệu đồng</p>
+      </div>
+      <div class="legend">
+        <span><i class="now"></i> Kỳ này</span>
+        <span><i class="prev"></i> Kỳ trước</span>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="chart">
+        <path [attr.d]="chartArea()" class="area"></path>
+        <path [attr.d]="chartPath('previous')" class="prev-line"></path>
+        <path [attr.d]="chartPath('current')" class="now-line"></path>
+      </svg>
+      <div class="ticks">
+        @for (p of chartPoints; track p.tick) {
+          <span>{{ p.tick }}</span>
+        }
+      </div>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Lấp đầy theo rạp</h3>
+        <span>Hôm nay</span>
+      </div>
+      @for (item of occupancy(); track item.cinemaName) {
+        <div class="occ-row">
+          <div class="occ-meta">
+            <strong>{{ item.cinemaName }}</strong>
+            <span>{{ item.screenings }} suất</span>
+          </div>
+          <nz-progress
+            [nzPercent]="item.occupancy"
+            [nzStrokeColor]="item.occupancy > 85 ? '#c48a14' : '#0f766e'"
+            [nzShowInfo]="true"
+          ></nz-progress>
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Suất sắp tới</h3>
+        <a routerLink="/screenings">Xem lịch</a>
+      </div>
+      <div class="show-list">
+        @for (row of upcoming(); track row.id) {
+          <div class="show-item">
+            <div>
+              <strong>{{ row.filmTitle }}</strong>
+              <span>{{ row.cinemaName }} · {{ row.roomName }}</span>
+            </div>
+            <div class="show-side">
+              <b>{{ formatDateTime(row.startAt) }}</b>
+              <small>{{ row.soldSeats }}/{{ row.totalSeats }}</small>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+
+  <section class="panel orders">
+    <div class="panel-head">
+      <h3>Đơn gần đây</h3>
+      <a routerLink="/orders">Tất cả đơn</a>
+    </div>
+    <nz-table [nzData]="recentOrders()" [nzFrontPagination]="false" nzSize="middle">
+      <thead>
+        <tr>
+          <th>Mã đơn</th>
+          <th>Khách</th>
+          <th>Phim</th>
+          <th>Tổng</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of recentOrders(); track order.id) {
+          <tr>
+            <td><code>{{ order.orderCode }}</code></td>
+            <td>{{ order.customerName }}</td>
+            <td>{{ order.filmTitle }}</td>
+            <td>{{ formatVnd(order.totalAmount) }}</td>
+            <td><nz-tag [nzColor]="orderColor(order.status)">{{ statusLabel(order.status) }}</nz-tag></td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </section>
+</div>

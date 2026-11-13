@@ -1,0 +1,66 @@
+<div class="page">
+  <div class="toolbar">
+    <input
+      nz-input
+      placeholder="Tìm rạp theo tên, mã, tỉnh..."
+      [ngModel]="keyword()"
+      (ngModelChange)="keyword.set($event)"
+      style="max-width: 360px"
+    />
+  </div>
+
+  <div nz-row [nzGutter]="[16, 16]">
+    @for (cinema of cinemas(); track cinema.id) {
+      <div nz-col [nzXs]="24" [nzMd]="12" [nzXl]="8">
+        <nz-card class="cinema-card" [nzBordered]="false">
+          <div class="card-top">
+            <div>
+              <span class="code">{{ cinema.code }}</span>
+              <h3>{{ cinema.name }}</h3>
+            </div>
+            <nz-tag [nzColor]="statusColor(cinema.status)">{{ statusLabel(cinema.status) }}</nz-tag>
+          </div>
+          <p>{{ cinema.address }}</p>
+          <p class="muted">{{ cinema.province }} · {{ cinema.phone }}</p>
+          <div class="card-foot">
+            <strong>{{ cinema.roomCount }} phòng</strong>
+            <button nz-button nzType="link" (click)="openRooms(cinema)">
+              Xem phòng
+              <span nz-icon nzType="arrow-right"></span>
+            </button>
+          </div>
+        </nz-card>
+      </div>
+    }
+  </div>
+</div>
+
+<nz-drawer
+  [nzVisible]="drawerOpen()"
+  [nzTitle]="selected()?.name || 'Phòng chiếu'"
+  nzWidth="480"
+  (nzOnClose)="drawerOpen.set(false)"
+>
+  <ng-container *nzDrawerContent>
+    <nz-table [nzData]="roomsOfSelected()" [nzFrontPagination]="false" nzSize="small">
+      <thead>
+        <tr>
+          <th>Phòng</th>
+          <th>Loại</th>
+          <th>Ghế</th>
+          <th>Trạng thái</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (room of roomsOfSelected(); track room.id) {
+          <tr>
+            <td>{{ room.name }}</td>
+            <td>{{ room.roomType }}</td>
+            <td>{{ room.seatCount }}</td>
+            <td><nz-tag [nzColor]="statusColor(room.status)">{{ statusLabel(room.status) }}</nz-tag></td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </ng-container>
+</nz-drawer>

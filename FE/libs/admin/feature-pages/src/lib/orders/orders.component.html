@@ -1,0 +1,121 @@
+<div class="page">
+  <div class="toolbar">
+    <input
+      nz-input
+      placeholder="Tìm mã đơn, khách, phim..."
+      [ngModel]="keyword()"
+      (ngModelChange)="keyword.set($event)"
+      style="max-width: 320px"
+    />
+    <nz-select
+      style="width: 200px"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event)"
+    >
+      <nz-option nzValue="ALL" nzLabel="Tất cả trạng thái"></nz-option>
+      @for (s of statuses; track s) {
+        <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+      }
+    </nz-select>
+  </div>
+
+  <div class="table-card">
+    <nz-table [nzData]="rows()" [nzPageSize]="8" nzHideOnSinglePage nzSize="middle">
+      <thead>
+        <tr>
+          <th>Mã đơn</th>
+          <th>Khách</th>
+          <th>Phim / suất</th>
+          <th>Ghế</th>
+          <th>Tổng</th>
+          <th>Trạng thái</th>
+          <th nzWidth="64px" nzAlign="center"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of rows(); track order.id) {
+          <tr>
+            <td>{{ order.orderCode }}</td>
+            <td>
+              <div>{{ order.customerName }}</div>
+              <small>{{ order.customerPhone }}</small>
+            </td>
+            <td>
+              <div>{{ order.filmTitle }}</div>
+              <small>{{ formatDateTime(order.showtimeAt) }}</small>
+            </td>
+            <td>{{ order.seatLabels.join(', ') }}</td>
+            <td>{{ formatVnd(order.totalAmount) }}</td>
+            <td><nz-tag [nzColor]="statusColor(order.status)">{{ statusLabel(order.status) }}</nz-tag></td>
+            <td nzAlign="center">
+              <button
+                nz-button
+                nzType="text"
+                class="row-more-btn"
+                nz-dropdown
+                [nzDropdownMenu]="orderMenu"
+                nzTrigger="click"
+                nzPlacement="bottomRight"
+              >
+                <span nz-icon nzType="ellipsis"></span>
+              </button>
+              <nz-dropdown-menu #orderMenu="nzDropdownMenu">
+                <ul nz-menu class="row-more-menu">
+                  <li nz-menu-item (click)="open(order)">
+                    <span nz-icon nzType="eye"></span>
+                    Chi tiết
+                  </li>
+                  @if (order.status === 'PENDING_PAYMENT') {
+                    <li nz-menu-item (click)="markPaid(order)">
+                      <span nz-icon nzType="check"></span>
+                      Xác nhận đã TT
+                    </li>
+                  }
+                  @if (order.status === 'PAID') {
+                    <li nz-menu-item nzDanger (click)="refund(order)">
+                      <span nz-icon nzType="stop"></span>
+                      Hoàn tiền
+                    </li>
+                  }
+                </ul>
+              </nz-dropdown-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>
+
+<nz-drawer
+  [nzVisible]="drawerOpen()"
+  [nzTitle]="selected()?.orderCode || 'Chi tiết đơn'"
+  nzWidth="460"
+  (nzOnClose)="drawerOpen.set(false)"
+>
+  <ng-container *nzDrawerContent>
+    @if (selected(); as order) {
+      <nz-descriptions nzBordered [nzColumn]="1" nzSize="small">
+        <nz-descriptions-item nzTitle="Khách">{{ order.customerName }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="SĐT">{{ order.customerPhone }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Rạp">{{ order.cinemaName }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Phim">{{ order.filmTitle }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Suất">{{ formatDateTime(order.showtimeAt) }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Ghế">{{ order.seatLabels.join(', ') }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Tổng">{{ formatVnd(order.totalAmount) }}</nz-descriptions-item>
+        <nz-descriptions-item nzTitle="Trạng thái">
+          <nz-tag [nzColor]="statusColor(order.status)">{{ statusLabel(order.status) }}</nz-tag>
+        </nz-descriptions-item>
+      </nz-descriptions>
+
+      <div class="actions">
+        @if (order.status === 'PENDING_PAYMENT') {
+          <button nz-button nzType="primary" (click)="markPaid(order)">Xác nhận đã thanh toán</button>
+        }
+        @if (order.status === 'PAID') {
+          <button nz-button nzDanger (click)="refund(order)">Hoàn tiền</button>
+        }
+      </div>
+    }
+  </ng-container>
+</nz-drawer>
