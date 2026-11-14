@@ -49,7 +49,7 @@ public class CinemaScopeServiceImpl implements CinemaScopeService {
         }
 
         OffsetDateTime now = OffsetDateTime.now();
-        LocalDate today = now.toLocalDate();
+        LocalDate today = now.atZoneSameInstant(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
         Set<Long> cinemaIds = userCinemaScopeRepository.findActiveScopes(appUserId, now).stream()
                 .map(scope -> scope.getCinema().getCinemaId())
                 .collect(Collectors.toCollection(LinkedHashSet::new));

@@ -28,8 +28,8 @@ import vn.thefilm.backend.enums.SeatHoldStatus;
         "spring.flyway.enabled=false",
         "spring.jpa.hibernate.ddl-auto=none",
         "spring.sql.init.mode=always",
-        "spring.sql.init.schema-locations=classpath:db/local/schema.sql",
-        "spring.sql.init.data-locations=classpath:db/local/data.sql"
+        "spring.sql.init.schema-locations=classpath:db/admin-fixture/schema.sql",
+        "spring.sql.init.data-locations=classpath:db/admin-fixture/data.sql"
 })
 @Transactional
 class BookingRepositoryTests {

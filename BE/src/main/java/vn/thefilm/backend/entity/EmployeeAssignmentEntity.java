@@ -58,6 +58,19 @@ public class EmployeeAssignmentEntity {
     protected EmployeeAssignmentEntity() {
     }
 
+    public EmployeeAssignmentEntity(EmployeeEntity employee, CinemaEntity cinema, Long departmentId,
+            Long jobPositionId, LocalDate validFrom, LocalDate validTo, AppUserEntity actor) {
+        this.employee=employee; this.cinema=cinema; this.departmentId=departmentId; this.jobPositionId=jobPositionId;
+        this.validFrom=validFrom; this.validTo=validTo; this.changedBy=actor;
+        this.assignmentStatus=EmployeeAssignmentStatus.ACTIVE; this.createdAt=OffsetDateTime.now();
+    }
+    public void end(LocalDate validTo, AppUserEntity actor) {
+        this.validTo=validTo; this.changedBy=actor;
+        // A future termination remains effective until validTo.
+        this.assignmentStatus=!validTo.isAfter(LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
+                ? EmployeeAssignmentStatus.ENDED : EmployeeAssignmentStatus.ACTIVE;
+    }
+
     public Long getEmployeeAssignmentId() {
         return employeeAssignmentId;
     }

@@ -18,6 +18,16 @@ import vn.thefilm.backend.enums.ShowSeatStatus;
 public interface ShowSeatRepository extends JpaRepository<ShowSeatEntity, Long> {
 
     @Query("""
+            SELECT s.screening.screeningId AS screeningId, COUNT(s) AS total,
+              SUM(CASE WHEN s.seatStatus = vn.thefilm.backend.enums.ShowSeatStatus.AVAILABLE THEN 1 ELSE 0 END) AS available,
+              SUM(CASE WHEN s.seatStatus = vn.thefilm.backend.enums.ShowSeatStatus.HELD THEN 1 ELSE 0 END) AS held,
+              SUM(CASE WHEN s.seatStatus = vn.thefilm.backend.enums.ShowSeatStatus.SOLD THEN 1 ELSE 0 END) AS sold,
+              SUM(CASE WHEN s.seatStatus = vn.thefilm.backend.enums.ShowSeatStatus.BLOCKED THEN 1 ELSE 0 END) AS blocked
+            FROM ShowSeatEntity s WHERE s.screening.screeningId IN :ids GROUP BY s.screening.screeningId
+            """)
+    List<InventorySeatCounts> inventoryCounts(@Param("ids") Collection<Long> ids);
+
+    @Query("""
             SELECT ss.screening.screeningId AS screeningId,
                    SUM(CASE WHEN ss.seatStatus = :availableStatus THEN 1 ELSE 0 END) AS availableSeats,
                    SUM(CASE WHEN ss.seatStatus <> :blockedStatus THEN 1 ELSE 0 END) AS totalSeats

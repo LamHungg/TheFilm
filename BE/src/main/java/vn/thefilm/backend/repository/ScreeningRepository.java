@@ -15,7 +15,7 @@ import vn.thefilm.backend.enums.FilmApprovalStatus;
 import vn.thefilm.backend.enums.ScreeningStatus;
 
 @Repository
-public interface ScreeningRepository extends JpaRepository<ScreeningEntity, Long> {
+public interface ScreeningRepository extends JpaRepository<ScreeningEntity, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<ScreeningEntity> {
 
     @Query("""
             SELECT s

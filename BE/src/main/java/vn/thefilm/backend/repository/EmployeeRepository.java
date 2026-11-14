@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import vn.thefilm.backend.entity.EmployeeEntity;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<EmployeeEntity, Long> {
+public interface EmployeeRepository extends JpaRepository<EmployeeEntity, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<EmployeeEntity> {
 
     Optional<EmployeeEntity> findByAppUser_AppUserId(Long appUserId);
 

@@ -117,6 +117,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/health", "/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/v1/admin/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(mockAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(userAccountStatusFilter, MockCustomerAuthenticationFilter.class)

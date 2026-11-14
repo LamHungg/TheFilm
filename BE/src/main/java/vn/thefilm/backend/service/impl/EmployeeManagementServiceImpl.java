@@ -197,21 +197,26 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
             return toDto(employee);
         }
 
+        java.time.LocalDate terminatedOn = status == EmployeeStatus.TERMINATED
+                ? (employee.getTerminatedOn() == null
+                    ? java.time.LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")) : employee.getTerminatedOn())
+                : null;
+        if (terminatedOn != null && employee.getHiredOn() != null && terminatedOn.isBefore(employee.getHiredOn())) {
+            throw new IllegalArgumentException("Ngày nghỉ không được trước ngày vào làm.");
+        }
+        java.time.LocalDate previousTerminatedOn = employee.getTerminatedOn();
         entityManager.createNativeQuery("""
-                UPDATE employee
-                SET status = :status,
-                    terminated_on = CASE WHEN :status = 'TERMINATED'
-                                         THEN COALESCE(terminated_on, CURRENT_DATE)
-                                         ELSE NULL END
-                WHERE employee_id = :employeeId
+                UPDATE employee SET status = :status, terminated_on = :terminatedOn WHERE employee_id = :employeeId
                 """)
                 .setParameter("status", status.name())
+                .setParameter("terminatedOn", terminatedOn)
                 .setParameter("employeeId", employeeId)
                 .executeUpdate();
         entityManager.refresh(employee);
 
         Map<String, Object> before = new LinkedHashMap<>();
         before.put("status", previousStatus == null ? null : previousStatus.name());
+        before.put("terminatedOn", previousTerminatedOn == null ? null : previousTerminatedOn.toString());
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("status", status.name());
         after.put("terminatedOn", employee.getTerminatedOn() == null ? null : employee.getTerminatedOn().toString());

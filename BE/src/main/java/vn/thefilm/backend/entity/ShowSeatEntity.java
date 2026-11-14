@@ -59,6 +59,9 @@ public class ShowSeatEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    public void blockManually() { this.seatStatus=ShowSeatStatus.BLOCKED; }
+    public void unblockManually() { release(); }
+
     @PrePersist
     void setCreatedAt() { if (createdAt == null) createdAt = OffsetDateTime.now(); }
 

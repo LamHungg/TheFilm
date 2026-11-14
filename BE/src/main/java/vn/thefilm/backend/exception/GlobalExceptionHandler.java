@@ -51,6 +51,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure("VALIDATION_FAILED", message));
     }
 
+    @ExceptionHandler({jakarta.validation.ConstraintViolationException.class,
+            org.springframework.web.method.annotation.HandlerMethodValidationException.class})
+    ResponseEntity<ApiResponse<Void>> handleMethodValidation(Exception exception) {
+        return ResponseEntity.badRequest().body(ApiResponse.failure("VALIDATION_FAILED", "Tham số không hợp lệ."));
+    }
+
     @ExceptionHandler(DataAccessException.class)
     ResponseEntity<ApiResponse<Void>> handleDatabaseUnavailable(DataAccessException exception) {
         log.error("Database operation failed", exception);

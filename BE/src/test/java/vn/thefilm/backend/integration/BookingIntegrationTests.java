@@ -42,8 +42,8 @@ import vn.thefilm.backend.service.scheduler.SeatHoldExpiryScheduler;
         "spring.flyway.enabled=false",
         "spring.jpa.hibernate.ddl-auto=none",
         "spring.sql.init.mode=always",
-        "spring.sql.init.schema-locations=classpath:db/local/schema.sql",
-        "spring.sql.init.data-locations=classpath:db/local/data.sql",
+        "spring.sql.init.schema-locations=classpath:db/admin-fixture/schema.sql",
+        "spring.sql.init.data-locations=classpath:db/admin-fixture/data.sql",
         "thefilm.booking.hold-expiry-scan-ms=3600000"
 })
 class BookingIntegrationTests {
