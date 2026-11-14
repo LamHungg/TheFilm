@@ -1,0 +1,977 @@
+{
+  "realm": "thefilm",
+  "enabled": true,
+  "displayName": "THEFILM",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 3600,
+  "roles": {
+    "realm": [
+      {
+        "name": "CHAIN_ADMIN",
+        "description": "Vai tro CHAIN_ADMIN"
+      },
+      {
+        "name": "CINEMA_MANAGER",
+        "description": "Vai tro CINEMA_MANAGER"
+      },
+      {
+        "name": "HR",
+        "description": "Vai tro HR"
+      },
+      {
+        "name": "ACCOUNTANT",
+        "description": "Vai tro ACCOUNTANT"
+      },
+      {
+        "name": "CS_LEAD",
+        "description": "Vai tro CS_LEAD"
+      },
+      {
+        "name": "CS_AGENT",
+        "description": "Vai tro CS_AGENT"
+      },
+      {
+        "name": "CASHIER",
+        "description": "Vai tro CASHIER"
+      },
+      {
+        "name": "USHER",
+        "description": "Vai tro USHER"
+      },
+      {
+        "name": "CONCESSION",
+        "description": "Vai tro CONCESSION"
+      },
+      {
+        "name": "CUSTOMER",
+        "description": "Vai tro CUSTOMER"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "thefilm-web",
+      "name": "THEFILM Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://localhost:4300/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://localhost:4300"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:4200/*##http://localhost:4300/*"
+      }
+    },
+    {
+      "clientId": "thefilm-api",
+      "name": "THEFILM API",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": true,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "id": "d3a3d7b7-5fcc-524b-b914-d3ba2480ecf9",
+      "username": "khanh.nguyen@thefilm.example",
+      "email": "khanh.nguyen@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Khánh",
+      "lastName": "Nguyễn Quốc",
+      "attributes": {
+        "employee_code": [
+          "NV0001"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CHAIN_ADMIN"
+      ]
+    },
+    {
+      "id": "9a462352-6057-706f-60d5-4392c931bbc3",
+      "username": "huong.tran@thefilm.example",
+      "email": "huong.tran@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Hương",
+      "lastName": "Trần Thị Mai",
+      "attributes": {
+        "employee_code": [
+          "NV0002"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "HR"
+      ]
+    },
+    {
+      "id": "766e322f-7aa0-dce8-57f6-5478a411506b",
+      "username": "phuc.le@thefilm.example",
+      "email": "phuc.le@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Phúc",
+      "lastName": "Lê Văn",
+      "attributes": {
+        "employee_code": [
+          "NV0003"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ACCOUNTANT"
+      ]
+    },
+    {
+      "id": "96963383-11e9-cbba-0194-6be7a05d3e09",
+      "username": "trang.pham@thefilm.example",
+      "email": "trang.pham@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Trang",
+      "lastName": "Phạm Thu",
+      "attributes": {
+        "employee_code": [
+          "NV0004"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CS_LEAD"
+      ]
+    },
+    {
+      "id": "73670965-5381-5863-665f-604a46ce54fb",
+      "username": "yen.do@thefilm.example",
+      "email": "yen.do@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Yến",
+      "lastName": "Đỗ Hải",
+      "attributes": {
+        "employee_code": [
+          "NV0005"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CS_AGENT"
+      ]
+    },
+    {
+      "id": "036b12cf-691b-5f4d-2c7e-d59025c85504",
+      "username": "tuan.vo@thefilm.example",
+      "email": "tuan.vo@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Tuấn",
+      "lastName": "Võ Minh",
+      "attributes": {
+        "employee_code": [
+          "NV0101"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CINEMA_MANAGER"
+      ]
+    },
+    {
+      "id": "dee3107a-5801-7743-f110-4d6d36e1572a",
+      "username": "lan.nguyen@thefilm.example",
+      "email": "lan.nguyen@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Lan",
+      "lastName": "Nguyễn Thị",
+      "attributes": {
+        "employee_code": [
+          "NV0102"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "2f83d1c7-abe9-2a3b-7ecf-0f2fe231da19",
+      "username": "bao.hoang@thefilm.example",
+      "email": "bao.hoang@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Bảo",
+      "lastName": "Hoàng Gia",
+      "attributes": {
+        "employee_code": [
+          "NV0103"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "6149b072-33b0-dd57-fd92-7bc540980fee",
+      "username": "huy.bui@thefilm.example",
+      "email": "huy.bui@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Huy",
+      "lastName": "Bùi Quang",
+      "attributes": {
+        "employee_code": [
+          "NV0105"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CONCESSION"
+      ]
+    },
+    {
+      "id": "351b41c8-e2cf-c303-3d12-2efbb0379a5e",
+      "username": "nhung.dang@thefilm.example",
+      "email": "nhung.dang@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Nhung",
+      "lastName": "Đặng Thị Hồng",
+      "attributes": {
+        "employee_code": [
+          "NV0201"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CINEMA_MANAGER"
+      ]
+    },
+    {
+      "id": "66b5d5e4-f9c6-6fdd-5fac-829815a6bf65",
+      "username": "viet.truong@thefilm.example",
+      "email": "viet.truong@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Việt",
+      "lastName": "Trương Quốc",
+      "attributes": {
+        "employee_code": [
+          "NV0202"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "8ec7b4b4-bda5-7bda-d61f-f632b3214b42",
+      "username": "ngan.phan@thefilm.example",
+      "email": "ngan.phan@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Ngân",
+      "lastName": "Phan Thị Kim",
+      "attributes": {
+        "employee_code": [
+          "NV0203"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "41329b04-338f-bd6a-d54b-dd21861c872e",
+      "username": "thinh.ngo@thefilm.example",
+      "email": "thinh.ngo@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Thịnh",
+      "lastName": "Ngô Đức",
+      "attributes": {
+        "employee_code": [
+          "NV0204"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USHER"
+      ]
+    },
+    {
+      "id": "3963af99-e37d-0000-4951-f21a60c918a3",
+      "username": "tu.duong@thefilm.example",
+      "email": "tu.duong@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Tú",
+      "lastName": "Dương Thị Cẩm",
+      "attributes": {
+        "employee_code": [
+          "NV0205"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CONCESSION"
+      ]
+    },
+    {
+      "id": "a1e1c515-c72a-e4ca-a2f1-2760e9b836d8",
+      "username": "long.vu@thefilm.example",
+      "email": "long.vu@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Long",
+      "lastName": "Vũ Đình",
+      "attributes": {
+        "employee_code": [
+          "NV0301"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CINEMA_MANAGER"
+      ]
+    },
+    {
+      "id": "7e9e32f0-5353-0819-b195-46108350b276",
+      "username": "thuha.nguyen@thefilm.example",
+      "email": "thuha.nguyen@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Hà",
+      "lastName": "Nguyễn Thị Thu",
+      "attributes": {
+        "employee_code": [
+          "NV0302"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "eec845b2-1f7c-ac47-10cf-8842ee9cd2ef",
+      "username": "nam.tran@thefilm.example",
+      "email": "nam.tran@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Nam",
+      "lastName": "Trần Văn",
+      "attributes": {
+        "employee_code": [
+          "NV0303"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "2c00f186-3871-16e0-5361-06c6dc75c551",
+      "username": "ngocanh.pham@thefilm.example",
+      "email": "ngocanh.pham@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Ánh",
+      "lastName": "Phạm Thị Ngọc",
+      "attributes": {
+        "employee_code": [
+          "NV0305"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CONCESSION"
+      ]
+    },
+    {
+      "id": "3cc2dfa3-f15a-aee8-0330-4a1df75e18eb",
+      "username": "thanh.huynh@thefilm.example",
+      "email": "thanh.huynh@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Thành",
+      "lastName": "Huỳnh Văn",
+      "attributes": {
+        "employee_code": [
+          "NV0401"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CINEMA_MANAGER"
+      ]
+    },
+    {
+      "id": "80da7f26-6d6e-8f9f-edb6-19ccc27f954c",
+      "username": "bichngoc.tran@thefilm.example",
+      "email": "bichngoc.tran@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Ngọc",
+      "lastName": "Trần Thị Bích",
+      "attributes": {
+        "employee_code": [
+          "NV0402"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "dcc1ec75-6b1c-594f-79a6-1c319b6ad403",
+      "username": "danh.le@thefilm.example",
+      "email": "danh.le@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Danh",
+      "lastName": "Lê Công",
+      "attributes": {
+        "employee_code": [
+          "NV0403"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CASHIER"
+      ]
+    },
+    {
+      "id": "5b535381-851f-d90d-1c25-58d7892ee7ea",
+      "username": "phuoc.nguyen@thefilm.example",
+      "email": "phuoc.nguyen@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Phước",
+      "lastName": "Nguyễn Hữu",
+      "attributes": {
+        "employee_code": [
+          "NV0404"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USHER"
+      ]
+    },
+    {
+      "id": "8c6a71c3-c936-9954-4269-d37c0c9ec1fa",
+      "username": "mylinh.doan@thefilm.example",
+      "email": "mylinh.doan@thefilm.example",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Linh",
+      "lastName": "Đoàn Thị Mỹ",
+      "attributes": {
+        "employee_code": [
+          "NV0405"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CONCESSION"
+      ]
+    },
+    {
+      "id": "cc63c87f-2632-bf7d-fcdb-63b9947f7011",
+      "username": "thanhmai.nguyen@example.com",
+      "email": "thanhmai.nguyen@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Mai",
+      "lastName": "Nguyễn Thị Thanh",
+      "attributes": {
+        "customer_code": [
+          "KH0001"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "4da63ad6-8c57-5ba9-3dbb-29fa0128f243",
+      "username": "hung.tran92@example.com",
+      "email": "hung.tran92@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Hùng",
+      "lastName": "Trần Văn",
+      "attributes": {
+        "customer_code": [
+          "KH0002"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "58b77303-866c-c786-7cab-357dc585c5c0",
+      "username": "bichphuong.le@example.com",
+      "email": "bichphuong.le@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Phượng",
+      "lastName": "Lê Thị Bích",
+      "attributes": {
+        "customer_code": [
+          "KH0003"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "9080d416-c18b-95dc-950e-6b3013dcd769",
+      "username": "vinh.pham88@example.com",
+      "email": "vinh.pham88@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Vinh",
+      "lastName": "Phạm Quang",
+      "attributes": {
+        "customer_code": [
+          "KH0004"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "1d7bf551-8ce5-aaae-39c2-bb9bfad57a0a",
+      "username": "thuhien.hoang@example.com",
+      "email": "thuhien.hoang@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Hiền",
+      "lastName": "Hoàng Thị Thu",
+      "attributes": {
+        "customer_code": [
+          "KH0005"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "52587ea5-5027-958f-66e1-e35c504f87f4",
+      "username": "quan.do03@example.com",
+      "email": "quan.do03@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Quân",
+      "lastName": "Đỗ Minh",
+      "attributes": {
+        "customer_code": [
+          "KH0006"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "21bb3f22-121d-de49-dd85-21a44cec60fd",
+      "username": "hongnhung.vu@example.com",
+      "email": "hongnhung.vu@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Nhung",
+      "lastName": "Vũ Thị Hồng",
+      "attributes": {
+        "customer_code": [
+          "KH0007"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "334a4152-85cc-c776-99dc-a56c20563b00",
+      "username": "anhtuan.bui@example.com",
+      "email": "anhtuan.bui@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Tuấn",
+      "lastName": "Bùi Anh",
+      "attributes": {
+        "customer_code": [
+          "KH0008"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "cda1d2e5-ae7d-9ea1-0786-a59289980002",
+      "username": "phuongthao.ngo@example.com",
+      "email": "phuongthao.ngo@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Thảo",
+      "lastName": "Ngô Thị Phương",
+      "attributes": {
+        "customer_code": [
+          "KH0009"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "d2f658c9-a5d0-a050-469d-c2d58bf7e19f",
+      "username": "long.dang00@example.com",
+      "email": "long.dang00@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Long",
+      "lastName": "Đặng Hoàng",
+      "attributes": {
+        "customer_code": [
+          "KH0010"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "ca6035be-d7b4-7841-8847-d189a4175018",
+      "username": "ngocdiep.phan@example.com",
+      "email": "ngocdiep.phan@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Diệp",
+      "lastName": "Phan Thị Ngọc",
+      "attributes": {
+        "customer_code": [
+          "KH0011"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "d31ca447-f497-a675-a164-6785fcb2cbdc",
+      "username": "khoa.trinh93@example.com",
+      "email": "khoa.trinh93@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Khoa",
+      "lastName": "Trịnh Văn",
+      "attributes": {
+        "customer_code": [
+          "KH0012"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "f81512cf-2fa4-11fa-57fe-5d0e7fe999e9",
+      "username": "myduyen.luong@example.com",
+      "email": "myduyen.luong@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Duyên",
+      "lastName": "Lương Thị Mỹ",
+      "attributes": {
+        "customer_code": [
+          "KH0013"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "5d42c74a-f666-67fa-151d-a1fb3e289f37",
+      "username": "thanhson.vo@example.com",
+      "email": "thanhson.vo@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Sơn",
+      "lastName": "Võ Thanh",
+      "attributes": {
+        "customer_code": [
+          "KH0014"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Thefilm@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "CUSTOMER"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Keycloak cho moi truong phat trien. Chi dung de dev, khong dung cho moi truong that.
+# Realm "thefilm" duoc nap tu keycloak/thefilm-realm.json khi container khoi dong lan dau.
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    container_name: thefilm-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: http://localhost:8081
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./keycloak/thefilm-realm.json:/opt/keycloak/data/import/thefilm-realm.json:ro
