@@ -1,0 +1,113 @@
+<nz-tabs class="page-tabs">
+  <nz-tab nzTitle="Lịch ca">
+    <div class="sched-toolbar">
+      <nz-select class="cinema-select" [ngModel]="cinema()" (ngModelChange)="cinema.set($event)" aria-label="Rạp">
+        @for (c of cinemas(); track c) {
+          <nz-option [nzValue]="c" [nzLabel]="c"></nz-option>
+        }
+      </nz-select>
+      <div class="week">
+        <button nz-button nzType="text" class="row-more-btn" aria-label="Tuần trước" (click)="weekOffset.set(weekOffset() - 1)">
+          <span nz-icon nzType="left"></span>
+        </button>
+        <span>{{ weekDays()[0].date }} – {{ weekDays()[6].date }}</span>
+        <button nz-button nzType="text" class="row-more-btn" aria-label="Tuần sau" (click)="weekOffset.set(weekOffset() + 1)">
+          <span nz-icon nzType="right"></span>
+        </button>
+      </div>
+      <div class="spacer"></div>
+      <button nz-button nzType="primary" (click)="publish()">Gửi lịch cho nhân viên</button>
+    </div>
+
+    <div class="table-card sched-card">
+      <div class="sched">
+        <div class="sched-head name">Nhân viên</div>
+        @for (d of weekDays(); track d.label) {
+          <div class="sched-head">
+            <b>{{ d.label }}</b>
+            <span>{{ d.date }}</span>
+          </div>
+        }
+        @for (p of staff(); track p.name) {
+          <div class="sched-name">
+            <b>{{ p.name }}</b>
+            <span>{{ p.count }} ca / tuần</span>
+          </div>
+          @for (slot of p.days; track $index) {
+            <button
+              type="button"
+              class="sched-cell"
+              [class.filled]="!!slot"
+              nz-dropdown
+              nzTrigger="click"
+              [nzDropdownMenu]="shiftMenu"
+              [attr.aria-label]="p.name + ' ' + weekDays()[$index].label + (slot ? ': ca ' + slot.shift : ': chưa xếp ca')"
+            >
+              @if (slot) {
+                <b>{{ slot.shift }}</b>
+                <span>{{ shiftTime(slot.shift) }}</span>
+              } @else {
+                <span nz-icon nzType="plus" class="add"></span>
+              }
+            </button>
+            <nz-dropdown-menu #shiftMenu="nzDropdownMenu">
+              <ul nz-menu class="row-more-menu">
+                @for (t of bo.shiftTemplates.items(); track t.id) {
+                  <li nz-menu-item (click)="setShift(p.name, $index, slot, t.name)">
+                    {{ t.name }} <small>{{ t.timeFrom }}–{{ t.timeTo }}</small>
+                  </li>
+                }
+                @if (slot) {
+                  <li nz-menu-divider></li>
+                  <li nz-menu-item nzDanger (click)="setShift(p.name, $index, slot, null)">Bỏ ca</li>
+                }
+              </ul>
+            </nz-dropdown-menu>
+          }
+        } @empty {
+          <p class="sched-empty">Rạp này chưa có nhân viên. Thêm ở trang Nhân viên & phân quyền.</p>
+        }
+      </div>
+    </div>
+  </nz-tab>
+
+  <nz-tab nzTitle="Chấm công">
+    <admin-resource-table
+      [rows]="bo.attendance.items()"
+      [columns]="attendanceCols"
+      [searchKeys]="['employeeName']"
+      searchPlaceholder="Tìm nhân viên"
+      filterKey="cinema"
+      filterLabel="Mọi rạp"
+      [pageSize]="20"
+    />
+  </nz-tab>
+
+  <nz-tab nzTitle="Nghỉ phép">
+    <admin-resource-table
+      [rows]="bo.leaveRequests.items()"
+      [columns]="leaveCols"
+      [actions]="leaveActions"
+      filterKey="status"
+      filterLabel="Mọi trạng thái"
+      emptyText="Không có đơn nghỉ phép"
+    />
+  </nz-tab>
+
+  <nz-tab nzTitle="Bảng lương">
+    <admin-resource-table [rows]="bo.payroll.items()" [columns]="payrollCols" [actions]="payrollActions" />
+  </nz-tab>
+
+  <nz-tab nzTitle="Mẫu ca">
+    <admin-resource-table
+      [rows]="bo.shiftTemplates.items()"
+      [columns]="templateCols"
+      [fields]="templateFields"
+      entityName="mẫu ca"
+      createLabel="Thêm mẫu ca"
+      [deletable]="true"
+      (save)="upsert(bo.shiftTemplates, $event)"
+      (remove)="bo.shiftTemplates.remove($event.id)"
+    />
+  </nz-tab>
+</nz-tabs>

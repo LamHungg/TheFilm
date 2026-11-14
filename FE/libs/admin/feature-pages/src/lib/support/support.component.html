@@ -1,0 +1,103 @@
+<nz-tabs class="page-tabs">
+<nz-tab nzTitle="Yêu cầu hỗ trợ">
+<div class="page">
+  <div class="table-card">
+    <nz-table [nzData]="rows()" [nzPageSize]="8" nzHideOnSinglePage nzSize="middle">
+      <thead>
+        <tr>
+          <th>Mã</th>
+          <th>Chủ đề</th>
+          <th>Khách</th>
+          <th>Kênh</th>
+          <th>Ưu tiên</th>
+          <th>Trạng thái</th>
+          <th>Cập nhật</th>
+          <th nzWidth="64px" nzAlign="center"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td>{{ row.ticketCode }}</td>
+            <td>{{ row.subject }}</td>
+            <td>{{ row.customerName }}</td>
+            <td>{{ statusLabel(row.channel) }}</td>
+            <td><nz-tag [nzColor]="priorityColor(row.priority)">{{ statusLabel(row.priority) }}</nz-tag></td>
+            <td><nz-tag [nzColor]="statusColor(row.status)">{{ statusLabel(row.status) }}</nz-tag></td>
+            <td>{{ formatDateTime(row.updatedAt) }}</td>
+            <td nzAlign="center">
+              @if (row.status !== 'CLOSED') {
+                <button
+                  nz-button
+                  nzType="text"
+                  class="row-more-btn"
+                  nz-dropdown
+                  [nzDropdownMenu]="supportMenu"
+                  nzTrigger="click"
+                  nzPlacement="bottomRight"
+                >
+                  <span nz-icon nzType="ellipsis"></span>
+                </button>
+                <nz-dropdown-menu #supportMenu="nzDropdownMenu">
+                  <ul nz-menu class="row-more-menu">
+                    <li nz-menu-item (click)="openThread(row)">
+                      <span nz-icon nzType="eye"></span>
+                      Xem hội thoại
+                    </li>
+                    <li nz-menu-item (click)="advance(row)">
+                      <span nz-icon nzType="forward"></span>
+                      Chuyển bước
+                    </li>
+                  </ul>
+                </nz-dropdown-menu>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>
+</nz-tab>
+<nz-tab nzTitle="Bài hướng dẫn">
+  <admin-resource-table
+    [rows]="bo.knowledge.items()"
+    [columns]="articleCols"
+    [fields]="articleFields"
+    entityName="bài hướng dẫn"
+    createLabel="Viết bài"
+    [searchKeys]="['title', 'topic']"
+    searchPlaceholder="Tìm bài theo tiêu đề, chủ đề"
+    filterKey="topic"
+    filterLabel="Mọi chủ đề"
+    [defaults]="{ status: 'DRAFT' }"
+    [deletable]="true"
+    (save)="saveArticle($event)"
+    (remove)="bo.knowledge.remove($event.id)"
+  />
+</nz-tab>
+</nz-tabs>
+
+<nz-drawer
+  [nzVisible]="!!thread()"
+  [nzTitle]="(thread()?.ticketCode ?? '') + ' · ' + (thread()?.subject ?? '')"
+  nzWidth="520"
+  (nzOnClose)="thread.set(null)"
+>
+  <ng-container *nzDrawerContent>
+    <div class="thread">
+      @for (m of messages(); track m.id) {
+        <div class="msg" [attr.data-from]="m.from">
+          <div class="msg-meta"><b>{{ m.author }}</b> · {{ formatDateTime(m.at) }}</div>
+          <p>{{ m.body }}</p>
+        </div>
+      } @empty {
+        <p class="thread-empty">Chưa có tin nhắn nào trong yêu cầu này.</p>
+      }
+    </div>
+    <form class="reply" (ngSubmit)="sendReply()">
+      <textarea nz-input rows="3" name="reply" placeholder="Trả lời khách…" [(ngModel)]="reply"></textarea>
+      <button nz-button nzType="primary" type="submit" [disabled]="!reply.trim()">Gửi</button>
+    </form>
+  </ng-container>
+</nz-drawer>

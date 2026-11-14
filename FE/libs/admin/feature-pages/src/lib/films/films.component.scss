@@ -1,0 +1,271 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: tf-rise 0.4s ease both;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+
+  input {
+    max-width: 320px;
+  }
+}
+
+.table-card {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 20px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+  padding: 10px 10px 2px;
+  overflow: hidden;
+
+  ::ng-deep .ant-table-tbody > tr > td {
+    vertical-align: middle;
+  }
+}
+
+@keyframes tf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.film-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  img {
+    width: 44px;
+    height: 62px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #eef2f7;
+  }
+
+  strong {
+    display: block;
+  }
+
+  small {
+    color: #6b7280;
+  }
+}
+
+.film-form {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.media-pane {
+  display: grid;
+  gap: 18px;
+}
+
+.media-block {
+  display: grid;
+  gap: 10px;
+}
+
+.media-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+
+  span {
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  small {
+    color: #98a2b3;
+    font-size: 12px;
+  }
+}
+
+.poster-frame,
+.trailer-frame {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background:
+    linear-gradient(160deg, #111827, #1f2937);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.poster-frame {
+  aspect-ratio: 2 / 3;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.trailer-frame {
+  aspect-ratio: 16 / 9;
+
+  iframe,
+  video {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #0b0c10;
+  }
+}
+
+.media-drop {
+  display: block;
+
+  ::ng-deep .ant-upload.ant-upload-drag {
+    border-radius: 12px;
+    border: 1px dashed rgba(196, 138, 20, 0.45);
+    background: #fffbf2;
+    transition: border-color 0.2s ease, background 0.2s ease;
+
+    &:hover:not(.ant-upload-disabled),
+    &.ant-upload-drag-hover {
+      border-color: #c48a14;
+      background: #fff5e0;
+    }
+
+    .ant-upload-btn {
+      padding: 12px 10px;
+    }
+  }
+
+  .drop-icon {
+    font-size: 22px;
+    color: #c48a14;
+  }
+
+  .drop-title {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #344054;
+  }
+
+  .drop-hint {
+    margin: 2px 0 0;
+    font-size: 11px;
+    color: #98a2b3;
+  }
+}
+
+.poster-frame.empty,
+.trailer-frame.empty {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(226, 169, 59, 0.12), transparent 50%),
+    #f8fafc;
+  border-style: dashed;
+}
+
+.placeholder {
+  height: 100%;
+  min-height: 120px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  color: #98a2b3;
+  text-align: center;
+  padding: 16px;
+
+  span[nz-icon] {
+    font-size: 28px;
+    color: #c48a14;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    max-width: 160px;
+  }
+}
+
+.source-field {
+  display: grid;
+  gap: 4px;
+
+  span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #98a2b3;
+    letter-spacing: 0.02em;
+  }
+
+  input {
+    width: 100%;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: #f8fafc;
+    color: #475467;
+    font: inherit;
+    font-size: 12px;
+    outline: none;
+
+    &:focus {
+      border-color: rgba(196, 138, 20, 0.55);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(226, 169, 59, 0.14);
+    }
+  }
+}
+
+.fields-pane {
+  .grid-2,
+  .grid-3 {
+    display: grid;
+    gap: 12px;
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .film-form {
+    grid-template-columns: 1fr;
+  }
+
+  .poster-frame {
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 720px) {
+  .fields-pane .grid-2,
+  .fields-pane .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}

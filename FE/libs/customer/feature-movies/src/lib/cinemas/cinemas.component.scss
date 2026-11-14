@@ -45,7 +45,7 @@
     font-size: 0.88rem;
 
     .loc-icon {
-      color: #c90e29;
+      color: var(--primary);
       font-size: 1.1rem;
     }
 
@@ -61,7 +61,7 @@
     .change-btn {
       background: none;
       border: none;
-      color: #c90e29;
+      color: var(--primary);
       font-weight: 800;
       font-size: 0.82rem;
       cursor: pointer;
@@ -201,7 +201,7 @@
       }
 
       .btn-showtimes {
-        background-color: #c90e29;
+        background-color: var(--primary);
         color: #ffffff;
         border: none;
         border-radius: 999px;
@@ -213,7 +213,7 @@
         transition: all 0.15s ease;
 
         &:hover {
-          background-color: #a80b22;
+          background-color: var(--primary-hover);
           transform: translateY(-1px);
         }
       }

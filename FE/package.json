@@ -4,13 +4,16 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve customer-portal",
+    "start:admin": "nx serve admin-portal",
     "build": "nx build customer-portal",
+    "build:admin": "nx build admin-portal",
     "build:prod": "nx build customer-portal --configuration=production",
     "lint": "nx run-many -t lint"
   },
   "private": true,
   "dependencies": {
     "@angular-devkit/build-angular": "~22.2.0",
+    "@angular/animations": "^22.2.4",
     "@angular/common": "~22.2.0",
     "@angular/compiler": "~22.2.0",
     "@angular/core": "~22.2.0",
@@ -19,7 +22,9 @@
     "@angular/platform-server": "~22.2.0",
     "@angular/router": "~22.2.0",
     "@angular/ssr": "~22.2.0",
+    "@ant-design/icons-angular": "^22.1.1",
     "express": "^4.21.2",
+    "ng-zorro-antd": "^22.2.0",
     "rxjs": "~7.8.0"
   },
   "devDependencies": {

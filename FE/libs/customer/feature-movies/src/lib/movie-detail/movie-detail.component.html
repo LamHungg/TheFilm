@@ -13,14 +13,23 @@
     <div class="media-column">
       <div class="banner-box">
         <thefilm-poster
-          [theme]="movie.figmaTheme"
+          [theme]="movie.figmaTheme || 'navy'"
           [title]="movie.title"
+          [imageUrl]="movie.bannerUrl || movie.posterUrl"
           variant="banner"
         ></thefilm-poster>
       </div>
 
       <!-- Quick Specs Card -->
       <div class="specs-card">
+        <div class="spec-row" *ngIf="movie.director">
+          <span class="spec-label">Đạo diễn:</span>
+          <span class="spec-value">{{ movie.director }}</span>
+        </div>
+        <div class="spec-row" *ngIf="movie.cast.length">
+          <span class="spec-label">Diễn viên:</span>
+          <span class="spec-value">{{ movie.cast.join(', ') }}</span>
+        </div>
         <div class="spec-row">
           <span class="spec-label">Khởi chiếu:</span>
           <span class="spec-value">{{ movie.releaseDate }}</span>
@@ -37,9 +46,14 @@
     </div>
 
     <div class="info-column">
-      <!-- Rating Badge (T13) -->
-      <div class="rating-badge-pill">
-        <span>{{ movie.rating }}</span>
+      <!-- Rating Badge & Score Row -->
+      <div class="badges-top-row">
+        <div class="rating-badge-pill">
+          <span>{{ movie.rating }}</span>
+        </div>
+        <div class="score-badge-pill" *ngIf="movie.score">
+          <span>★ {{ movie.score }} / 10</span>
+        </div>
       </div>
 
       <!-- Movie Title & Subtitle -->
@@ -62,9 +76,9 @@
             <strong>{{ selectedCinema?.name || 'THEFILM Nguyễn Trãi' }}</strong>
           </div>
           <div class="select-change-wrapper">
-            <select [(ngModel)]="selectedCinemaId" (change)="onCinemaChange()" class="figma-select">
-              <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }} ({{ c.city }})</option>
-            </select>
+            <thefilm-select ariaLabel="Chọn cụm rạp" [(ngModel)]="selectedCinemaId" (ngModelChange)="onCinemaChange()">
+              <thefilm-option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }} ({{ c.city }})</thefilm-option>
+            </thefilm-select>
           </div>
         </div>
 

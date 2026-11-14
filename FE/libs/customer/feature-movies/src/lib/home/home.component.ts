@@ -7,6 +7,8 @@ import {
   MovieCardComponent,
   QuickBookingComponent,
   QuickBookingSearchParams,
+  SelectComponent,
+  SelectOptionComponent,
 } from '@the-film/shared/ui';
 
 @Component({
@@ -18,6 +20,8 @@ import {
     FormsModule,
     MovieCardComponent,
     QuickBookingComponent,
+    SelectComponent,
+    SelectOptionComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',

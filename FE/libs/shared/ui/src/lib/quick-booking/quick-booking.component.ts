@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Cinema } from '@the-film/customer/data-access';
+import { SelectComponent, SelectOptionComponent } from '../select/select.component';
 
 export interface QuickBookingSearchParams {
   cinemaId: string;
@@ -13,7 +14,7 @@ export interface QuickBookingSearchParams {
 @Component({
   selector: 'thefilm-quick-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SelectComponent, SelectOptionComponent],
   templateUrl: './quick-booking.component.html',
   styleUrls: ['./quick-booking.component.scss'],
 })

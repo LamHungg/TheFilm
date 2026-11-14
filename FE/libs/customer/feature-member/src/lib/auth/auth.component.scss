@@ -38,14 +38,14 @@
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      background: #c90e29;
+      background: var(--primary);
       color: #ffffff;
       font-size: 1.35rem;
       font-weight: 900;
     }
 
     .auth-subtitle-tag {
-      color: #c90e29;
+      color: var(--primary);
       font-size: 0.75rem;
       font-weight: 800;
       letter-spacing: 0.08em;
@@ -54,7 +54,7 @@
 
   .auth-main-title {
     margin: 0 0 0.5rem;
-    color: #1a1b21;
+    color: var(--text-dark);
     font-size: 1.85rem;
     font-weight: 900;
     line-height: 1.25;
@@ -89,13 +89,13 @@
       transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 
       &.active {
-        background: #c90e29;
+        background: var(--primary);
         color: #ffffff;
-        box-shadow: 0 2px 8px rgba(201, 14, 41, 0.3);
+        box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);
       }
 
       &:focus-visible {
-        outline: 3px solid rgba(201, 14, 41, 0.35);
+        outline: 3px solid rgba(225, 29, 72, 0.35);
         outline-offset: 2px;
       }
 
@@ -122,7 +122,7 @@
     border: 1px solid #fecaca;
     border-radius: 10px;
     background: #fef2f2;
-    color: #991b1b;
+    color: var(--primary-deep);
     font-size: 0.86rem;
     line-height: 1.45;
 
@@ -183,9 +183,9 @@
         }
 
         &:focus {
-          border-color: #c90e29;
+          border-color: var(--primary);
           background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
+          box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
         }
 
         &:disabled {
@@ -219,7 +219,7 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 
     &:focus-visible {
-      outline: 3px solid rgba(201, 14, 41, 0.3);
+      outline: 3px solid rgba(225, 29, 72, 0.3);
       outline-offset: 3px;
     }
 
@@ -232,12 +232,12 @@
   .btn-auth-submit {
     margin-top: 0.25rem;
     border: 0;
-    background: #c90e29;
+    background: var(--primary);
     color: #ffffff;
     letter-spacing: 0.04em;
 
     &:hover:not(:disabled) {
-      background: #a80b22;
+      background: var(--primary-hover);
     }
   }
 
@@ -264,7 +264,7 @@
     padding: 0.25rem;
     border: 0;
     background: transparent;
-    color: #c90e29;
+    color: var(--primary);
     cursor: pointer;
     font: inherit;
     font-weight: 800;
@@ -275,7 +275,7 @@
 
     &:focus-visible {
       border-radius: 3px;
-      outline: 2px solid #c90e29;
+      outline: 2px solid var(--primary);
       outline-offset: 2px;
     }
 

@@ -1,0 +1,158 @@
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+  font-size: 14px;
+}
+
+.ts-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px 0 14px;
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: var(--radius-sm, 12px);
+  background: #f8fafc;
+  color: var(--text-dark, #0f172a);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: var(--border-strong, #cbd5e1);
+    background: #ffffff;
+  }
+
+  &:focus-visible,
+  :host(.open) & {
+    outline: none;
+    border-color: var(--primary, #e11d48);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.ts-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.is-empty {
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+  }
+}
+
+.ts-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted, #64748b);
+  transition: transform 0.2s ease;
+
+  :host(.open) & {
+    transform: rotate(180deg);
+  }
+}
+
+.ts-list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 288px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid var(--border-light, #e2e8f0);
+  border-radius: var(--radius-sm, 12px);
+  box-shadow: var(--shadow-lg, 0 24px 48px -12px rgba(15, 23, 42, 0.18));
+  animation: ts-pop 0.14s ease-out;
+}
+
+.ts-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-body, #334155);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.is-active {
+    background: var(--bg-subtle, #f1f5f9);
+    color: var(--text-dark, #0f172a);
+  }
+
+  &.is-selected {
+    color: var(--primary, #e11d48);
+    font-weight: 700;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+@keyframes ts-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-list {
+    animation: none;
+  }
+}
+
+/* Pill variant used by the movie list filters. */
+:host(.chip) {
+  width: auto;
+  font-size: 12px;
+
+  .ts-trigger {
+    min-height: 34px;
+    padding: 0 10px 0 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--bg-rose-tint, #fff1f2);
+    color: var(--primary-deep, #9f1239);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+
+    &:hover:not(:disabled) {
+      background: #fecdd3;
+    }
+  }
+
+  .ts-value.is-empty {
+    color: inherit;
+    font-weight: 700;
+  }
+
+  .ts-chevron {
+    color: currentColor;
+  }
+
+  .ts-list {
+    min-width: 200px;
+    font-size: 13px;
+    letter-spacing: normal;
+  }
+}

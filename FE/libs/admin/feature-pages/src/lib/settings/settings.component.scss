@@ -1,0 +1,89 @@
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 880px;
+}
+
+.card {
+  padding: 20px;
+  background: var(--tf-panel);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--tf-radius);
+  box-shadow: var(--tf-shadow);
+
+  header {
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    margin: 0;
+    font-family: var(--tf-font);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--tf-muted);
+    font-size: 13px;
+  }
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+
+    > span {
+      font-size: 13px;
+      font-weight: 600;
+    }
+  }
+}
+
+.toggles {
+  display: grid;
+
+  label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 48px;
+    border-top: 1px solid var(--tf-line);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  label:first-child {
+    border-top: 0;
+  }
+}
+
+.fields + .toggles {
+  margin-top: 12px;
+}
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 0;
+  background: linear-gradient(to top, var(--tf-bg) 70%, transparent);
+}
+
+@media (max-width: 720px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

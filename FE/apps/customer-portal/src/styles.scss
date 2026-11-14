@@ -1,79 +1,245 @@
-/* Core Design System & CSS Reset - 100% Figma Specifications */
+/* TheFilm - Modern Editorial Light Cinema Design System */
 :root {
-  /* Exact Figma Brand Colors */
-  --primary: #C90E29;
-  --primary-hover: #A80B22;
-  --primary-active: #8E091C;
-  --primary-light: #FEE2E2;
-  --primary-light-text: #991B1B;
-  
-  --wine-dark: #23080E;
-  --wine-hero: #2D0A12;
-  --gold: #F3A738;
-  --gold-glow: rgba(243, 167, 56, 0.4);
-  
-  /* Exact Figma Neutrals */
-  --text-dark: #1A1B21;
-  --text-body: #333640;
-  --text-muted: #666B78;
-  --text-light: #FFFFFF;
-  
+  color-scheme: light;
+
+  /* Light Surfaces */
+  --bg-page: #F6F7FB;
   --bg-white: #FFFFFF;
-  --bg-subtle: #F7F8FB;
-  --bg-page: #F8FAFC;
-  --border-light: #E2E4E9;
-  --border-focus: #C90E29;
-  
-  /* Status Colors */
-  --success: #10B981;
-  --success-light: #D1FAE5;
-  --warning: #F59E0B;
-  
-  /* Exact Figma Corner Radii */
-  --radius-pill: 999px;
-  --radius-card: 16px;
-  --radius-card-lg: 20px;
-  --radius-input: 10px;
-  --radius-btn: 12px;
-  --radius-sm: 6px;
-  
-  /* Global Typography */
-  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --bg-subtle: #F1F5F9;
+  --bg-elevated: #FFFFFF;
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-rose-tint: #FFF1F2;
+  --bg-amber-tint: #FFFBEB;
+
+  /* Brand & Accent Colors */
+  --primary: #E11D48;
+  --primary-hover: #BE123C;
+  --primary-deep: #9F1239;
+  --primary-glow: rgba(225, 29, 72, 0.22);
+  --accent-gold: #D97706;
+  --accent-amber: #F59E0B;
+
+  /* Typography */
+  --text-dark: #0F172A;
+  --text-body: #334155;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
+
+  /* Borders & Dividers */
+  --border-light: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --border-strong: #CBD5E1;
+
+  /* Radius & Shadows */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  --shadow-xs: 0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 6px 16px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 14px 32px -8px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, 0.12), 0 8px 20px -4px rgba(15, 23, 42, 0.05);
+  --shadow-primary: 0 10px 24px -6px rgba(225, 29, 72, 0.35);
+
+  /* Fonts */
+  --font-display: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 html {
-  font-family: var(--font-family);
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--text-dark);
-  background-color: var(--bg-page);
   scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-page);
 }
 
 body {
-  font-family: var(--font-family);
-  min-height: 100vh;
-  overflow-x: clip;
+  font-family: var(--font-sans);
+  background-color: var(--bg-page);
+  background-image:
+    radial-gradient(circle at 12% 0%, rgba(225, 29, 72, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 88% 8%, rgba(245, 158, 11, 0.05) 0%, transparent 40%);
+  background-attachment: fixed;
   color: var(--text-dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-/* Ensure all form controls use Inter */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
 button, input, select, textarea {
-  font-family: var(--font-family);
+  font-family: inherit;
 }
 
-/* Custom Scrollbar */
+/* Global Design System Buttons */
+.figma-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -6px rgba(225, 29, 72, 0.45);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.figma-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FFFFFF;
+  color: var(--text-dark);
+  border: 1px solid var(--border-light);
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: #FFF1F2;
+    border-color: #FDA4AF;
+    color: var(--primary);
+    transform: translateY(-1px);
+  }
+}
+
+/* Global Form Controls (Light Mode) */
+.figma-select {
+  appearance: none;
+  width: 100%;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 11px 38px 11px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+
+  &:hover:not(:disabled) {
+    border-color: #CBD5E1;
+    background-color: #FFFFFF;
+  }
+
+  &:focus {
+    outline: none;
+    background-color: #FFFFFF;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background-color: #F1F5F9;
+  }
+
+  option {
+    background-color: #FFFFFF;
+    color: var(--text-dark);
+  }
+}
+
+.figma-input {
+  width: 100%;
+  background-color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dark);
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: var(--text-light);
+  }
+
+  &:hover {
+    border-color: #CBD5E1;
+    background-color: #FFFFFF;
+  }
+
+  &:focus {
+    outline: none;
+    background-color: #FFFFFF;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.12);
+  }
+}
+
+.figma-card {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom Light Scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -82,214 +248,9 @@ button, input, select, textarea {
 
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-/* ========================================================
-   GLOBAL FIGMA UI COMPONENTS: BUTTONS (btn), COMBOBOXES (cbx), CHECKBOXES
-   ======================================================== */
-
-/* Figma Pill Primary Button */
-.figma-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  height: 40px;
-  padding: 0 1.5rem;
-  background-color: var(--primary);
-  color: #FFFFFF !important;
-  font-family: var(--font-family);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  border: none;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 6px rgba(201, 14, 41, 0.25);
+  border-radius: 999px;
 
   &:hover {
-    background-color: var(--primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(201, 14, 41, 0.35);
-  }
-
-  &:active {
-    background-color: var(--primary-active);
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    background-color: #CBD5E1;
-    color: #94A3B8 !important;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-  }
-}
-
-/* Figma Secondary Button (White with border) */
-.figma-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  height: 40px;
-  padding: 0 1.25rem;
-  background-color: var(--bg-white);
-  color: var(--text-dark) !important;
-  font-family: var(--font-family);
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-btn);
-  cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-
-  &:hover {
-    border-color: #CBD5E1;
-    background-color: var(--bg-subtle);
-    color: var(--primary) !important;
-  }
-}
-
-/* Figma Combobox / Select Dropdown (.figma-select) */
-.figma-select, select.figma-control {
-  appearance: none;
-  width: 100%;
-  height: 42px;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-input);
-  padding: 0 36px 0 14px;
-  font-family: var(--font-family);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-dark);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666B78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.15s ease;
-
-  &:hover {
-    border-color: #CBD5E1;
-  }
-
-  &:focus {
-    border-color: var(--primary);
-    background-color: var(--bg-white);
-    box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
-  }
-}
-
-/* Figma Text Input (.figma-input) */
-.figma-input, input.figma-control {
-  width: 100%;
-  height: 42px;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-input);
-  padding: 0 14px;
-  font-family: var(--font-family);
-  font-size: 13px;
-  color: var(--text-dark);
-  outline: none;
-  transition: all 0.15s ease;
-
-  &::placeholder {
-    color: var(--text-muted);
-    font-size: 13px;
-  }
-
-  &:hover {
-    border-color: #CBD5E1;
-  }
-
-  &:focus {
-    border-color: var(--primary);
-    background-color: var(--bg-white);
-    box-shadow: 0 0 0 3px rgba(201, 14, 41, 0.12);
-  }
-}
-
-/* Figma Custom Checkbox (.figma-checkbox) */
-.figma-checkbox-wrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  cursor: pointer;
-  user-select: none;
-  font-size: 13px;
-  color: var(--text-dark);
-
-  input[type="checkbox"] {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background-color: var(--bg-subtle);
-    border: 1.5px solid #CBD5E1;
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.15s ease;
-    margin: 0;
-    flex-shrink: 0;
-
-    &:checked {
-      background-color: var(--primary);
-      border-color: var(--primary);
-
-      &::after {
-        content: '';
-        position: absolute;
-        left: 5px;
-        top: 2px;
-        width: 4px;
-        height: 8px;
-        border: solid #FFFFFF;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
-      }
-    }
-
-    &:focus {
-      box-shadow: 0 0 0 2px rgba(201, 14, 41, 0.2);
-    }
-  }
-}
-
-/* Figma Pink Filter Pill Chip (.figma-chip-pink) */
-.figma-chip-pink {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  background-color: var(--primary-light);
-  color: var(--primary-light-text);
-  border: none;
-  border-radius: var(--radius-pill);
-  padding: 0 16px;
-  font-family: var(--font-family);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  outline: none;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background-color: #FECACA;
+    background: #94A3B8;
   }
 }

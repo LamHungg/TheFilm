@@ -26,35 +26,35 @@
     <!-- Filter Dropdown Chips (Figma Pink Pills: #FEE2E2 / #991B1B) -->
     <div class="filter-chips-row">
       <div class="chip-dropdown">
-        <select [(ngModel)]="selectedGenre" (change)="applyFilters()">
-          <option value="">THỂ LOẠI</option>
-          <option *ngFor="let g of availableGenres" [value]="g">{{ g }}</option>
-        </select>
+        <thefilm-select variant="chip" ariaLabel="Thể loại" [(ngModel)]="selectedGenre" (ngModelChange)="applyFilters()">
+          <thefilm-option value="">THỂ LOẠI</thefilm-option>
+          <thefilm-option *ngFor="let g of availableGenres" [value]="g">{{ g }}</thefilm-option>
+        </thefilm-select>
       </div>
 
       <div class="chip-dropdown">
-        <select [(ngModel)]="selectedDateFilter" (change)="applyFilters()">
-          <option value="">NGÀY CHIẾU</option>
-          <option value="today">Hôm nay (01/11)</option>
-          <option value="tomorrow">Ngày mai (02/11)</option>
-          <option value="weekend">Cuối tuần</option>
-        </select>
+        <thefilm-select variant="chip" ariaLabel="Ngày chiếu" [(ngModel)]="selectedDateFilter" (ngModelChange)="applyFilters()">
+          <thefilm-option value="">NGÀY CHIẾU</thefilm-option>
+          <thefilm-option value="today">Hôm nay (01/11)</thefilm-option>
+          <thefilm-option value="tomorrow">Ngày mai (02/11)</thefilm-option>
+          <thefilm-option value="weekend">Cuối tuần</thefilm-option>
+        </thefilm-select>
       </div>
 
       <div class="chip-dropdown">
-        <select [(ngModel)]="selectedFormat" (change)="applyFilters()">
-          <option value="">ĐỊNH DẠNG</option>
-          <option value="2D">2D Digital</option>
-          <option value="3D">3D Digital</option>
-          <option value="IMAX">IMAX Laser</option>
-        </select>
+        <thefilm-select variant="chip" ariaLabel="Định dạng" [(ngModel)]="selectedFormat" (ngModelChange)="applyFilters()">
+          <thefilm-option value="">ĐỊNH DẠNG</thefilm-option>
+          <thefilm-option value="2D">2D Digital</thefilm-option>
+          <thefilm-option value="3D">3D Digital</thefilm-option>
+          <thefilm-option value="IMAX">IMAX Laser</thefilm-option>
+        </thefilm-select>
       </div>
 
       <div class="chip-dropdown">
-        <select [(ngModel)]="selectedCinemaFilter" (change)="applyFilters()">
-          <option value="">RẠP CHIẾU</option>
-          <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }}</option>
-        </select>
+        <thefilm-select variant="chip" ariaLabel="Rạp chiếu" [(ngModel)]="selectedCinemaFilter" (ngModelChange)="applyFilters()">
+          <thefilm-option value="">RẠP CHIẾU</thefilm-option>
+          <thefilm-option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }}</thefilm-option>
+        </thefilm-select>
       </div>
     </div>
   </div>

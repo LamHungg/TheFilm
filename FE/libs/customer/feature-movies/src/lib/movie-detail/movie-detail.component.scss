@@ -10,15 +10,15 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 13px;
-  color: #666b78;
+  color: var(--text-muted);
   margin-bottom: 2rem;
 
   a {
-    color: #1a1b21;
+    color: var(--text-dark);
     text-decoration: none;
 
     &:hover {
-      color: #c90e29;
+      color: var(--primary);
     }
   }
 
@@ -27,7 +27,7 @@
   }
 
   .current {
-    color: #c90e29;
+    color: var(--primary);
     font-weight: 700;
   }
 }
@@ -78,11 +78,11 @@
       }
 
       .spec-label {
-        color: #666b78;
+        color: var(--text-muted);
       }
 
       .spec-value {
-        color: #1a1b21;
+        color: var(--text-dark);
         font-weight: 700;
       }
     }
@@ -94,11 +94,32 @@
   display: flex;
   flex-direction: column;
 
+  .badges-top-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+
+    .rating-badge-pill {
+      margin-bottom: 0;
+    }
+  }
+
+  .score-badge-pill {
+    padding: 0.25rem 0.65rem;
+    border-radius: 4px;
+    background-color: var(--bg-amber-tint);
+    color: var(--accent-gold);
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
   .rating-badge-pill {
     align-self: flex-start;
     display: inline-block;
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: var(--bg-rose-tint);
+    color: var(--primary-deep);
     padding: 0.25rem 0.65rem;
     border-radius: 4px;
     font-size: 11px;
@@ -109,7 +130,7 @@
   .movie-title {
     font-size: 2.25rem;
     font-weight: 800;
-    color: #1a1b21;
+    color: var(--text-dark);
     line-height: 1.2;
     margin: 0 0 0.5rem;
     letter-spacing: -0.02em;
@@ -117,7 +138,7 @@
 
   .movie-meta-sub {
     font-size: 14px;
-    color: #666b78;
+    color: var(--text-muted);
     margin: 0 0 1.25rem;
   }
 
@@ -141,7 +162,7 @@
 
   .section-badge-label {
     display: inline-block;
-    color: #c90e29;
+    color: var(--primary);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -173,13 +194,13 @@
 
     .c-label {
       font-size: 10px;
-      color: #666b78;
+      color: var(--text-muted);
       font-weight: 700;
       letter-spacing: 0.05em;
     }
 
     strong {
-      color: #1a1b21;
+      color: var(--text-dark);
       font-size: 15px;
     }
   }
@@ -203,7 +224,7 @@
 
   .date-pill {
     background-color: #f7f8fb;
-    color: #666b78;
+    color: var(--text-muted);
     border: 1px solid #e2e4e9;
     border-radius: 999px;
     padding: 0.55rem 1.25rem;
@@ -216,14 +237,14 @@
 
     &:hover {
       background-color: #e2e4e9;
-      color: #1a1b21;
+      color: var(--text-dark);
     }
 
     &.active {
-      background-color: #c90e29;
-      border-color: #c90e29;
+      background-color: var(--primary);
+      border-color: var(--primary);
       color: #ffffff;
-      box-shadow: 0 2px 8px rgba(201, 14, 41, 0.35);
+      box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35);
     }
   }
 }
@@ -236,7 +257,7 @@
     display: block;
     font-size: 11px;
     font-weight: 700;
-    color: #666b78;
+    color: var(--text-muted);
     letter-spacing: 0.05em;
     margin-bottom: 0.65rem;
   }
@@ -254,19 +275,19 @@
       font-family: inherit;
       font-size: 12px;
       font-weight: 700;
-      color: #666b78;
+      color: var(--text-muted);
       cursor: pointer;
       transition: all 0.15s ease;
 
       &:hover {
-        border-color: #c90e29;
-        color: #c90e29;
+        border-color: var(--primary);
+        color: var(--primary);
       }
 
       &.active {
-        background-color: #fee2e2;
-        border-color: #fee2e2;
-        color: #991b1b;
+        background-color: var(--bg-rose-tint);
+        border-color: var(--bg-rose-tint);
+        color: var(--primary-deep);
       }
     }
   }
@@ -314,30 +335,30 @@
       transition: all 0.2s ease;
 
       &:hover {
-        border-color: #c90e29;
-        box-shadow: 0 4px 12px rgba(201, 14, 41, 0.15);
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);
         transform: translateY(-2px);
 
         .time {
-          color: #c90e29;
+          color: var(--primary);
         }
       }
 
       .time {
         font-size: 1.15rem;
         font-weight: 800;
-        color: #1a1b21;
+        color: var(--text-dark);
       }
 
       .price {
         font-size: 12px;
         font-weight: 700;
-        color: #c90e29;
+        color: var(--primary);
       }
 
       .seats {
         font-size: 11px;
-        color: #666b78;
+        color: var(--text-muted);
       }
     }
   }
@@ -345,7 +366,7 @@
   .empty-showtimes {
     text-align: center;
     padding: 2.5rem 1rem;
-    color: #666b78;
+    color: var(--text-muted);
     font-size: 13px;
     background-color: #f7f8fb;
     border-radius: 10px;

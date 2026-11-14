@@ -1,0 +1,86 @@
+@if (room(); as r) {
+  <div class="layout-page">
+    <div class="head">
+      <a routerLink="/cinemas" class="back"><span nz-icon nzType="left"></span> Rạp & phòng</a>
+      <h2>{{ r.name }} <small>{{ cinema()?.name }} · {{ r.roomType }}</small></h2>
+      <div class="actions">
+        @if (dirty()) {
+          <span class="unsaved">Chưa lưu</span>
+          <button nz-button (click)="discard()">Huỷ thay đổi</button>
+        }
+        <button nz-button nzType="primary" [disabled]="!dirty()" (click)="save()">Lưu sơ đồ</button>
+      </div>
+    </div>
+
+    <div class="tools" role="radiogroup" aria-label="Công cụ tô ghế">
+      @for (t of tools; track t.key) {
+        <button
+          type="button"
+          role="radio"
+          class="tool"
+          [attr.aria-checked]="tool() === t.key"
+          [attr.data-kind]="t.key"
+          (click)="tool.set(t.key)"
+        >
+          <i></i>{{ t.label }}
+        </button>
+      }
+    </div>
+
+    <section class="card map-card">
+      <div class="map-scroll">
+        <div class="map">
+          <div class="screen">Màn hình</div>
+          @for (row of rows(); track row.row) {
+            <div class="row">
+              <span class="row-label">{{ row.row }}</span>
+              @for (s of row.seats; track s.col) {
+                <button
+                  type="button"
+                  class="seat"
+                  [attr.data-kind]="s.kind"
+                  [class.broken]="s.broken"
+                  [attr.aria-label]="s.kind === 'GAP' ? 'Lối đi' : label(s)"
+                  [title]="label(s)"
+                  (click)="paint(s)"
+                >
+                  @if (s.kind !== 'GAP') {
+                    {{ s.col }}
+                  }
+                </button>
+              }
+              <span class="row-label">{{ row.row }}</span>
+            </div>
+          }
+        </div>
+      </div>
+      <footer class="legend">
+        <span><i data-kind="STANDARD"></i>Thường <b>{{ counts().standard }}</b></span>
+        <span><i data-kind="VIP"></i>VIP <b>{{ counts().vip }}</b></span>
+        <span><i data-kind="COUPLE"></i>Đôi <b>{{ counts().couple }}</b></span>
+        <span><i class="broken-dot"></i>Đang hỏng <b>{{ counts().broken }}</b></span>
+        <span class="total">Tổng <b>{{ counts().total }}</b> ghế</span>
+      </footer>
+    </section>
+
+    <section class="card">
+      <h3>Lịch sử bảo trì phòng này</h3>
+      @for (m of maintenance(); track m.id) {
+        <div class="maint">
+          <b>{{ m.seatLabel }}</b>
+          <span>{{ m.reason }}</span>
+          <small>{{ formatDateTime(m.reportedAt) }}</small>
+          <em [class.open]="m.status === 'OPEN'">{{ m.status === 'OPEN' ? 'Đang sửa' : 'Đã xong' }}</em>
+        </div>
+      } @empty {
+        <p class="muted">Chưa có ghế nào báo hỏng.</p>
+      }
+    </section>
+  </div>
+} @else {
+  <div class="card missing">
+    <h3>Không tìm thấy phòng chiếu</h3>
+    <p>Phòng có thể đã bị xoá. Quay lại danh sách rạp để chọn phòng khác.</p>
+    <a nz-button nzType="primary" routerLink="/cinemas">Về Rạp & phòng</a>
+  </div>
+}

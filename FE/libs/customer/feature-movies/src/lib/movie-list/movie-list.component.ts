@@ -2,13 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MovieCardComponent } from '@the-film/shared/ui';
+import { MovieCardComponent, SelectComponent, SelectOptionComponent } from '@the-film/shared/ui';
 import { Movie, Cinema, Showtime, CinemaService } from '@the-film/customer/data-access';
 
 @Component({
   selector: 'thefilm-movie-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MovieCardComponent],
+  imports: [CommonModule, RouterModule, FormsModule, MovieCardComponent, SelectComponent, SelectOptionComponent],
   templateUrl: './movie-list.component.html',
   styleUrl: './movie-list.component.scss',
 })

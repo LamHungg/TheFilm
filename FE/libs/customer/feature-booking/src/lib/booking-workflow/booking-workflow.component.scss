@@ -41,7 +41,7 @@
 
       &:hover {
         color: #ffffff;
-        border-color: #c90e29;
+        border-color: var(--primary);
       }
     }
 
@@ -82,8 +82,8 @@
     }
 
     &.urgent {
-      border-color: #c90e29;
-      background-color: rgba(201, 14, 41, 0.15);
+      border-color: var(--primary);
+      background-color: rgba(225, 29, 72, 0.15);
 
       .timer-countdown {
         color: #f43f5e;
@@ -135,9 +135,9 @@
         opacity: 1;
 
         .step-num {
-          background-color: #c90e29;
+          background-color: var(--primary);
           color: #ffffff;
-          box-shadow: 0 0 10px rgba(201, 14, 41, 0.5);
+          box-shadow: 0 0 10px rgba(225, 29, 72, 0.5);
         }
 
         .step-title {
@@ -300,10 +300,10 @@
 
     // Selected
     &.is-selected {
-      background-color: #c90e29 !important;
+      background-color: var(--primary) !important;
       color: #ffffff !important;
-      border-color: #c90e29 !important;
-      box-shadow: 0 0 10px rgba(201, 14, 41, 0.7);
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 10px rgba(225, 29, 72, 0.7);
       transform: scale(1.1);
     }
 
@@ -351,7 +351,7 @@
         &.seat-standard { background-color: #334155; }
         &.seat-vip { background-color: rgba(245, 158, 11, 0.35); border: 1px solid #f59e0b; }
         &.seat-couple { background-color: rgba(244, 63, 94, 0.35); border: 1px solid #f43f5e; }
-        &.is-selected { background-color: #c90e29; }
+        &.is-selected { background-color: var(--primary); }
         &.status-booked { background-color: #1e293b; border: 1px solid #475569; }
         &.status-held { background-color: #7c2d12; border: 1px solid #fb923c; }
       }
@@ -461,7 +461,7 @@
             }
 
             &:not(:disabled):hover {
-              background-color: #c90e29;
+              background-color: var(--primary);
             }
           }
 
@@ -531,7 +531,7 @@
       outline: none;
 
       &:focus {
-        border-color: #c90e29;
+        border-color: var(--primary);
       }
     }
   }
@@ -560,7 +560,7 @@
       input {
         width: 18px;
         height: 18px;
-        accent-color: #c90e29;
+        accent-color: var(--primary);
       }
     }
   }
@@ -600,7 +600,7 @@
 
       input {
         margin-top: 0.25rem;
-        accent-color: #c90e29;
+        accent-color: var(--primary);
       }
 
       .method-details {
@@ -620,8 +620,8 @@
       }
 
       &.selected {
-        border-color: #c90e29;
-        background-color: rgba(201, 14, 41, 0.08);
+        border-color: var(--primary);
+        background-color: rgba(225, 29, 72, 0.08);
       }
     }
   }
@@ -779,7 +779,7 @@
       flex-wrap: wrap;
 
       .btn-primary {
-        background-color: #c90e29;
+        background-color: var(--primary);
         color: #fff;
         text-decoration: none;
         padding: 0.75rem 1.75rem;
@@ -931,7 +931,7 @@
         cursor: pointer;
 
         &.btn-apply-voucher {
-          background-color: #c90e29;
+          background-color: var(--primary);
           color: #fff;
           border-radius: 999px;
         }
@@ -1007,7 +1007,7 @@
     .btn-confirm-pay {
       width: 100%;
       height: 48px;
-      background-color: #c90e29;
+      background-color: var(--primary);
       color: #ffffff;
       border: none;
       border-radius: 999px;
@@ -1023,7 +1023,7 @@
       }
 
       &:not(:disabled):hover {
-        background-color: #a80b22;
+        background-color: var(--primary-hover);
       }
     }
 
@@ -1105,7 +1105,7 @@
     padding: 0.65rem 1.3rem;
     border: 0;
     border-radius: 999px;
-    background: #c90e29;
+    background: var(--primary);
     color: #fff;
     font-weight: 800;
     cursor: pointer;

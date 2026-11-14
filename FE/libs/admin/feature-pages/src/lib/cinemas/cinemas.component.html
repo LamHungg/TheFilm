@@ -1,0 +1,181 @@
+<div class="page">
+  <div class="toolbar">
+    <nz-input-wrapper class="search">
+      <span nz-icon nzType="search" nzInputPrefix></span>
+      <input
+        nz-input
+        type="search"
+        placeholder="Tìm rạp theo tên, mã, tỉnh"
+        [ngModel]="keyword()"
+        (ngModelChange)="keyword.set($event)"
+      />
+    </nz-input-wrapper>
+    <button nz-button nzType="primary" (click)="openCinema()">
+      <span nz-icon nzType="plus"></span>
+      Thêm rạp
+    </button>
+  </div>
+
+  <div nz-row [nzGutter]="[16, 16]">
+    @for (cinema of cinemas(); track cinema.id) {
+      <div nz-col [nzXs]="24" [nzMd]="12" [nzXl]="8">
+        <nz-card class="cinema-card" [nzBordered]="false">
+          <div class="card-top">
+            <div>
+              <span class="code">{{ cinema.code }}</span>
+              <h3>{{ cinema.name }}</h3>
+            </div>
+            <nz-tag [nzColor]="statusColor(cinema.status)">{{ statusLabel(cinema.status) }}</nz-tag>
+          </div>
+          <p>{{ cinema.address }}</p>
+          <p class="muted">{{ cinema.province }} · {{ cinema.phone || 'Chưa có SĐT' }}</p>
+          <div class="card-foot">
+            <strong>{{ cinema.roomCount }} phòng</strong>
+            <div class="foot-actions">
+              <button nz-button nzType="text" (click)="openCinema(cinema)">Sửa</button>
+              <button nz-button nzType="link" (click)="openRooms(cinema)">
+                Phòng & sơ đồ ghế
+                <span nz-icon nzType="arrow-right"></span>
+              </button>
+            </div>
+          </div>
+        </nz-card>
+      </div>
+    } @empty {
+      <div nz-col [nzSpan]="24">
+        <p class="empty">Không có rạp nào khớp "{{ keyword() }}".</p>
+      </div>
+    }
+  </div>
+</div>
+
+<nz-drawer
+  [nzVisible]="drawerOpen()"
+  [nzTitle]="selected()?.name || 'Phòng chiếu'"
+  [nzExtra]="drawerExtra"
+  nzWidth="560"
+  (nzOnClose)="drawerOpen.set(false)"
+>
+  <ng-template #drawerExtra>
+    <button nz-button nzType="primary" (click)="openRoom()">
+      <span nz-icon nzType="plus"></span>
+      Thêm phòng
+    </button>
+  </ng-template>
+  <ng-container *nzDrawerContent>
+    <nz-table [nzData]="roomsOfSelected()" [nzFrontPagination]="false" nzSize="small">
+      <thead>
+        <tr>
+          <th>Phòng</th>
+          <th>Loại</th>
+          <th nzAlign="right">Ghế</th>
+          <th>Trạng thái</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (room of roomsOfSelected(); track room.id) {
+          <tr>
+            <td><strong>{{ room.name }}</strong></td>
+            <td>{{ room.roomType }}</td>
+            <td nzAlign="right">{{ room.seatCount }}</td>
+            <td><nz-tag [nzColor]="statusColor(room.status)">{{ statusLabel(room.status) }}</nz-tag></td>
+            <td nzAlign="right" class="room-actions">
+              <button nz-button nzType="text" nzSize="small" (click)="openRoom(room)">Sửa</button>
+              <a nz-button nzSize="small" [routerLink]="['/cinemas/rooms', room.id]" (click)="drawerOpen.set(false)">Sơ đồ ghế</a>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </ng-container>
+</nz-drawer>
+
+<nz-modal
+  [nzVisible]="cinemaModal()"
+  [nzTitle]="cinemaForm.id ? 'Sửa rạp' : 'Thêm rạp'"
+  nzOkText="Lưu"
+  nzCancelText="Huỷ"
+  (nzOnCancel)="cinemaModal.set(false)"
+  (nzOnOk)="saveCinema()"
+  nzWidth="640px"
+>
+  <ng-container *nzModalContent>
+    <form nz-form nzLayout="vertical" class="form-grid" (ngSubmit)="saveCinema()">
+      <nz-form-item class="wide">
+        <nz-form-label nzRequired>Tên rạp</nz-form-label>
+        <nz-form-control><input nz-input name="name" [(ngModel)]="cinemaForm.name" /></nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzRequired>Mã rạp</nz-form-label>
+        <nz-form-control><input nz-input name="code" placeholder="TF-HCM-Q7" [(ngModel)]="cinemaForm.code" /></nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzRequired>Tỉnh / thành</nz-form-label>
+        <nz-form-control><input nz-input name="province" [(ngModel)]="cinemaForm.province" /></nz-form-control>
+      </nz-form-item>
+      <nz-form-item class="wide">
+        <nz-form-label>Địa chỉ</nz-form-label>
+        <nz-form-control><input nz-input name="address" [(ngModel)]="cinemaForm.address" /></nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Số điện thoại</nz-form-label>
+        <nz-form-control><input nz-input name="phone" inputmode="tel" [(ngModel)]="cinemaForm.phone" /></nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Trạng thái</nz-form-label>
+        <nz-form-control>
+          <nz-select name="status" [(ngModel)]="cinemaForm.status">
+            @for (s of statuses; track s) {
+              <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<nz-modal
+  [nzVisible]="roomModal()"
+  [nzTitle]="roomForm.id ? 'Sửa phòng chiếu' : 'Thêm phòng chiếu'"
+  nzOkText="Lưu"
+  nzCancelText="Huỷ"
+  (nzOnCancel)="roomModal.set(false)"
+  (nzOnOk)="saveRoom()"
+>
+  <ng-container *nzModalContent>
+    <form nz-form nzLayout="vertical" class="form-grid" (ngSubmit)="saveRoom()">
+      <nz-form-item class="wide">
+        <nz-form-label nzRequired>Tên phòng</nz-form-label>
+        <nz-form-control><input nz-input name="roomName" placeholder="IMAX 2" [(ngModel)]="roomForm.name" /></nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Loại phòng</nz-form-label>
+        <nz-form-control>
+          <nz-select name="roomType" [(ngModel)]="roomForm.roomType">
+            @for (t of roomTypes(); track t) {
+              <nz-option [nzValue]="t" [nzLabel]="t"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzRequired>Số ghế</nz-form-label>
+        <nz-form-control nzExtra="Cập nhật lại khi lưu sơ đồ ghế">
+          <input nz-input type="number" inputmode="numeric" name="seatCount" [(ngModel)]="roomForm.seatCount" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Trạng thái</nz-form-label>
+        <nz-form-control>
+          <nz-select name="roomStatus" [(ngModel)]="roomForm.status">
+            @for (s of statuses; track s) {
+              <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>

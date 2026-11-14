@@ -1,0 +1,104 @@
+<div class="shell">
+  <aside class="sider" [class.open]="menuOpen()">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">TF</div>
+      <div>
+        <strong>THEFILM</strong>
+        <span>Quản trị chuỗi rạp</span>
+      </div>
+    </div>
+
+    <nav class="nav">
+      @for (group of navGroups; track group.label) {
+        <p class="nav-label">{{ group.label }}</p>
+        @for (item of group.items; track item.path) {
+          <a
+            class="nav-item"
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            (click)="menuOpen.set(false)"
+          >
+            <span nz-icon [nzType]="item.icon"></span>
+            <span>{{ item.label }}</span>
+            @if (item.badge && openSupport() > 0) {
+              <em>{{ openSupport() }}</em>
+            }
+          </a>
+        }
+      }
+    </nav>
+
+    <div class="sider-bottom">
+
+      <div class="sider-user" nz-dropdown [nzDropdownMenu]="userMenu" nzPlacement="topLeft">
+        <nz-avatar
+          [nzSize]="36"
+          nzText="{{ user()?.name?.charAt(0) || 'A' }}"
+          style="background:#e2a93b;color:#17181c;font-weight:700"
+        ></nz-avatar>
+        <div>
+          <strong>{{ user()?.name }}</strong>
+          <span>{{ user()?.email }}</span>
+        </div>
+        <span nz-icon nzType="down"></span>
+      </div>
+      <nz-dropdown-menu #userMenu="nzDropdownMenu">
+        <ul nz-menu>
+          <li nz-menu-item disabled>{{ user()?.role }} · {{ user()?.cinemaScope }}</li>
+          <li nz-menu-divider></li>
+          <li nz-menu-item (click)="logout()">
+            <span nz-icon nzType="logout"></span>
+            Đăng xuất
+          </li>
+        </ul>
+      </nz-dropdown-menu>
+    </div>
+  </aside>
+  @if (menuOpen()) {
+    <div class="scrim" (click)="menuOpen.set(false)" (keydown.escape)="menuOpen.set(false)"></div>
+  }
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" type="button" aria-label="Mở menu" (click)="menuOpen.set(true)">
+        <span nz-icon nzType="menu"></span>
+      </button>
+      <div class="crumbs">
+        THEFILM <span>/</span> {{ pageMeta().title }}
+      </div>
+
+      <div class="search">
+        <span nz-icon nzType="search"></span>
+        <input
+          type="search"
+          placeholder="Tìm phim, rạp, đơn hàng..."
+          [(ngModel)]="search"
+        />
+        <kbd>/</kbd>
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-btn" type="button" nz-tooltip nzTooltipTitle="Thông báo">
+          <span nz-icon nzType="bell"></span>
+          @if (openSupport() > 0) {
+            <i>{{ openSupport() }}</i>
+          }
+        </button>
+        <button nz-button nzType="default">
+          <span nz-icon nzType="download"></span>
+          <span class="export-label">Export</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h1>{{ pageMeta().title }}</h1>
+          <p>{{ pageMeta().subtitle }}</p>
+        </div>
+      </div>
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { FigmaPosterComponent } from '@the-film/shared/ui';
+import { FigmaPosterComponent, SelectComponent, SelectOptionComponent } from '@the-film/shared/ui';
 import { formatVND } from '@the-film/shared/util';
 import {
   Movie,
@@ -28,7 +28,7 @@ interface GroupedShowtime {
 @Component({
   selector: 'thefilm-movie-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FigmaPosterComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FigmaPosterComponent, SelectComponent, SelectOptionComponent],
   templateUrl: './movie-detail.component.html',
   styleUrl: './movie-detail.component.scss',
 })

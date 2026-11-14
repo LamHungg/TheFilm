@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { AuthService, UserProfile } from '@the-film/customer/data-access';
+import { SelectComponent, SelectOptionComponent } from '@the-film/shared/ui';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -26,7 +27,7 @@ interface UpdateCustomerProfileRequest {
 @Component({
   selector: 'thefilm-member-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, SelectComponent, SelectOptionComponent],
   templateUrl: './member-profile.component.html',
   styleUrl: './member-profile.component.scss',
 })

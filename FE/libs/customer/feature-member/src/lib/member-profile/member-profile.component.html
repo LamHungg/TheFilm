@@ -97,13 +97,13 @@
           />
 
           <label for="favorite-cinema">Rạp yêu thích</label>
-          <select id="favorite-cinema" name="preferredCinemaId" [(ngModel)]="editPreferredCinemaId">
-            <option [ngValue]="null">Chưa chọn rạp</option>
-            <option *ngIf="savedCinemaOptionId as savedCinemaId" [ngValue]="savedCinemaId">
+          <thefilm-select inputId="favorite-cinema" name="preferredCinemaId" [(ngModel)]="editPreferredCinemaId">
+            <thefilm-option [value]="null">Chưa chọn rạp</thefilm-option>
+            <thefilm-option *ngIf="savedCinemaOptionId as savedCinemaId" [value]="savedCinemaId">
               {{ cinemaLabel(savedCinemaId) }}
-            </option>
-            <option *ngFor="let cinema of cinemas" [ngValue]="cinema.id">{{ cinema.name }}</option>
-          </select>
+            </thefilm-option>
+            <thefilm-option *ngFor="let cinema of cinemas" [value]="cinema.id">{{ cinema.name }}</thefilm-option>
+          </thefilm-select>
           <p *ngIf="loadingCinemas" role="status">Đang tải danh sách rạp…</p>
           <p *ngIf="cinemaError" role="status">{{ cinemaError }}</p>
 

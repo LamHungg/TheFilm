@@ -1,0 +1,185 @@
+<div class="dash">
+  <div class="dash-toolbar">
+    <button
+      type="button"
+      class="cinema-pick"
+      nz-dropdown
+      nzTrigger="click"
+      [nzDropdownMenu]="cinemaMenu"
+      nzPlacement="bottomLeft"
+    >
+      <span nz-icon nzType="shop"></span>
+      <span class="label">{{ cinemaLabel() }}</span>
+      <span nz-icon nzType="down" class="caret"></span>
+    </button>
+    <nz-dropdown-menu #cinemaMenu="nzDropdownMenu">
+      <ul nz-menu class="cinema-menu">
+        <li nz-menu-item (click)="cinemaId.set(null)">
+          Toàn chuỗi <small>{{ cinemas().length }} rạp</small>
+          @if (cinemaId() === null) {
+            <span nz-icon nzType="check" class="ck"></span>
+          }
+        </li>
+        <li nz-menu-divider></li>
+        @for (c of cinemas(); track c.id) {
+          <li nz-menu-item (click)="cinemaId.set(c.id)">
+            {{ c.name }} <small>{{ c.province }}</small>
+            @if (cinemaId() === c.id) {
+              <span nz-icon nzType="check" class="ck"></span>
+            }
+          </li>
+        }
+      </ul>
+    </nz-dropdown-menu>
+
+    <div class="range" role="group" aria-label="Khoảng thời gian">
+      @for (r of ranges; track r.key) {
+        <button type="button" [attr.aria-pressed]="range() === r.key" (click)="range.set(r.key)">
+          {{ r.label }}
+        </button>
+      }
+    </div>
+
+    <div class="actions">
+      <a nz-button nzType="default" routerLink="/films" class="secondary">Duyệt phim</a>
+      <a nz-button nzType="primary" routerLink="/screenings">
+        <span nz-icon nzType="plus"></span>
+        Tạo suất chiếu
+      </a>
+    </div>
+  </div>
+
+  <section class="card kpis">
+    @for (k of kpis(); track k.id) {
+      <div class="kpi">
+        <div class="kpi-top">
+          <span class="ico"><span nz-icon [nzType]="k.icon"></span></span>
+          {{ k.label }}
+        </div>
+        <strong>{{ k.value }}</strong>
+        <small>
+          @if (k.trend) {
+            <span class="up">{{ k.trend }}</span>
+          }
+          {{ k.note }}
+        </small>
+      </div>
+    }
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head">
+        <h3>
+          Cần can thiệp
+          @if (attention().length) {
+            <span class="count">{{ attention().length }}</span>
+          }
+        </h3>
+      </div>
+      @if (attentionTop().length) {
+        <ul class="alerts">
+          @for (a of attentionTop(); track a.id) {
+            <li class="alert">
+              <span class="ico" [attr.data-level]="a.level"><span nz-icon [nzType]="a.icon"></span></span>
+              <div class="alert-text">
+                <b>{{ a.title }}</b>
+                <span>
+                  @if (a.flag) {
+                    <em [attr.data-level]="a.level">{{ a.flag }}</em> ·
+                  }
+                  {{ a.detail }}
+                </span>
+              </div>
+              <a nz-button [routerLink]="a.link" class="act">{{ a.action }}</a>
+            </li>
+          }
+        </ul>
+        @if (attention().length > attentionTop().length) {
+          <p class="more-note">Còn {{ attention().length - attentionTop().length }} việc khác, xử lý dần từ các dòng trên.</p>
+        }
+      } @else {
+        <p class="empty">Không có việc nào cần xử lý. Suất bán chậm, rạp bảo trì và ca CSKH ưu tiên cao sẽ hiện ở đây.</p>
+      }
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Lấp đầy theo rạp</h3>
+        <a class="more" routerLink="/cinemas">Rạp & phòng <span nz-icon nzType="right"></span></a>
+      </div>
+      <div class="occ">
+        @for (o of occupancy(); track o.cinemaName) {
+          <div class="occ-row">
+            <div class="meta">
+              <b>{{ o.cinemaName }}</b>
+              <span><strong>{{ o.occupancy }}%</strong> · {{ o.screenings }} suất</span>
+            </div>
+            <div class="bar"><i [style.width.%]="o.occupancy"></i></div>
+            @if (o.maintenance) {
+              <span class="note">Có phòng đang bảo trì</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head">
+        <h3>Suất sắp chiếu</h3>
+        <a class="more" routerLink="/screenings">Xem lịch <span nz-icon nzType="right"></span></a>
+      </div>
+      <ul class="shows">
+        @for (s of upcoming(); track s.id) {
+          <li class="show">
+            <div class="when">
+              <time>{{ time(s.startAt) }}</time>
+              <small>{{ day(s.startAt) }}</small>
+            </div>
+            <div class="show-text">
+              <b>{{ s.filmTitle }}</b>
+              <span>{{ short(s.cinemaName) }} · {{ s.roomName }}</span>
+            </div>
+            <div class="sold">
+              @if (s.status === 'SOLD_OUT') {
+                <span class="tag tag-ok">Hết vé</span>
+              } @else if (pct(s.soldSeats, s.totalSeats) < 20) {
+                <span class="tag tag-err">Bán chậm</span>
+              }
+              <div><strong>{{ s.soldSeats }}</strong> / {{ s.totalSeats }}</div>
+              @if (s.status !== 'SOLD_OUT' && pct(s.soldSeats, s.totalSeats) >= 20) {
+                <div class="bar"><i [style.width.%]="pct(s.soldSeats, s.totalSeats)"></i></div>
+              }
+            </div>
+          </li>
+        } @empty {
+          <li class="empty">Chưa có suất nào sắp chiếu.</li>
+        }
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Doanh thu 7 ngày <span class="sub">triệu đồng</span></h3>
+      </div>
+      <div class="bars">
+        @for (d of revenueDays; track d.tick; let last = $last) {
+          <div class="col" [class.peak]="last">
+            <b>{{ d.value }}</b>
+            <i [style.height.%]="(d.value / revenueMax) * 100"></i>
+          </div>
+        }
+      </div>
+      <div class="ticks">
+        @for (d of revenueDays; track d.tick; let last = $last) {
+          <span [class.today]="last">{{ d.tick }}</span>
+        }
+      </div>
+      <div class="chart-foot">
+        <span>Tổng 7 ngày <strong>{{ revenueTotal.toLocaleString('vi-VN') }} tr đ</strong></span>
+      </div>
+    </section>
+  </div>
+</div>

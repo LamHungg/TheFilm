@@ -1,0 +1,165 @@
+<div class="page">
+  <div class="toolbar">
+    <div class="filters">
+      <nz-select
+        style="width: 260px"
+        [ngModel]="cinemaFilter()"
+        (ngModelChange)="cinemaFilter.set($event)"
+      >
+        <nz-option nzValue="ALL" nzLabel="Tất cả rạp"></nz-option>
+        @for (c of cinemas(); track c.id) {
+          <nz-option [nzValue]="c.id" [nzLabel]="c.name"></nz-option>
+        }
+      </nz-select>
+      <nz-select
+        style="width: 180px"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      >
+        <nz-option nzValue="ALL" nzLabel="Tất cả trạng thái"></nz-option>
+        @for (s of statuses; track s) {
+          <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+        }
+      </nz-select>
+    </div>
+    <button nz-button nzType="primary" (click)="openCreate()">
+      <span nz-icon nzType="plus"></span>
+      Tạo suất
+    </button>
+  </div>
+
+  <div class="table-card">
+    <nz-table [nzData]="rows()" [nzPageSize]="8" nzHideOnSinglePage nzSize="middle">
+      <thead>
+        <tr>
+          <th>Phim</th>
+          <th>Rạp / phòng</th>
+          <th>Giờ chiếu</th>
+          <th>Giá</th>
+          <th>Lấp đầy</th>
+          <th>Trạng thái</th>
+          <th nzWidth="64px" nzAlign="center"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td>{{ row.filmTitle }}</td>
+            <td>
+              <div>{{ row.cinemaName }}</div>
+              <small>{{ row.roomName }}</small>
+            </td>
+            <td>{{ formatDateTime(row.startAt) }}</td>
+            <td>{{ formatVnd(row.basePrice) }}</td>
+            <td class="meter-cell">
+              <nz-progress
+                [nzPercent]="fillPercent(row)"
+                [nzSize]="'small'"
+                [nzShowInfo]="false"
+                [nzStrokeColor]="'#c48a14'"
+              ></nz-progress>
+              <small><strong>{{ fillPercent(row) }}%</strong> · {{ row.soldSeats }}/{{ row.totalSeats }} ghế</small>
+            </td>
+            <td><nz-tag [nzColor]="statusColor(row.status)">{{ statusLabel(row.status) }}</nz-tag></td>
+            <td nzAlign="center">
+              <button
+                nz-button
+                nzType="text"
+                class="row-more-btn"
+                nz-dropdown
+                [nzDropdownMenu]="screeningMenu"
+                nzTrigger="click"
+                nzPlacement="bottomRight"
+              >
+                <span nz-icon nzType="ellipsis"></span>
+              </button>
+              <nz-dropdown-menu #screeningMenu="nzDropdownMenu">
+                <ul nz-menu class="row-more-menu">
+                  @if (row.status !== 'CANCELLED' && row.status !== 'COMPLETED') {
+                    <li nz-menu-item (click)="cancelScreening(row)">
+                      <span nz-icon nzType="stop"></span>
+                      Hủy suất
+                    </li>
+                  }
+                  <li nz-menu-item nzDanger (click)="remove(row)">
+                    <span nz-icon nzType="delete"></span>
+                    Xoá
+                  </li>
+                </ul>
+              </nz-dropdown-menu>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+  </div>
+</div>
+
+<nz-modal
+  [nzVisible]="modalOpen()"
+  nzTitle="Tạo suất chiếu"
+  (nzOnCancel)="modalOpen.set(false)"
+  (nzOnOk)="save()"
+  nzWidth="640px"
+>
+  <ng-container *nzModalContent>
+    <form nz-form nzLayout="vertical" class="form-grid">
+      <nz-form-item>
+        <nz-form-label>Phim</nz-form-label>
+        <nz-form-control>
+          <nz-select [(ngModel)]="form.filmId" name="filmId">
+            @for (f of films(); track f.id) {
+              <nz-option [nzValue]="f.id" [nzLabel]="f.title"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Rạp</nz-form-label>
+        <nz-form-control>
+          <nz-select
+            [ngModel]="form.cinemaId"
+            (ngModelChange)="onCinemaChange($event)"
+            name="cinemaId"
+          >
+            @for (c of cinemas(); track c.id) {
+              <nz-option [nzValue]="c.id" [nzLabel]="c.name"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Phòng</nz-form-label>
+        <nz-form-control>
+          <nz-select [(ngModel)]="form.roomId" name="roomId">
+            @for (r of rooms(); track r.id) {
+              <nz-option [nzValue]="r.id" [nzLabel]="r.name + ' · ' + r.seatCount + ' ghế'"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Giờ bắt đầu</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="datetime-local" [(ngModel)]="form.startAt" name="startAt" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Giá cơ bản (VND)</nz-form-label>
+        <nz-form-control>
+          <input nz-input type="number" [(ngModel)]="form.basePrice" name="basePrice" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label>Trạng thái</nz-form-label>
+        <nz-form-control>
+          <nz-select [(ngModel)]="form.status" name="status">
+            @for (s of statuses; track s) {
+              <nz-option [nzValue]="s" [nzLabel]="statusLabel(s)"></nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
