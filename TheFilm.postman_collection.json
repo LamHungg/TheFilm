@@ -1,0 +1,3060 @@
+{
+  "info": {
+    "name": "TheFilm BE - Du lieu mau V005 va luong nghiep vu",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Chay ./run.sh (Keycloak + BE profile oracle). Token that duoc lay tu Keycloak: tu dong khi goi API admin (autoLogin=true) hoac chay nhom 0. Muon dung profile devauth thi dat autoLogin=false va token=mock-admin-token. Chay lan luot 0 -> A -> B -> C -> D."
+  },
+  "item": [
+    {
+      "name": "0. Dang nhap Keycloak (token that)",
+      "item": [
+        {
+          "name": "Lay token CHAIN_ADMIN (khanh.nguyen)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/thefilm/protocol/openid-connect/token",
+              "host": [
+                "{{keycloakUrl}}"
+              ],
+              "path": [
+                "realms",
+                "thefilm",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "thefilm-web"
+                },
+                {
+                  "key": "username",
+                  "value": "{{adminUser}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}"
+                }
+              ]
+            },
+            "description": "Luu token vao bien token, dung cho cac API admin."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co access_token\", ()=>pm.expect(j.access_token).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"token\", j.access_token);",
+                  "const p = JSON.parse(atob(j.access_token.split(\".\")[1].replace(/-/g,\"+\").replace(/_/g,\"/\")));",
+                  "console.log(\"sub:\", p.sub, \"| vai tro:\", (p.realm_access||{}).roles);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lay token CINEMA_MANAGER (tuan.vo, rap HCM-Q1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/thefilm/protocol/openid-connect/token",
+              "host": [
+                "{{keycloakUrl}}"
+              ],
+              "path": [
+                "realms",
+                "thefilm",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "thefilm-web"
+                },
+                {
+                  "key": "username",
+                  "value": "{{managerUser}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}"
+                }
+              ]
+            },
+            "description": "Luu vao bien tokenManager de thu phan quyen theo rap."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co access_token\", ()=>pm.expect(j.access_token).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"tokenManager\", j.access_token);",
+                  "const p = JSON.parse(atob(j.access_token.split(\".\")[1].replace(/-/g,\"+\").replace(/_/g,\"/\")));",
+                  "console.log(\"sub:\", p.sub, \"| vai tro:\", (p.realm_access||{}).roles);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lay token CUSTOMER (thanhmai.nguyen)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "url": {
+              "raw": "{{keycloakUrl}}/realms/thefilm/protocol/openid-connect/token",
+              "host": [
+                "{{keycloakUrl}}"
+              ],
+              "path": [
+                "realms",
+                "thefilm",
+                "protocol",
+                "openid-connect",
+                "token"
+              ]
+            },
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "client_id",
+                  "value": "thefilm-web"
+                },
+                {
+                  "key": "username",
+                  "value": "{{customerUser}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}"
+                }
+              ]
+            },
+            "description": "Luu vao bien tokenCustomer, dung cho API khach hang."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co access_token\", ()=>pm.expect(j.access_token).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"tokenCustomer\", j.access_token);",
+                  "const p = JSON.parse(atob(j.access_token.split(\".\")[1].replace(/-/g,\"+\").replace(/_/g,\"/\")));",
+                  "console.log(\"sub:\", p.sub, \"| vai tro:\", (p.realm_access||{}).roles);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem thong tin token CHAIN_ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "console.log(JSON.stringify(j.data));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem thong tin token CINEMA_MANAGER",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenManager}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "console.log(JSON.stringify(j.data));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem thong tin token CUSTOMER",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenCustomer}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "console.log(JSON.stringify(j.data));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "A. Kiem tra",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Toi la ai (token admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "console.log(JSON.stringify(j.data));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "B. Doc du lieu mau (admin)",
+      "item": [
+        {
+          "name": "Chuoi rap",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/chains",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "chains"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co chuoi THEFILM\", ()=>pm.expect(j.data.some(c=>c.chainCode===\"THEFILM\")).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Phap nhan (2 cong ty)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/legal-entities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "legal-entities"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co 2 phap nhan\", ()=>pm.expect(j.data.length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach rap (4 rap)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cinemas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cinemas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co 4 rap\", ()=>pm.expect(j.data.length).to.be.at.least(4));",
+                  "const q1=j.data.find(c=>c.cinemaCode===\"HCM-Q1\");",
+                  "pm.collectionVariables.set(\"cinemaId\", q1.cinemaId);",
+                  "pm.collectionVariables.set(\"legalEntityId\", q1.legalEntityId);",
+                  "pm.collectionVariables.set(\"chainId\", q1.chainId);",
+                  "const dn=j.data.find(c=>c.cinemaCode===\"DN-HC\"); if(dn) pm.collectionVariables.set(\"cinemaIdDn\", dn.cinemaId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Loai phong / loai ghe da co",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/room-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "room-types"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set(\"roomTypeIdSeed\", j.data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Phong cua rap HCM-Q1",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cinemas/{{cinemaId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cinemas",
+                "{{cinemaId}}",
+                "rooms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"rap co phong\", ()=>pm.expect(j.data.length).to.be.above(0));",
+                  "pm.collectionVariables.set(\"seedRoomId\", j.data[0].roomId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Phim da co (tim TF0)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films?keyword=TF0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "TF0"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "console.log(\"so phim:\", (j.data.content||j.data).length);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suat chieu 7 ngay toi (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/screenings?cinemaId={{cinemaId}}&from={{fromTs}}&to={{toTs}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "screenings"
+              ],
+              "query": [
+                {
+                  "key": "cinemaId",
+                  "value": "{{cinemaId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{fromTs}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{toTs}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d=new Date(); pm.collectionVariables.set(\"fromTs\", d.toISOString().slice(0,19)+\"Z\");",
+                  "const e=new Date(d.getTime()+7*86400000); pm.collectionVariables.set(\"toTs\", e.toISOString().slice(0,19)+\"Z\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co suat chieu\", ()=>pm.expect(j.data.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quy tac gia da duyet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/price-rules?status=APPROVED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "price-rules"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "APPROVED"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co quy tac gia\", ()=>pm.expect(j.data.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nhan vien (HR)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/employees?keyword=Nguyen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "employees"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "Nguyen"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "console.log(\"nhan vien:\", j.data.length); if(j.data.length) pm.collectionVariables.set(\"employeeId\", j.data[0].employeeId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nhan vien chua co tai khoan (NV0104)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/employees?keyword=NV0104",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "employees"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "NV0104"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if(j.data.length) pm.collectionVariables.set(\"employeeIdNoAcct\", j.data[0].employeeId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gan tai khoan Keycloak cho NV0104",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/employees/{{employeeIdNoAcct}}/link-user",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "employees",
+                "{{employeeIdNoAcct}}",
+                "link-user"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"oidcIssuer\": \"http://localhost:8081/realms/thefilm\",\n  \"oidcSubject\": \"00000000-0000-4000-8000-000000000104\",\n  \"email\": \"ha.ly@thefilm.example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chi chay duoc mot lan; lan hai se bao da gan."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cap quyen rap HCM-Q1 cho NV0104",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/employees/{{employeeIdNoAcct}}/scopes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "employees",
+                "{{employeeIdNoAcct}}",
+                "scopes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cinemaId\": \"{{cinemaId}}\",\n  \"validFrom\": \"2026-01-01T00:00:00+07:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "C. Khach xem phim va suat chieu (cong khai)",
+      "item": [
+        {
+          "name": "Danh sach phim dang chieu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/films?status=NOW_SHOWING&page=0&size=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "films"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "NOW_SHOWING"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "12"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const list=j.data.content||j.data; pm.test(\"co phim\", ()=>pm.expect(list.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tat ca phim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/films?status=ALL&size=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "films"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ALL"
+                },
+                {
+                  "key": "size",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const list=j.data.content||j.data; pm.collectionVariables.set(\"filmId\", list[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chi tiet phim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/films/{{filmId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "films",
+                "{{filmId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach rap (HCM)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/cinemas?province=TP. Hồ Chí Minh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "cinemas"
+              ],
+              "query": [
+                {
+                  "key": "province",
+                  "value": "TP. Hồ Chí Minh"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co rap\", ()=>pm.expect(j.data.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suat chieu cua rap",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/screenings?cinemaId={{cinemaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "screenings"
+              ],
+              "query": [
+                {
+                  "key": "cinemaId",
+                  "value": "{{cinemaId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const s=j.data.filter(x=>x.availableSeats>=4); pm.test(\"co suat con ghe\", ()=>pm.expect(s.length).to.be.above(0));",
+                  "pm.collectionVariables.set(\"screeningId\", s[0].id);",
+                  "console.log(s[0].filmTitle, s[0].startsAt);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "D. Khach dat ve: giu ghe, tao don, thanh toan, nhan ve",
+      "item": [
+        {
+          "name": "1. Xem so do ghe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/screenings/{{screeningId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "screenings",
+                "{{screeningId}}",
+                "seats"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const a=j.data.seats.filter(x=>x.status===\"AVAILABLE\"); pm.test(\"con ghe trong\", ()=>pm.expect(a.length).to.be.at.least(2));",
+                  "pm.collectionVariables.set(\"seatId1\", a[0].showSeatId);",
+                  "pm.collectionVariables.set(\"seatId2\", a[1].showSeatId);",
+                  "console.log(\"gia ve chua VAT:\", a[0].basePrice);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Giu 2 ghe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/hold?screeningId={{screeningId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "hold"
+              ],
+              "query": [
+                {
+                  "key": "screeningId",
+                  "value": "{{screeningId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showSeatIds\": [\n    \"{{seatId1}}\",\n    \"{{seatId2}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set(\"salesOrderId\", j.data.salesOrderId);",
+                  "pm.collectionVariables.set(\"holdToken\", j.data.holdToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Tao don (khach vang lai)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "orders"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"screeningId\": \"{{screeningId}}\",\n  \"showSeatIds\": [\n    \"{{seatId1}}\",\n    \"{{seatId2}}\"\n  ],\n  \"salesOrderId\": \"{{salesOrderId}}\",\n  \"holdToken\": \"{{holdToken}}\",\n  \"idempotencyKey\": \"pm-{{sfx}}\",\n  \"voucherCode\": null,\n  \"guestName\": \"Nguyễn Văn Kiểm Thử\",\n  \"guestEmail\": \"kiemthu@example.com\",\n  \"guestPhone\": \"0988123456\",\n  \"fnbItems\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"sfx\", String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set(\"orderCode\", j.data.orderCode);",
+                  "pm.test(\"tong = tam tinh - giam + VAT\", ()=>pm.expect(Math.abs(j.data.total-(j.data.subtotal-j.data.discount+j.data.vat))).to.be.below(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Thanh toan (MOCK, thanh cong)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/orders/{{orderCode}}/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "orders",
+                "{{orderCode}}",
+                "pay"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"MOCK\",\n  \"idempotencyKey\": \"pay-{{sfx}}\",\n  \"paymentMethod\": \"MOMO\",\n  \"successful\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"da thanh toan\", ()=>pm.expect(j.data.paymentStatus).to.eql(\"SUCCEEDED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Xem don",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/orders/{{orderCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "orders",
+                "{{orderCode}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"don ISSUED\", ()=>pm.expect(j.data.status).to.eql(\"ISSUED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Xem ve",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/orders/{{orderCode}}/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "orders",
+                "{{orderCode}}",
+                "tickets"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"co 2 ve\", ()=>pm.expect(j.data.length).to.eql(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Ghe da ban (khong con AVAILABLE)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/screenings/{{screeningId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "screenings",
+                "{{screeningId}}",
+                "seats"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const s=j.data.seats.find(x=>x.showSeatId==pm.collectionVariables.get(\"seatId1\")); pm.test(\"ghe SOLD\", ()=>pm.expect(s.status).to.eql(\"SOLD\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "D1. Giu ghe roi tha ra",
+      "item": [
+        {
+          "name": "0. Lay mot ghe trong khac",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/screenings/{{screeningId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "screenings",
+                "{{screeningId}}",
+                "seats"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "const a=j.data.seats.filter(x=>x.status===\"AVAILABLE\"); pm.collectionVariables.set(\"seatId3\", a[a.length-1].showSeatId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A. Giu ghe roi tha ra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/hold?screeningId={{screeningId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "hold"
+              ],
+              "query": [
+                {
+                  "key": "screeningId",
+                  "value": "{{screeningId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"showSeatIds\": [\n    \"{{seatId3}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "pm.collectionVariables.set(\"salesOrderId2\", j.data.salesOrderId);",
+                  "pm.collectionVariables.set(\"holdToken2\", j.data.holdToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B. Tha ghe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/release",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "release"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salesOrderId\": \"{{salesOrderId2}}\",\n  \"holdToken\": \"{{holdToken2}}\",\n  \"showSeatIds\": [\n    \"{{seatId3}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "D2. Sua rap",
+      "item": [
+        {
+          "name": "Sua rap",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cinemas/{{cinemaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cinemas",
+                "{{cinemaId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"legalEntityId\": \"{{legalEntityId}}\",\n  \"cinemaName\": \"Rap Test Quan 1 (sua)\",\n  \"addressLine\": \"1 Nguyen Hue\",\n  \"provinceName\": \"TP HCM\",\n  \"districtName\": \"Quan 1\",\n  \"wardName\": \"Ben Nghe\",\n  \"phone\": \"0281234567\",\n  \"email\": \"rap@example.com\",\n  \"timeZone\": \"Asia/Ho_Chi_Minh\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach rap (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cinemas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cinemas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Khach thay rap (API cong khai)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/cinemas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "cinemas"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test(\"Co it nhat 1 rap\", function(){ pm.expect(j.data.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "E. Loai phong, loai ghe (tao moi)",
+      "item": [
+        {
+          "name": "Tao loai phong",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/room-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "room-types"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"typeCode\": \"RT{{sfx}}\",\n  \"typeName\": \"Phong 2D thuong\",\n  \"description\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"sfx\", String(Date.now()).slice(-7));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"roomTypeId\", j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tao loai ghe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/seat-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seat-types"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"typeCode\": \"ST{{sfx}}\",\n  \"typeName\": \"Ghe thuong\",\n  \"description\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"seatTypeId\", j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach loai ghe",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/seat-types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seat-types"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "F. Phong, so do ghe, bao tri (tao moi)",
+      "item": [
+        {
+          "name": "Tao phong",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cinemas/{{cinemaId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cinemas",
+                "{{cinemaId}}",
+                "rooms"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomTypeId\": \"{{roomTypeId}}\",\n  \"roomCode\": \"R{{sfx}}\",\n  \"roomName\": \"Phong test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"roomId\", j.data.roomId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tao so do ghe (2 hang x 5 ghe)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/rooms/{{roomId}}/layouts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "rooms",
+                "{{roomId}}",
+                "layouts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"layoutName\": \"So do v1\",\n  \"rows\": [\n    {\n      \"rowLabel\": \"A\",\n      \"seatCount\": 5,\n      \"seatTypeId\": \"{{seatTypeId}}\"\n    },\n    {\n      \"rowLabel\": \"B\",\n      \"seatCount\": 5,\n      \"seatTypeId\": \"{{seatTypeId}}\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"layoutId\", j.data.layoutId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kich hoat so do",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/layouts/{{layoutId}}/activate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "layouts",
+                "{{layoutId}}",
+                "activate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xem ghe cua so do",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/layouts/{{layoutId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "layouts",
+                "{{layoutId}}",
+                "seats"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data && j.data.length) pm.collectionVariables.set(\"seatId\", j.data[0].roomSeatId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach phong cua rap",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/cinemas/{{cinemaId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "cinemas",
+                "{{cinemaId}}",
+                "rooms"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bao tri 1 ghe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/seats/{{seatId}}/maintenance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "seats",
+                "{{seatId}}",
+                "maintenance"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startAt\": \"{{fromTs}}\",\n  \"endAt\": \"{{toTs}}\",\n  \"reason\": \"Hong tay vin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = new Date(); d.setDate(d.getDate()+1); d.setHours(10,0,0,0);",
+                  "pm.collectionVariables.set(\"startsAt\", d.toISOString());",
+                  "const f = new Date(); f.setDate(f.getDate()-1);",
+                  "pm.collectionVariables.set(\"fromTs\", f.toISOString());",
+                  "const t = new Date(); t.setDate(t.getDate()+7);",
+                  "pm.collectionVariables.set(\"toTs\", t.toISOString());",
+                  "const e = new Date(); e.setFullYear(e.getFullYear()+1);",
+                  "pm.collectionVariables.set(\"yearLater\", e.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"maintId\", j.data.seatMaintenanceId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Xong bao tri",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/maintenance/{{maintId}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "maintenance",
+                "{{maintId}}",
+                "resolve"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "G. Phim (tao moi)",
+      "item": [
+        {
+          "name": "Tra cuu the loai, nhan do tuoi",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films/lookups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films",
+                "lookups"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data.genres.length) pm.collectionVariables.set(\"genreId\", j.data.genres[0].id);",
+                  "if (j.data.ageClassifications.length) pm.collectionVariables.set(\"ageId\", j.data.ageClassifications[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tao phim",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filmCode\": \"F{{sfx}}\",\n  \"titleLocal\": \"Phim thu nghiem\",\n  \"titleOriginal\": \"Test Film\",\n  \"synopsis\": \"Noi dung\",\n  \"runtimeMinutes\": 100,\n  \"ageClassificationId\": \"{{ageId}}\",\n  \"genreIds\": [\n    \"{{genreId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"filmId\", j.data.filmId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Them ban chieu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films/{{filmId}}/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films",
+                "{{filmId}}",
+                "versions"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"versionCode\": \"2D_SUB\",\n  \"languageCode\": \"EN\",\n  \"subtitleCode\": \"VI\",\n  \"formatCode\": \"2D\",\n  \"runtimeMinutes\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"versionId\", j.data.filmVersionId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Them quyen phat hanh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films/{{filmId}}/release-rights",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films",
+                "{{filmId}}",
+                "release-rights"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"validFrom\": \"{{fromTs}}\",\n  \"validTo\": \"{{yearLater}}\",\n  \"distributorName\": \"NPH Test\",\n  \"referenceCode\": \"HD-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duyet phim (APPROVED)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films/{{filmId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films",
+                "{{filmId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tim phim",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/films?keyword=thu&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "films"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "thu"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "H. Suat chieu (tao moi, kiem tra trung gio)",
+      "item": [
+        {
+          "name": "Tao suat chieu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/screenings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "screenings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cinemaId\": \"{{cinemaId}}\",\n  \"roomId\": \"{{roomId}}\",\n  \"filmVersionId\": \"{{versionId}}\",\n  \"startsAt\": \"{{startsAt}}\",\n  \"screeningTypeCode\": \"STANDARD\",\n  \"cleanupMinutes\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = new Date(); d.setDate(d.getDate()+1); d.setHours(10,0,0,0);",
+                  "pm.collectionVariables.set(\"startsAt\", d.toISOString());",
+                  "const f = new Date(); f.setDate(f.getDate()-1);",
+                  "pm.collectionVariables.set(\"fromTs\", f.toISOString());",
+                  "const t = new Date(); t.setDate(t.getDate()+7);",
+                  "pm.collectionVariables.set(\"toTs\", t.toISOString());",
+                  "const e = new Date(); e.setFullYear(e.getFullYear()+1);",
+                  "pm.collectionVariables.set(\"yearLater\", e.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"screeningId\", j.data.screeningId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tao suat trung gio (phai 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/screenings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "screenings"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cinemaId\": \"{{cinemaId}}\",\n  \"roomId\": \"{{roomId}}\",\n  \"filmVersionId\": \"{{versionId}}\",\n  \"startsAt\": \"{{startsAt}}\",\n  \"screeningTypeCode\": \"STANDARD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Trung lich tra 409\", function(){ pm.expect(pm.response.code).to.eql(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mo ban",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/screenings/{{screeningId}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "screenings",
+                "{{screeningId}}",
+                "publish"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach suat (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/screenings?cinemaId={{cinemaId}}&from={{fromTs}}&to={{toTs}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "screenings"
+              ],
+              "query": [
+                {
+                  "key": "cinemaId",
+                  "value": "{{cinemaId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "{{fromTs}}"
+                },
+                {
+                  "key": "to",
+                  "value": "{{toTs}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Khach thay suat dang ban",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/screenings?cinemaId={{cinemaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "screenings"
+              ],
+              "query": [
+                {
+                  "key": "cinemaId",
+                  "value": "{{cinemaId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Khach xem so do ghe suat",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public/bookings/screenings/{{screeningId}}/seats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public",
+                "bookings",
+                "screenings",
+                "{{screeningId}}",
+                "seats"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Huy suat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/screenings/{{screeningId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "screenings",
+                "{{screeningId}}",
+                "cancel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Test huy suat\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "I. Quy tac gia (tao moi)",
+      "item": [
+        {
+          "name": "Tao quy tac gia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/price-rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "price-rules"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruleCode\": \"PR{{sfx}}\",\n  \"cinemaId\": \"{{cinemaId}}\",\n  \"roomTypeId\": \"{{roomTypeId}}\",\n  \"seatTypeId\": \"{{seatTypeId}}\",\n  \"validFrom\": \"{{fromTs}}\",\n  \"basePrice\": 90000,\n  \"priorityNo\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  "const j = pm.response.json();",
+                  "if (j.data) { pm.collectionVariables.set(\"priceRuleId\", j.data.priceRuleId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duyet quy tac gia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/price-rules/{{priceRuleId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "price-rules",
+                "{{priceRuleId}}",
+                "status"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Danh sach quy tac gia",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/price-rules?status=APPROVED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "price-rules"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "APPROVED"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function(){ pm.response.to.have.status(200); });",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "keycloakUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "autoLogin",
+      "value": "true"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "tokenManager",
+      "value": ""
+    },
+    {
+      "key": "tokenCustomer",
+      "value": ""
+    },
+    {
+      "key": "adminUser",
+      "value": "khanh.nguyen@thefilm.example"
+    },
+    {
+      "key": "managerUser",
+      "value": "tuan.vo@thefilm.example"
+    },
+    {
+      "key": "customerUser",
+      "value": "thanhmai.nguyen@example.com"
+    },
+    {
+      "key": "password",
+      "value": "Thefilm@123"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "(function () {",
+          "  if (pm.collectionVariables.get(\"autoLogin\") !== \"true\") return;",
+          "  const h = pm.request.headers.get(\"Authorization\") || \"\";",
+          "  if (h.indexOf(\"{{token}}\") < 0) return;",
+          "  const tok = pm.collectionVariables.get(\"token\");",
+          "  try {",
+          "    const p = JSON.parse(atob(tok.split(\".\")[1].replace(/-/g, \"+\").replace(/_/g, \"/\")));",
+          "    if (p.exp * 1000 > Date.now() + 30000) return;",
+          "  } catch (e) { /* chua co token hoac token khong hop le */ }",
+          "  const kc = pm.collectionVariables.get(\"keycloakUrl\");",
+          "  pm.sendRequest({",
+          "    url: kc + \"/realms/thefilm/protocol/openid-connect/token\", method: \"POST\",",
+          "    header: { \"Content-Type\": \"application/x-www-form-urlencoded\" },",
+          "    body: { mode: \"urlencoded\", urlencoded: [",
+          "      { key: \"grant_type\", value: \"password\" }, { key: \"client_id\", value: \"thefilm-web\" },",
+          "      { key: \"username\", value: pm.collectionVariables.get(\"adminUser\") },",
+          "      { key: \"password\", value: pm.collectionVariables.get(\"password\") } ] }",
+          "  }, function (err, res) {",
+          "    if (!err && res.code === 200) { pm.collectionVariables.set(\"token\", res.json().access_token); }",
+          "    else { console.warn(\"Khong lay duoc token Keycloak. Keycloak da chay chua (./run.sh)?\"); }",
+          "  });",
+          "})();"
+        ]
+      }
+    }
+  ]
+}
