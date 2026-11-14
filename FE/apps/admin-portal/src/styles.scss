@@ -238,3 +238,77 @@ nz-input-wrapper {
 .row-more-menu .ant-dropdown-menu-item .anticon {
   font-size: 14px;
 }
+
+/* Menu chọn rạp ở Tổng quan (dropdown render ngoài component) */
+.cinema-menu {
+  min-width: 260px;
+  padding: 4px !important;
+  border-radius: 12px !important;
+}
+
+.cinema-menu .ant-dropdown-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  border-radius: 8px !important;
+}
+
+.cinema-menu small {
+  color: var(--tf-muted);
+  font-size: 12px;
+}
+
+.cinema-menu .ck {
+  margin-left: auto;
+  color: var(--tf-amber-deep);
+}
+
+/* Trang có tab (các trang quản trị mới) */
+.page-tabs > .ant-tabs-nav {
+  margin-bottom: 16px !important;
+}
+
+.page-tabs .ant-tabs-tab {
+  font-weight: 600;
+}
+
+.page-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--tf-ink) !important;
+}
+
+.page-tabs .ant-tabs-ink-bar {
+  background: var(--tf-amber-deep) !important;
+}
+
+.page-note {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--tf-line);
+  color: #475467;
+  font-size: 14px;
+}
+
+.page-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  font-size: 14px;
+
+  b {
+    color: #b91c1c;
+  }
+}
+
+/* Bảng rộng hơn màn hẹp: cuộn trong khung, không đẩy cả trang tràn ngang */
+.table-card {
+  max-width: 100%;
+  overflow-x: auto;
+}

@@ -11,6 +11,10 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzDropdownModule } from 'ng-zorro-antd/dropdown';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
+import { AdminBackofficeService, PromoVoucher } from '@the-film/admin/data-access';
+import { ColDef, FieldDef, ResourceTableComponent, SaveEvent } from '../shared/resource-table/resource-table.component';
+import { opts, plain, upsertFrom } from '../shared/crud-helpers';
 import {
   AdminOpsService,
   AdminPromotion,
@@ -33,6 +37,8 @@ import { formatDate, formatVnd, statusLabel } from '../shared/admin-formatters';
     NzIconModule,
     NzProgressModule,
     NzDropdownModule,
+    NzTabsModule,
+    ResourceTableComponent,
   ],
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.scss',
@@ -41,6 +47,30 @@ export class PromotionsComponent {
   readonly statusLabel = statusLabel;
   private readonly ops = inject(AdminOpsService);
   private readonly message = inject(NzMessageService);
+  readonly bo = inject(AdminBackofficeService);
+
+  readonly voucherCols: ColDef[] = [
+    { key: 'code', label: 'Mã voucher', kind: 'code', width: '170px' },
+    { key: 'campaign', label: 'Chiến dịch', kind: 'strong' },
+    { key: 'issuedTo', label: 'Người nhận', width: '200px' },
+    { key: 'expiresAt', label: 'Hết hạn', kind: 'date', width: '130px' },
+    { key: 'status', label: 'Trạng thái', kind: 'tag', width: '130px' },
+  ];
+
+  voucherFields(): FieldDef[] {
+    return [
+      { key: 'campaign', label: 'Chiến dịch', kind: 'select', required: true, wide: true, options: plain(this.ops.promotions().map((p) => p.name)) },
+      { key: 'issuedTo', label: 'Người nhận', placeholder: 'Tên thành viên hoặc để trống' },
+      { key: 'expiresAt', label: 'Hết hạn', kind: 'date', required: true },
+      { key: 'status', label: 'Trạng thái', kind: 'select', options: opts(['UNUSED', 'USED', 'EXPIRED']) },
+    ];
+  }
+
+  saveVoucher(e: SaveEvent): void {
+    const promo = this.ops.promotions().find((p) => p.name === e.value['campaign']);
+    const code = `${promo?.code ?? 'TF'}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    upsertFrom<PromoVoucher>(this.bo.vouchers, e, { code });
+  }
 
   readonly modalOpen = signal(false);
   readonly editingId = signal<number | null>(null);

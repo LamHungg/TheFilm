@@ -27,3 +27,60 @@
   box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
   padding: 10px 10px 2px;
 }
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.msg {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f4f5f7;
+
+  p {
+    margin: 4px 0 0;
+    white-space: pre-line;
+  }
+
+  &[data-from='AGENT'] {
+    align-self: flex-end;
+    background: rgba(226, 169, 59, 0.16);
+  }
+
+  &[data-from='AI'] {
+    border: 1px dashed rgba(23, 24, 28, 0.16);
+    background: #fff;
+  }
+}
+
+.msg-meta {
+  color: var(--tf-muted);
+  font-size: 12px;
+
+  b {
+    color: var(--tf-ink);
+  }
+}
+
+.thread-empty {
+  color: var(--tf-muted);
+}
+
+.reply {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  padding-top: 12px;
+  border-top: 1px solid var(--tf-line);
+  background: #fff;
+
+  textarea {
+    width: 100%;
+  }
+}

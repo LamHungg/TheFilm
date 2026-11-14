@@ -115,46 +115,6 @@
   padding-top: 10px;
 }
 
-.quota {
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-
-  .quota-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
-
-    strong {
-      color: #f6d889;
-    }
-  }
-
-  .quota-bar {
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    overflow: hidden;
-
-    span {
-      display: block;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #e2a93b, #f0c14b);
-    }
-  }
-
-  small {
-    display: block;
-    margin-top: 8px;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 11px;
-  }
-}
 
 .sider-user {
   display: flex;
@@ -221,8 +181,13 @@
   }
 }
 
+.menu-btn {
+  display: none;
+}
+
 .search {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   max-width: 420px;
@@ -344,6 +309,47 @@
   }
 
   .sider {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    width: 272px;
+    translate: -100% 0;
+    transition: translate 0.25s ease;
+
+    &.open {
+      translate: 0 0;
+    }
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 59;
+    background: rgba(15, 17, 22, 0.45);
+  }
+
+  .menu-btn {
+    display: grid;
+    place-items: center;
+  }
+
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    gap: 8px;
+    padding: 10px 16px;
+  }
+
+  .search kbd,
+  .export-label {
     display: none;
+  }
+
+  .content {
+    padding: 8px 16px 32px;
   }
 }

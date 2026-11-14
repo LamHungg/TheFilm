@@ -11,6 +11,16 @@ import {
   DashboardStats,
 } from '../models/admin.models';
 
+
+/** Mốc giờ tương đối so với hôm nay, để dữ liệu mẫu luôn có suất "hôm nay" và "sắp chiếu". */
+function at(dayOffset: number, hm: string): string {
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  const [h, m] = hm.split(':').map(Number);
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+}
+
 export const ADMIN_USER: AdminUser = {
   name: 'Nguyễn Minh Quân',
   email: 'quan.admin@thefilm.vn',
@@ -176,8 +186,8 @@ export const MOCK_ADMIN_SCREENINGS: AdminScreening[] = [
     cinemaName: 'THEFILM Vincom Đồng Khởi',
     roomId: 1,
     roomName: 'IMAX 1',
-    startAt: '2026-11-13T14:30:00+07:00',
-    endAt: '2026-11-13T16:46:00+07:00',
+    startAt: at(0, '14:30'),
+    endAt: at(0, '16:46'),
     status: 'ON_SALE',
     basePrice: 150000,
     soldSeats: 186,
@@ -191,8 +201,8 @@ export const MOCK_ADMIN_SCREENINGS: AdminScreening[] = [
     cinemaName: 'THEFILM Vincom Đồng Khởi',
     roomId: 3,
     roomName: 'Standard 3',
-    startAt: '2026-11-13T16:00:00+07:00',
-    endAt: '2026-11-13T17:58:00+07:00',
+    startAt: at(0, '16:00'),
+    endAt: at(0, '17:58'),
     status: 'ON_SALE',
     basePrice: 95000,
     soldSeats: 92,
@@ -206,8 +216,8 @@ export const MOCK_ADMIN_SCREENINGS: AdminScreening[] = [
     cinemaName: 'THEFILM Royal City',
     roomId: 6,
     roomName: 'IMAX Laser',
-    startAt: '2026-11-13T19:45:00+07:00',
-    endAt: '2026-11-13T22:01:00+07:00',
+    startAt: at(0, '19:45'),
+    endAt: at(0, '22:01'),
     status: 'ON_SALE',
     basePrice: 180000,
     soldSeats: 301,
@@ -221,8 +231,8 @@ export const MOCK_ADMIN_SCREENINGS: AdminScreening[] = [
     cinemaName: 'THEFILM Aeon Tân Bình',
     roomId: 5,
     roomName: 'Standard 2',
-    startAt: '2026-11-14T10:00:00+07:00',
-    endAt: '2026-11-14T11:48:00+07:00',
+    startAt: at(1, '10:00'),
+    endAt: at(1, '11:48'),
     status: 'SCHEDULED',
     basePrice: 85000,
     soldSeats: 12,
@@ -236,8 +246,8 @@ export const MOCK_ADMIN_SCREENINGS: AdminScreening[] = [
     cinemaName: 'THEFILM Aeon Tân Bình',
     roomId: 4,
     roomName: '4DX 1',
-    startAt: '2026-11-13T20:15:00+07:00',
-    endAt: '2026-11-13T22:13:00+07:00',
+    startAt: at(0, '20:15'),
+    endAt: at(0, '22:13'),
     status: 'SOLD_OUT',
     basePrice: 165000,
     soldSeats: 96,
@@ -251,8 +261,8 @@ export const MOCK_ADMIN_SCREENINGS: AdminScreening[] = [
     cinemaName: 'THEFILM Vincom Đồng Khởi',
     roomId: 2,
     roomName: 'Gold Class 2',
-    startAt: '2026-11-15T21:00:00+07:00',
-    endAt: '2026-11-15T23:05:00+07:00',
+    startAt: at(2, '21:00'),
+    endAt: at(2, '23:05'),
     status: 'SCHEDULED',
     basePrice: 250000,
     soldSeats: 0,
@@ -268,11 +278,11 @@ export const MOCK_ADMIN_ORDERS: AdminOrder[] = [
     customerPhone: '0903 221 118',
     cinemaName: 'THEFILM Vincom Đồng Khởi',
     filmTitle: 'Tầng Mây Cuối Cùng',
-    showtimeAt: '2026-11-13T14:30:00+07:00',
+    showtimeAt: at(0, '14:30'),
     seatLabels: ['H12', 'H13'],
     totalAmount: 300000,
     status: 'PAID',
-    createdAt: '2026-11-13T09:12:00+07:00',
+    createdAt: at(0, '09:12'),
   },
   {
     id: 5002,
@@ -281,11 +291,11 @@ export const MOCK_ADMIN_ORDERS: AdminOrder[] = [
     customerPhone: '0918 445 902',
     cinemaName: 'THEFILM Royal City',
     filmTitle: 'Tầng Mây Cuối Cùng',
-    showtimeAt: '2026-11-13T19:45:00+07:00',
+    showtimeAt: at(0, '19:45'),
     seatLabels: ['D08'],
     totalAmount: 180000,
     status: 'PENDING_PAYMENT',
-    createdAt: '2026-11-13T10:05:00+07:00',
+    createdAt: at(0, '10:05'),
   },
   {
     id: 5003,
@@ -294,11 +304,11 @@ export const MOCK_ADMIN_ORDERS: AdminOrder[] = [
     customerPhone: '0987 112 334',
     cinemaName: 'THEFILM Aeon Tân Bình',
     filmTitle: 'Mùa Hè Bất Tận',
-    showtimeAt: '2026-11-13T20:15:00+07:00',
+    showtimeAt: at(0, '20:15'),
     seatLabels: ['C04', 'C05', 'C06'],
     totalAmount: 495000,
     status: 'PAID',
-    createdAt: '2026-11-13T08:40:00+07:00',
+    createdAt: at(0, '08:40'),
   },
   {
     id: 5004,
@@ -307,11 +317,11 @@ export const MOCK_ADMIN_ORDERS: AdminOrder[] = [
     customerPhone: '0933 778 201',
     cinemaName: 'THEFILM Vincom Đồng Khởi',
     filmTitle: 'Mùa Hè Bất Tận',
-    showtimeAt: '2026-11-12T21:00:00+07:00',
+    showtimeAt: at(-1, '21:00'),
     seatLabels: ['G10'],
     totalAmount: 95000,
     status: 'REFUNDED',
-    createdAt: '2026-11-12T18:22:00+07:00',
+    createdAt: at(-1, '18:22'),
   },
   {
     id: 5005,
@@ -320,11 +330,11 @@ export const MOCK_ADMIN_ORDERS: AdminOrder[] = [
     customerPhone: '0975 660 412',
     cinemaName: 'THEFILM Royal City',
     filmTitle: 'Tầng Mây Cuối Cùng',
-    showtimeAt: '2026-11-13T19:45:00+07:00',
+    showtimeAt: at(0, '19:45'),
     seatLabels: ['F15', 'F16'],
     totalAmount: 360000,
     status: 'EXPIRED',
-    createdAt: '2026-11-13T07:55:00+07:00',
+    createdAt: at(0, '07:55'),
   },
 ];
 

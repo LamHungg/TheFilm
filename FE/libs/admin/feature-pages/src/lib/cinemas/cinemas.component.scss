@@ -72,3 +72,51 @@
   padding-top: 12px;
   border-top: 1px solid rgba(20, 24, 32, 0.06);
 }
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.search {
+  width: 360px;
+  max-width: 100%;
+}
+
+.foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.empty {
+  padding: 32px 0;
+  color: var(--tf-muted);
+  text-align: center;
+}
+
+.room-actions {
+  white-space: nowrap;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .search {
+    width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

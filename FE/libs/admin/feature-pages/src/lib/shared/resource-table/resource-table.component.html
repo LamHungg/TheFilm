@@ -1,0 +1,190 @@
+<div class="rt">
+  <div class="rt-toolbar">
+    @if (searchKeys().length) {
+      <nz-input-wrapper class="rt-search">
+        <span nz-icon nzType="search" nzInputPrefix></span>
+        <input
+          nz-input
+          type="search"
+          [placeholder]="searchPlaceholder()"
+          [ngModel]="keyword()"
+          (ngModelChange)="keyword.set($event)"
+        />
+      </nz-input-wrapper>
+    }
+    @if (filterKey()) {
+      <nz-select
+        class="rt-filter"
+        nzAllowClear
+        [nzPlaceHolder]="filterLabel()"
+        [ngModel]="filterValue()"
+        (ngModelChange)="filterValue.set($event)"
+      >
+        @for (o of filterOptions(); track o) {
+          <nz-option [nzValue]="o" [nzLabel]="statusLabel(o)"></nz-option>
+        }
+      </nz-select>
+    }
+    <div class="rt-spacer"></div>
+    <ng-content select="[toolbar]"></ng-content>
+    @if (fields().length && createLabel()) {
+      <button nz-button nzType="primary" (click)="openCreate()">
+        <span nz-icon nzType="plus"></span>
+        {{ createLabel() }}
+      </button>
+    }
+  </div>
+
+  <div class="table-card">
+    <nz-table
+      [nzData]="visibleRows()"
+      [nzPageSize]="pageSize()"
+      nzHideOnSinglePage
+      nzSize="middle"
+      [nzScroll]="{ x: scrollX() }"
+      [nzNoResult]="noResult"
+    >
+      <thead>
+        <tr>
+          @for (c of columns(); track c.key) {
+            <th [nzWidth]="c.width ?? '240px'" [nzAlign]="isNumeric(c) ? 'right' : null">{{ c.label }}</th>
+          }
+          @if (hasMenu()) {
+            <th nzWidth="56px" nzRight></th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of visibleRows(); track row.id) {
+          <tr>
+            @for (c of columns(); track c.key) {
+              <td [nzAlign]="isNumeric(c) ? 'right' : null" [attr.data-tone]="c.tone ? c.tone(row) : null">
+                @switch (c.kind) {
+                  @case ('tag') {
+                    <nz-tag [nzColor]="statusColor(row[c.key])">{{ statusLabel(row[c.key]) }}</nz-tag>
+                    @if (c.sub && row[c.sub]) {
+                      <small class="tag-sub">{{ row[c.sub] }}</small>
+                    }
+                  }
+                  @case ('code') {
+                    <code>{{ display(row, c) }}</code>
+                  }
+                  @case ('strong') {
+                    <div class="cell-main">
+                      <strong>{{ display(row, c) }}</strong>
+                      @if (c.sub) {
+                        <small>{{ row[c.sub] || '—' }}</small>
+                      }
+                    </div>
+                  }
+                  @default {
+                    <div class="cell-main" [class.num]="isNumeric(c)">
+                      <span>{{ display(row, c) }}</span>
+                      @if (c.sub) {
+                        <small>{{ row[c.sub] || '—' }}</small>
+                      }
+                    </div>
+                  }
+                }
+              </td>
+            }
+            @if (hasMenu()) {
+              <td nzRight nzAlign="center">
+                <button
+                  nz-button
+                  nzType="text"
+                  class="row-more-btn"
+                  nz-dropdown
+                  [nzDropdownMenu]="rowMenu"
+                  nzTrigger="click"
+                  nzPlacement="bottomRight"
+                  aria-label="Thao tác"
+                >
+                  <span nz-icon nzType="ellipsis"></span>
+                </button>
+                <nz-dropdown-menu #rowMenu="nzDropdownMenu">
+                  <ul nz-menu class="row-more-menu">
+                    @if (fields().length) {
+                      <li nz-menu-item (click)="openEdit(row)">
+                        <span nz-icon nzType="edit"></span>
+                        Sửa
+                      </li>
+                    }
+                    @for (a of visibleActions(row); track a.label) {
+                      <li nz-menu-item [nzDanger]="!!a.danger" (click)="a.run(row)">
+                        <span nz-icon [nzType]="a.icon"></span>
+                        {{ a.label }}
+                      </li>
+                    }
+                    @if (deletable()) {
+                      <li nz-menu-divider></li>
+                      <li nz-menu-item nzDanger (click)="confirmRemove(row)">
+                        <span nz-icon nzType="delete"></span>
+                        Xoá
+                      </li>
+                    }
+                  </ul>
+                </nz-dropdown-menu>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </nz-table>
+    <ng-template #noResult>
+      <nz-empty
+        nzNotFoundImage="simple"
+        [nzNotFoundContent]="keyword() || filterValue() ? 'Không có kết quả khớp bộ lọc' : emptyText()"
+      ></nz-empty>
+    </ng-template>
+  </div>
+</div>
+
+<nz-modal
+  [nzVisible]="modalOpen()"
+  [nzTitle]="(editingId() ? 'Sửa ' : 'Thêm ') + entityName()"
+  (nzOnCancel)="modalOpen.set(false)"
+  (nzOnOk)="submit()"
+  nzOkText="Lưu"
+  nzCancelText="Huỷ"
+  nzWidth="640px"
+>
+  <ng-container *nzModalContent>
+    <form nz-form nzLayout="vertical" class="form-grid" (ngSubmit)="submit()">
+      @for (f of fields(); track f.key) {
+        <nz-form-item [class.wide]="f.wide || f.kind === 'textarea'">
+          <nz-form-label [nzRequired]="!!f.required">{{ f.label }}</nz-form-label>
+          <nz-form-control>
+            @switch (f.kind) {
+              @case ('select') {
+                <nz-select [(ngModel)]="form[f.key]" [name]="f.key" [nzPlaceHolder]="f.placeholder ?? 'Chọn'">
+                  @for (o of f.options ?? []; track o.value) {
+                    <nz-option [nzValue]="o.value" [nzLabel]="o.label"></nz-option>
+                  }
+                </nz-select>
+              }
+              @case ('textarea') {
+                <textarea nz-input rows="3" [(ngModel)]="form[f.key]" [name]="f.key" [placeholder]="f.placeholder ?? ''"></textarea>
+              }
+              @case ('switch') {
+                <nz-switch [(ngModel)]="form[f.key]" [name]="f.key"></nz-switch>
+              }
+              @case ('number') {
+                <input nz-input type="number" inputmode="numeric" [(ngModel)]="form[f.key]" [name]="f.key" [placeholder]="f.placeholder ?? ''" />
+              }
+              @case ('date') {
+                <input nz-input type="date" [(ngModel)]="form[f.key]" [name]="f.key" />
+              }
+              @case ('time') {
+                <input nz-input type="time" [(ngModel)]="form[f.key]" [name]="f.key" />
+              }
+              @default {
+                <input nz-input [(ngModel)]="form[f.key]" [name]="f.key" [placeholder]="f.placeholder ?? ''" />
+              }
+            }
+          </nz-form-control>
+        </nz-form-item>
+      }
+    </form>
+  </ng-container>
+</nz-modal>

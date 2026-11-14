@@ -1,5 +1,5 @@
 <div class="shell">
-  <aside class="sider">
+  <aside class="sider" [class.open]="menuOpen()">
     <div class="brand">
       <div class="mark" aria-hidden="true">TF</div>
       <div>
@@ -9,43 +9,26 @@
     </div>
 
     <nav class="nav">
-      <p class="nav-label">Vận hành</p>
-      @for (item of navMain; track item.path) {
-        <a
-          class="nav-item"
-          [routerLink]="item.path"
-          routerLinkActive="active"
-        >
-          <span nz-icon [nzType]="item.icon"></span>
-          <span>{{ item.label }}</span>
-        </a>
-      }
-
-      <p class="nav-label">Kinh doanh</p>
-      @for (item of navOps; track item.path) {
-        <a
-          class="nav-item"
-          [routerLink]="item.path"
-          routerLinkActive="active"
-        >
-          <span nz-icon [nzType]="item.icon"></span>
-          <span>{{ item.label }}</span>
-          @if (item.badge && openSupport() > 0) {
-            <em>{{ openSupport() }}</em>
-          }
-        </a>
+      @for (group of navGroups; track group.label) {
+        <p class="nav-label">{{ group.label }}</p>
+        @for (item of group.items; track item.path) {
+          <a
+            class="nav-item"
+            [routerLink]="item.path"
+            routerLinkActive="active"
+            (click)="menuOpen.set(false)"
+          >
+            <span nz-icon [nzType]="item.icon"></span>
+            <span>{{ item.label }}</span>
+            @if (item.badge && openSupport() > 0) {
+              <em>{{ openSupport() }}</em>
+            }
+          </a>
+        }
       }
     </nav>
 
     <div class="sider-bottom">
-      <div class="quota">
-        <div class="quota-top">
-          <span>Công suất ghế hôm nay</span>
-          <strong>78%</strong>
-        </div>
-        <div class="quota-bar"><span style="width: 78%"></span></div>
-        <small>1.248 / 1.600 ghế đã bán</small>
-      </div>
 
       <div class="sider-user" nz-dropdown [nzDropdownMenu]="userMenu" nzPlacement="topLeft">
         <nz-avatar
@@ -71,9 +54,15 @@
       </nz-dropdown-menu>
     </div>
   </aside>
+  @if (menuOpen()) {
+    <div class="scrim" (click)="menuOpen.set(false)" (keydown.escape)="menuOpen.set(false)"></div>
+  }
 
   <div class="main">
     <header class="topbar">
+      <button class="icon-btn menu-btn" type="button" aria-label="Mở menu" (click)="menuOpen.set(true)">
+        <span nz-icon nzType="menu"></span>
+      </button>
       <div class="crumbs">
         THEFILM <span>/</span> {{ pageMeta().title }}
       </div>
@@ -97,7 +86,7 @@
         </button>
         <button nz-button nzType="default">
           <span nz-icon nzType="download"></span>
-          Export
+          <span class="export-label">Export</span>
         </button>
       </div>
     </header>

@@ -4,3 +4,7 @@ export * from './lib/services/admin-auth.service';
 export * from './lib/services/admin-catalog.service';
 export * from './lib/services/admin-ops.service';
 export * from './lib/interceptors/admin-api.interceptor';
+export * from './lib/models/backoffice.models';
+export * from './lib/data/backoffice-mock';
+export * from './lib/services/mock-collection';
+export * from './lib/services/admin-backoffice.service';

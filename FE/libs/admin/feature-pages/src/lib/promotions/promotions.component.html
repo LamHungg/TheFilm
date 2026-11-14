@@ -1,3 +1,5 @@
+<nz-tabs class="page-tabs">
+<nz-tab nzTitle="Chiến dịch">
 <div class="page">
   <div class="toolbar">
     <button nz-button nzType="primary" (click)="openCreate()">
@@ -72,6 +74,23 @@
     </nz-table>
   </div>
 </div>
+</nz-tab>
+<nz-tab nzTitle="Voucher">
+  <admin-resource-table
+    [rows]="bo.vouchers.items()"
+    [columns]="voucherCols"
+    [fields]="voucherFields()"
+    entityName="voucher"
+    createLabel="Phát hành voucher"
+    [searchKeys]="['code', 'issuedTo', 'campaign']"
+    searchPlaceholder="Tìm theo mã, người nhận"
+    filterKey="status"
+    filterLabel="Mọi trạng thái"
+    [defaults]="{ status: 'UNUSED', issuedTo: 'Không chỉ định' }"
+    (save)="saveVoucher($event)"
+  />
+</nz-tab>
+</nz-tabs>
 
 <nz-modal
   [nzVisible]="modalOpen()"

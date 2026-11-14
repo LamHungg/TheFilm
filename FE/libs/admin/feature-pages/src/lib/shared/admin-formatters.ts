@@ -57,7 +57,48 @@ const STATUS_LABELS: Record<string, string> = {
   HOTLINE: 'Hotline',
   EMAIL: 'Email',
   CHAT: 'Chat',
+  PENDING: 'Chờ duyệt',
+  REJECTED: 'Từ chối',
+  UNUSED: 'Chưa dùng',
+  USED: 'Đã dùng',
+  ISSUED: 'Đã phát hành',
+  FAILED: 'Lỗi',
+  LOCKED: 'Đã chốt',
+  PUBLISHED: 'Đã đăng',
+  REFUND: 'Hoàn tiền',
+  CHANGE: 'Đổi vé',
+  IMPORT: 'Nhập kho',
+  EXPORT: 'Xuất kho',
+  ADJUST: 'Điều chỉnh',
+  WEEKDAY: 'Ngày thường',
+  WEEKEND: 'Cuối tuần',
+  HOLIDAY: 'Ngày lễ',
+  SUBTITLE: 'Phụ đề',
+  DUBBED: 'Lồng tiếng',
+  VOICEOVER: 'Thuyết minh',
+  CHAIN_ADMIN: 'Quản trị chuỗi',
+  CINEMA_MANAGER: 'Quản lý rạp',
+  STAFF: 'Nhân viên',
+  CREATE: 'Tạo',
+  UPDATE: 'Sửa',
+  DELETE: 'Xoá',
+  CANCEL: 'Huỷ',
+  LOGIN_FAILED: 'Đăng nhập lỗi',
 };
+
+const SUCCESS = ['ACTIVE', 'PAID', 'APPROVED', 'RESOLVED', 'ISSUED', 'PUBLISHED', 'NOW_SHOWING', 'ON_SALE', 'IMPORT', 'UNUSED'];
+const WARNING = ['PENDING', 'PENDING_PAYMENT', 'PENDING_REVIEW', 'WAITING', 'MAINTENANCE', 'PAUSED', 'OPEN', 'ADJUST'];
+const ERROR = ['FAILED', 'REJECTED', 'CANCELLED', 'EXPIRED', 'LOGIN_FAILED', 'DELETE', 'CANCEL', 'HIGH'];
+const INFO = ['DRAFT', 'IN_PROGRESS', 'LOCKED', 'REFUNDED', 'SCHEDULED', 'COMING_SOON', 'CHANGE', 'EXPORT', 'MEDIUM'];
+
+/** Màu nz-tag cho mã trạng thái: xanh xong, cam chờ, đỏ lỗi, xanh dương đang làm, xám còn lại. */
+export function statusColor(code: string): string {
+  if (SUCCESS.includes(code)) return 'success';
+  if (WARNING.includes(code)) return 'warning';
+  if (ERROR.includes(code)) return 'error';
+  if (INFO.includes(code)) return 'processing';
+  return 'default';
+}
 
 /** Vietnamese label for a backend enum code; unknown codes are shown as-is. */
 export function statusLabel(code: string): string {

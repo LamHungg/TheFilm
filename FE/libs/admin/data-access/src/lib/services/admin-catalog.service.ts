@@ -102,4 +102,25 @@ export class AdminCatalogService {
   deleteScreening(id: number): void {
     this.screeningsState.update((list) => list.filter((s) => s.id !== id));
   }
+
+  upsertCinema(payload: Omit<AdminCinema, 'id' | 'roomCount'> & { id?: number | null }): void {
+    if (payload.id) {
+      this.cinemasState.update((list) => list.map((c) => (c.id === payload.id ? { ...c, ...payload, id: c.id } : c)));
+      return;
+    }
+    const id = Math.max(0, ...this.cinemasState().map((c) => c.id)) + 1;
+    this.cinemasState.update((list) => [...list, { ...payload, id, roomCount: 0 }]);
+  }
+
+  upsertRoom(payload: Omit<AdminRoom, 'id'> & { id?: number | null }): void {
+    if (payload.id) {
+      this.roomsState.update((list) => list.map((r) => (r.id === payload.id ? { ...r, ...payload, id: r.id } : r)));
+      return;
+    }
+    const id = Math.max(0, ...this.roomsState().map((r) => r.id)) + 1;
+    this.roomsState.update((list) => [...list, { ...payload, id }]);
+    this.cinemasState.update((list) =>
+      list.map((c) => (c.id === payload.cinemaId ? { ...c, roomCount: c.roomCount + 1 } : c))
+    );
+  }
 }

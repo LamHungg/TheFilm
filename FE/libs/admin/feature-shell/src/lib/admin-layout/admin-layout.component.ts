@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs/operators';
@@ -20,17 +20,47 @@ interface NavItem {
   badge?: boolean;
 }
 
-const NAV_MAIN: NavItem[] = [
-  { path: '/dashboard', label: 'Tổng quan', icon: 'dashboard' },
-  { path: '/films', label: 'Phim', icon: 'video-camera' },
-  { path: '/cinemas', label: 'Rạp & phòng', icon: 'shop' },
-  { path: '/screenings', label: 'Suất chiếu', icon: 'calendar' },
-];
-
-const NAV_OPS: NavItem[] = [
-  { path: '/orders', label: 'Đơn hàng', icon: 'shopping-cart' },
-  { path: '/promotions', label: 'Khuyến mãi', icon: 'gift' },
-  { path: '/support', label: 'CSKH', icon: 'customer-service', badge: true },
+const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Vận hành',
+    items: [
+      { path: '/dashboard', label: 'Tổng quan', icon: 'dashboard' },
+      { path: '/films', label: 'Phim', icon: 'video-camera' },
+      { path: '/film-releases', label: 'Bản chiếu & phát hành', icon: 'play-circle' },
+      { path: '/cinemas', label: 'Rạp & phòng', icon: 'shop' },
+      { path: '/room-config', label: 'Loại phòng & ghế', icon: 'appstore' },
+      { path: '/screenings', label: 'Suất chiếu', icon: 'calendar' },
+      { path: '/pricing', label: 'Giá vé', icon: 'tag' },
+    ],
+  },
+  {
+    label: 'Kinh doanh',
+    items: [
+      { path: '/reports', label: 'Báo cáo', icon: 'bar-chart' },
+      { path: '/orders', label: 'Đơn hàng', icon: 'shopping-cart' },
+      { path: '/refunds', label: 'Hoàn & đổi vé', icon: 'rollback' },
+      { path: '/promotions', label: 'Khuyến mãi', icon: 'gift' },
+      { path: '/members', label: 'Thành viên', icon: 'crown' },
+      { path: '/fnb', label: 'Bắp nước', icon: 'coffee' },
+      { path: '/invoices', label: 'Hoá đơn', icon: 'file-text' },
+      { path: '/support', label: 'CSKH', icon: 'customer-service', badge: true },
+    ],
+  },
+  {
+    label: 'Nhân sự',
+    items: [
+      { path: '/staff', label: 'Nhân viên & phân quyền', icon: 'team' },
+      { path: '/shifts', label: 'Ca làm & lương', icon: 'schedule' },
+    ],
+  },
+  {
+    label: 'Hệ thống',
+    items: [
+      { path: '/organization', label: 'Tổ chức', icon: 'bank' },
+      { path: '/audit', label: 'Nhật ký thao tác', icon: 'history' },
+      { path: '/settings', label: 'Cài đặt', icon: 'setting' },
+    ],
+  },
 ];
 
 const TITLE_MAP: Record<string, { title: string; subtitle: string }> = {
@@ -44,6 +74,19 @@ const TITLE_MAP: Record<string, { title: string; subtitle: string }> = {
   '/orders': { title: 'Đơn hàng', subtitle: 'Vé, thanh toán và hoàn tiền' },
   '/promotions': { title: 'Khuyến mãi', subtitle: 'Chiến dịch giảm giá và voucher áp dụng toàn chuỗi' },
   '/support': { title: 'CSKH', subtitle: 'Theo dõi và xử lý yêu cầu hỗ trợ của khách hàng' },
+  '/film-releases': { title: 'Bản chiếu & phát hành', subtitle: 'Định dạng, âm thanh và quyền phát hành của từng phim' },
+  '/room-config': { title: 'Loại phòng & ghế', subtitle: 'Loại phòng, loại ghế, phụ thu và bảo trì ghế' },
+  '/pricing': { title: 'Giá vé', subtitle: 'Quy tắc giá theo rạp, loại phòng, loại ghế và khung giờ' },
+  '/reports': { title: 'Báo cáo', subtitle: 'Doanh thu vé, bắp nước và lấp đầy theo phim, rạp' },
+  '/refunds': { title: 'Hoàn & đổi vé', subtitle: 'Duyệt yêu cầu hoàn tiền và đổi suất của khách' },
+  '/members': { title: 'Thành viên', subtitle: 'Khách hàng thành viên, hạng và điểm thưởng' },
+  '/fnb': { title: 'Bắp nước', subtitle: 'Sản phẩm, giá bán và tồn kho tại từng rạp' },
+  '/invoices': { title: 'Hoá đơn', subtitle: 'Hoá đơn điện tử và thuế suất' },
+  '/staff': { title: 'Nhân viên & phân quyền', subtitle: 'Tài khoản, vai trò và phạm vi rạp của nhân viên' },
+  '/shifts': { title: 'Ca làm & lương', subtitle: 'Xếp ca, chấm công, nghỉ phép và bảng lương' },
+  '/organization': { title: 'Tổ chức', subtitle: 'Chuỗi rạp và pháp nhân xuất hoá đơn' },
+  '/audit': { title: 'Nhật ký thao tác', subtitle: 'Ai đã làm gì, lúc nào, từ đâu' },
+  '/settings': { title: 'Cài đặt', subtitle: 'Quy định bán vé, hoàn vé, thanh toán và hoá đơn' },
 };
 
 @Component({
@@ -71,10 +114,11 @@ export class AdminLayoutComponent {
   private readonly auth = inject(AdminAuthService);
   private readonly ops = inject(AdminOpsService);
 
-  readonly navMain = NAV_MAIN;
-  readonly navOps = NAV_OPS;
+  readonly navGroups = NAV_GROUPS;
   readonly user = this.auth.user;
   search = '';
+  /** Menu trượt trên màn hẹp (dưới 900px sidebar ẩn). */
+  readonly menuOpen = signal(false);
 
   readonly openSupport = computed(
     () =>

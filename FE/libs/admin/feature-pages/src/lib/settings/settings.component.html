@@ -1,0 +1,104 @@
+<form class="settings" (ngSubmit)="save()">
+  <section class="card">
+    <header>
+      <h3>Bán vé</h3>
+      <p>Áp dụng cho web, app và quầy.</p>
+    </header>
+    <div class="fields">
+      <label>
+        <span>Giữ ghế khi đang thanh toán</span>
+        <nz-input-wrapper>
+          <input nz-input type="number" inputmode="numeric" name="holdMinutes" [(ngModel)]="form.holdMinutes" />
+          <span nzInputSuffix>phút</span>
+        </nz-input-wrapper>
+      </label>
+      <label>
+        <span>Số vé tối đa mỗi đơn</span>
+        <input nz-input type="number" inputmode="numeric" name="maxTickets" [(ngModel)]="form.maxTicketsPerOrder" />
+      </label>
+      <label>
+        <span>Mở bán trước ngày chiếu</span>
+        <nz-input-wrapper>
+          <input nz-input type="number" inputmode="numeric" name="saleOpenDays" [(ngModel)]="form.saleOpenDays" />
+          <span nzInputSuffix>ngày</span>
+        </nz-input-wrapper>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <header>
+      <h3>Hoàn và đổi vé</h3>
+      <p>Yêu cầu ngoài các mốc này cần quản lý rạp duyệt tay ở trang Hoàn & đổi vé.</p>
+    </header>
+    <div class="fields">
+      <label>
+        <span>Cho hoàn trước giờ chiếu</span>
+        <nz-input-wrapper>
+          <input nz-input type="number" inputmode="numeric" name="refundBefore" [(ngModel)]="form.refundBeforeHours" />
+          <span nzInputSuffix>giờ</span>
+        </nz-input-wrapper>
+      </label>
+      <label>
+        <span>Phí hoàn vé</span>
+        <nz-input-wrapper>
+          <input nz-input type="number" inputmode="numeric" name="refundFee" [(ngModel)]="form.refundFeePct" />
+          <span nzInputSuffix>%</span>
+        </nz-input-wrapper>
+      </label>
+      <label>
+        <span>Cho đổi suất trước giờ chiếu</span>
+        <nz-input-wrapper>
+          <input nz-input type="number" inputmode="numeric" name="changeBefore" [(ngModel)]="form.changeBeforeHours" />
+          <span nzInputSuffix>giờ</span>
+        </nz-input-wrapper>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <header>
+      <h3>Thanh toán</h3>
+      <p>Cổng nào tắt sẽ không hiện ở bước thanh toán.</p>
+    </header>
+    <div class="toggles">
+      <label><span>VNPAY</span><nz-switch name="vnpay" [(ngModel)]="form.paymentVnpay"></nz-switch></label>
+      <label><span>Ví MoMo</span><nz-switch name="momo" [(ngModel)]="form.paymentMomo"></nz-switch></label>
+      <label><span>Thẻ quốc tế (Visa, Mastercard)</span><nz-switch name="card" [(ngModel)]="form.paymentCard"></nz-switch></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <header>
+      <h3>Hoá đơn điện tử</h3>
+    </header>
+    <div class="fields">
+      <label>
+        <span>Nhà cung cấp</span>
+        <nz-select name="provider" [(ngModel)]="form.invoiceProvider">
+          <nz-option nzValue="VNPT Invoice" nzLabel="VNPT Invoice"></nz-option>
+          <nz-option nzValue="Viettel S-Invoice" nzLabel="Viettel S-Invoice"></nz-option>
+          <nz-option nzValue="MISA meInvoice" nzLabel="MISA meInvoice"></nz-option>
+        </nz-select>
+      </label>
+    </div>
+    <div class="toggles">
+      <label><span>Tự xuất hoá đơn khi đơn thanh toán xong</span><nz-switch name="invoiceAuto" [(ngModel)]="form.invoiceAuto"></nz-switch></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <header>
+      <h3>Thông báo cho khách</h3>
+    </header>
+    <div class="toggles">
+      <label><span>Gửi vé qua email</span><nz-switch name="email" [(ngModel)]="form.notifyEmail"></nz-switch></label>
+      <label><span>Gửi vé qua SMS</span><nz-switch name="sms" [(ngModel)]="form.notifySms"></nz-switch></label>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button nz-button type="button" (click)="reset()">Huỷ thay đổi</button>
+    <button nz-button nzType="primary" type="submit">Lưu cài đặt</button>
+  </div>
+</form>
