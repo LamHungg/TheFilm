@@ -1,0 +1,255 @@
+<div class="rooms-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; PHÒNG & GHẾ</div>
+      <h1 class="page-title">Phòng chiếu, loại phòng và sơ đồ ghế</h1>
+      <p class="page-desc">
+        Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Tạo phòng mới</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar & Cinema Select -->
+  <div class="toolbar-row">
+    <div class="filter-pills-bar">
+      @for (tab of tabs; track tab.label; let i = $index) {
+        <button
+          class="filter-pill"
+          [class.active]="tab.active"
+          (click)="selectTab(i)"
+          type="button"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <div class="cinema-filter-box">
+      <label class="cinema-filter-label">Chọn rạp:</label>
+      <select class="cinema-select" [ngModel]="selectedCinemaId" (ngModelChange)="onCinemaChange($event)">
+        @for (c of cinemas; track c.cinemaId) {
+          <option [value]="c.cinemaId">{{ c.cinemaName }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- TAB 0: PHÒNG CHIẾU -->
+  @if (tabs[0].active) {
+    <div class="ops-middle-layout">
+      <!-- Left Table -->
+      <div class="table-card">
+        <div class="table-header-title">
+          <span>DANH SÁCH PHÒNG CHIẾU ({{ rooms.length }})</span>
+          @if (loading) {
+            <span class="loading-tag">Đang tải...</span>
+          }
+        </div>
+        <div class="card-inner-table">
+          <div class="table-header-row">
+            <div class="col-head col-code">MÃ</div>
+            <div class="col-head col-room">TÊN PHÒNG</div>
+            <div class="col-head col-type">LOẠI PHÒNG</div>
+            <div class="col-head col-status">TRẠNG THÁI</div>
+          </div>
+
+          <div class="table-body">
+            @if (!loading && rooms.length === 0) {
+              <div class="empty-cell">Chưa có phòng chiếu nào tại rạp này.</div>
+            }
+            @for (r of rooms; track r.roomId) {
+              <div
+                class="table-data-row"
+                [class.selected]="selectedRoom?.roomId === r.roomId"
+                (click)="selectRoom(r)"
+              >
+                <div class="col-cell col-code font-bold">{{ r.roomCode }}</div>
+                <div class="col-cell col-room">{{ r.roomName }}</div>
+                <div class="col-cell col-type">
+                  <span class="badge-type">{{ r.roomTypeName || 'Tiêu chuẩn' }}</span>
+                </div>
+                <div class="col-cell col-status" [class.text-green]="r.status === 'ACTIVE'">
+                  {{ r.status === 'ACTIVE' ? 'Hoạt động' : r.status }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Visual Seat Map Preview -->
+      <div class="seatmap-card">
+        <div class="seatmap-header">
+          <h2 class="seatmap-title">
+            SƠ ĐỒ GHẾ · {{ selectedRoom ? (selectedRoom.roomName + ' (' + selectedRoom.roomCode + ')') : 'CHƯA CHỌN PHÒNG' }}
+          </h2>
+          <span class="seatmap-subtitle">Loại: {{ selectedRoom?.roomTypeName || 'Standard' }} · Quy chuẩn 120 ghế</span>
+        </div>
+
+        <!-- Screen Indicator -->
+        <div class="screen-indicator-box">
+          <div class="screen-line"></div>
+          <span class="screen-text">MÀN HÌNH CHIẾU (SCREEN)</span>
+        </div>
+
+        <!-- Seats Grid -->
+        <div class="seats-grid-container">
+          @for (row of rows; track row) {
+            <div class="seat-row">
+              <span class="row-letter">{{ row }}</span>
+              <div class="seat-cells">
+                @for (col of cols; track col) {
+                  <div
+                    class="seat-cell"
+                    [class.seat-vip]="row === 'E' || row === 'F' || row === 'G'"
+                    [class.seat-sweetbox]="row === 'H'"
+                    [title]="row + col"
+                  >
+                    <span class="seat-num">{{ col }}</span>
+                  </div>
+                }
+              </div>
+              <span class="row-letter">{{ row }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Legend -->
+        <div class="seat-legend">
+          <div class="legend-item">
+            <span class="legend-color normal"></span>
+            <span>Ghế thường</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color vip"></span>
+            <span>Ghế VIP</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color sweetbox"></span>
+            <span>Ghế đôi (Sweetbox)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color maintenance"></span>
+            <span>Đang bảo trì</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 1: LOẠI PHÒNG -->
+  @if (tabs[1].active) {
+    <div class="full-card">
+      <div class="table-header-title">
+        <span>DANH MỤC ĐỊNH DẠNG VÀ LOẠI PHÒNG CHIẾU TOÀN HỆ THỐNG</span>
+      </div>
+      <div class="card-inner-table">
+        <div class="table-header-row types-grid">
+          <div class="col-head">MÃ ĐỊNH DẠNG</div>
+          <div class="col-head">TÊN LOẠI PHÒNG</div>
+          <div class="col-head">MÔ TẢ CHI TIẾT</div>
+          <div class="col-head">TRẠNG THÁI</div>
+        </div>
+        <div class="table-body">
+          @for (t of roomTypes; track t.id) {
+            <div class="table-data-row types-grid">
+              <div class="col-cell font-bold text-red">{{ t.typeCode }}</div>
+              <div class="col-cell font-medium">{{ t.typeName }}</div>
+              <div class="col-cell text-muted">{{ t.description || 'Không có mô tả' }}</div>
+              <div class="col-cell text-green font-semibold">{{ t.status }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: LOẠI GHẾ & SƠ ĐỒ GHẾ -->
+  @if (tabs[2].active) {
+    <div class="full-card">
+      <div class="table-header-title">
+        <span>DANH MỤC PHÂN HẠNG VÀ LOẠI GHẾ NGỒI</span>
+      </div>
+      <div class="card-inner-table">
+        <div class="table-header-row types-grid">
+          <div class="col-head">MÃ GHẾ</div>
+          <div class="col-head">TÊN PHÂN HẠNG</div>
+          <div class="col-head">ĐẶC ĐIỂM KỸ THUẬT</div>
+          <div class="col-head">TRẠNG THÁI</div>
+        </div>
+        <div class="table-body">
+          @for (s of seatTypes; track s.id) {
+            <div class="table-data-row types-grid">
+              <div class="col-cell font-bold text-red">{{ s.typeCode }}</div>
+              <div class="col-cell font-medium">{{ s.typeName }}</div>
+              <div class="col-cell text-muted">{{ s.description || 'Tiêu chuẩn rạp chiếu phim' }}</div>
+              <div class="col-cell text-green font-semibold">{{ s.status }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: Tạo Phòng Chiếu Mới -->
+  @if (isCreateModalOpen) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Tạo phòng chiếu mới</h2>
+            <p class="modal-subtitle">Thêm phòng chiếu vật lý vào cụm rạp đã chọn</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
+        </div>
+
+        @if (createError) {
+          <div class="alert-box error">{{ createError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateRoom()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Cụm rạp (*)</label>
+              <select [(ngModel)]="newRoom.cinemaId" name="cinemaId" class="form-select">
+                @for (c of cinemas; track c.cinemaId) {
+                  <option [value]="c.cinemaId">{{ c.cinemaName }} ({{ c.cinemaCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mã phòng chiếu (*)</label>
+              <input type="text" [(ngModel)]="newRoom.roomCode" name="roomCode" class="form-input" placeholder="VD: R01, IMAX01" required />
+            </div>
+
+            <div class="form-group">
+              <label>Loại phòng chiếu (*)</label>
+              <select [(ngModel)]="newRoom.roomTypeId" name="roomTypeId" class="form-select">
+                @for (t of roomTypes; track t.id) {
+                  <option [value]="t.id">{{ t.typeName }} ({{ t.typeCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Tên phòng chiếu (*)</label>
+              <input type="text" [(ngModel)]="newRoom.roomName" name="roomName" class="form-input" placeholder="VD: Phòng Chiếu 01 - Laser Surround" required />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isCreating">
+              {{ isCreating ? 'Đang lưu...' : 'Xác nhận tạo phòng' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
