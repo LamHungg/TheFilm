@@ -1,0 +1,209 @@
+<div class="pricing-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; GIÁ & ƯU ĐÃI</div>
+      <h1 class="page-title">Bảng giá vé và chính sách bán vé</h1>
+      <p class="page-desc">
+        Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Tạo quy tắc giá vé</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Middle Layout -->
+  <div class="ops-middle-layout">
+    <!-- Left Table -->
+    <div class="table-card">
+      <div class="table-header-title">
+        <span>QUY TẮC GIÁ VÉ HIỆN HÀNH ({{ priceRules.length }})</span>
+        @if (loading) {
+          <span class="loading-tag">Đang tải...</span>
+        }
+      </div>
+
+      <div class="card-inner-table">
+        <div class="table-header-row">
+          <div class="col-head col-code">MÃ QUY TẮC</div>
+          <div class="col-head col-type">LOẠI PHÒNG & GHẾ</div>
+          <div class="col-head col-validity">HIỆU LỰC</div>
+          <div class="col-head col-price">GIÁ GỐC</div>
+          <div class="col-head col-status">DUYỆT</div>
+        </div>
+
+        <div class="table-body">
+          @if (!loading && priceRules.length === 0) {
+            <div class="empty-cell">Chưa có bảng giá vé nào được thiết lập.</div>
+          }
+          @for (r of priceRules; track r.priceRuleId) {
+            <div class="table-data-row">
+              <div class="col-cell col-code font-bold text-red">{{ r.ruleCode }}</div>
+              <div class="col-cell col-type">
+                <div class="type-main">{{ getSeatTypeName(r.seatTypeId) }}</div>
+                <div class="type-sub text-muted">{{ getRoomTypeName(r.roomTypeId) }}</div>
+              </div>
+              <div class="col-cell col-validity">
+                <div>{{ getWeekdayLabel(r.weekdayNo) }}</div>
+                <div class="type-sub text-muted">Từ: {{ r.validFrom | date:'dd/MM/yyyy' }}</div>
+              </div>
+              <div class="col-cell col-price font-bold">{{ formatPrice(r.basePrice) }}</div>
+              <div class="col-cell col-status" [class.text-green]="r.approvalStatus === 'APPROVED'">
+                {{ r.approvalStatus }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Config Detail -->
+    <div class="detail-card">
+      <h2 class="detail-header-title">CẤU HÌNH PHỤ THU & ƯU ĐÃI CHUẨN</h2>
+
+      <div class="config-item">
+        <span class="cfg-name">Phụ thu định dạng IMAX / 3D Laser</span>
+        <span class="cfg-val text-red">+40.000 đ / vé</span>
+      </div>
+
+      <div class="config-item">
+        <span class="cfg-name">Phụ thu ngày Lễ / Tết / Sneak Show</span>
+        <span class="cfg-val text-red">+15.000 đ / vé</span>
+      </div>
+
+      <div class="config-item">
+        <span class="cfg-name">Ưu đãi thẻ thành viên VIP & VVIP</span>
+        <span class="cfg-val text-green">-15% Giá vé + Tích điểm 10%</span>
+      </div>
+
+      <div class="config-item">
+        <span class="cfg-name">Giờ vàng Happy Day (Thứ 3 hàng tuần)</span>
+        <span class="cfg-val text-green">Đồng giá 60.000 đ / vé 2D</span>
+      </div>
+
+      <div class="config-item">
+        <span class="cfg-name">Ưu đãi Học sinh / Sinh viên</span>
+        <span class="cfg-val text-green">Đồng giá 65.000 đ (trước 17:00)</span>
+      </div>
+
+      <button class="btn-outline-full" type="button" (click)="openCreateModal()">+ Thêm cấu hình giá mới</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Tạo Quy Tắc Giá Mới -->
+  @if (isModalOpen) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Tạo quy tắc giá vé mới</h2>
+            <p class="modal-subtitle">Thiết lập chính sách giá vé dựa trên loại ghế, phòng chiếu và thời gian</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
+        </div>
+
+        @if (saveError) {
+          <div class="alert-box error">{{ saveError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateRule()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Mã quy tắc bảng giá (*)</label>
+              <input type="text" [(ngModel)]="newRule.ruleCode" name="ruleCode" class="form-input" placeholder="VD: PR-STD-WEEKEND-01" required />
+            </div>
+
+            <div class="form-group">
+              <label>Loại ghế (*)</label>
+              <select [(ngModel)]="newRule.seatTypeId" name="seatTypeId" class="form-select">
+                @for (s of seatTypes; track s.id) {
+                  <option [value]="s.id">{{ s.typeName }} ({{ s.typeCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Loại phòng chiếu</label>
+              <select [(ngModel)]="newRule.roomTypeId" name="roomTypeId" class="form-select">
+                <option [ngValue]="null">Tất cả loại phòng</option>
+                @for (r of roomTypes; track r.id) {
+                  <option [value]="r.id">{{ r.typeName }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Phạm vi áp dụng (Cụm rạp)</label>
+              <select [(ngModel)]="newRule.cinemaId" name="cinemaId" class="form-select">
+                <option [ngValue]="null">Toàn bộ hệ thống rạp</option>
+                @for (c of cinemas; track c.cinemaId) {
+                  <option [value]="c.cinemaId">{{ c.cinemaName }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Thứ trong tuần áp dụng</label>
+              <select [(ngModel)]="newRule.weekdayNo" name="weekdayNo" class="form-select">
+                <option [ngValue]="null">Tất cả các ngày trong tuần</option>
+                <option [value]="1">Thứ Hai</option>
+                <option [value]="2">Thứ Ba</option>
+                <option [value]="3">Thứ Tư</option>
+                <option [value]="4">Thứ Năm</option>
+                <option [value]="5">Thứ Sáu</option>
+                <option [value]="6">Thứ Bảy (Cuối tuần)</option>
+                <option [value]="7">Chủ Nhật (Cuối tuần)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Đơn giá cơ bản (VNĐ) (*)</label>
+              <input type="number" [(ngModel)]="newRule.basePrice" name="basePrice" class="form-input" min="0" step="5000" required />
+            </div>
+
+            <div class="form-group">
+              <label>Hiệu lực từ ngày (*)</label>
+              <input type="date" [(ngModel)]="newRule.validFrom" name="validFrom" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label>Mức ưu tiên (Priority No)</label>
+              <input type="number" [(ngModel)]="newRule.priorityNo" name="priorityNo" class="form-input" min="1" max="999" />
+            </div>
+
+            <div class="form-group">
+              <label>Loại suất chiếu</label>
+              <select [(ngModel)]="newRule.screeningTypeCode" name="screeningTypeCode" class="form-select">
+                <option value="STANDARD">STANDARD (Tiêu chuẩn)</option>
+                <option value="SNEAK_PREVIEW">SNEAK_PREVIEW (Suất chiếu sớm)</option>
+                <option value="MIDNIGHT">MIDNIGHT (Suất đêm)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isSaving">
+              {{ isSaving ? 'Đang lưu...' : 'Xác nhận tạo quy tắc giá' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
