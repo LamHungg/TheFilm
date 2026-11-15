@@ -117,20 +117,30 @@ VALUES (1, 'WELCOME10', 'Ưu đãi khách hàng mới', 'PERCENT', 10, 50000,
         CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'N', 'ACTIVE');
 INSERT INTO promo_campaign (promo_campaign_id, campaign_code, campaign_name, discount_type, discount_value,
                             max_discount, valid_from, valid_to, stackable, status)
-VALUES (2, 'MOVIE50000', 'Giảm 50.000 đồng', 'FIXED', 50000, 50000,
+VALUES (2, 'MOVIE50000', 'Giảm 50.000đ khi đặt vé', 'FIXED', 50000, 50000,
+        CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'N', 'ACTIVE');
+INSERT INTO promo_campaign (promo_campaign_id, campaign_code, campaign_name, discount_type, discount_value,
+                            max_discount, valid_from, valid_to, stackable, status)
+VALUES (3, 'FREEPOPCORN', 'Miễn phí 01 Bắp ngọt (Popcorn Sweet)', 'FIXED', 45000, 45000,
+        CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'N', 'ACTIVE');
+INSERT INTO promo_campaign (promo_campaign_id, campaign_code, campaign_name, discount_type, discount_value,
+                            max_discount, valid_from, valid_to, stackable, status)
+VALUES (4, 'HAPPYTUE', 'Giảm 20% suất chiếu Thứ Ba Vui Vẻ', 'PERCENT', 20, 100000,
         CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'N', 'ACTIVE');
 INSERT INTO promo_voucher (voucher_id, promo_campaign_id, voucher_code, valid_from, valid_to, status)
 VALUES (1, 1, 'THEFILM-WELCOME10', CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'ACTIVE');
 INSERT INTO promo_voucher (voucher_id, promo_campaign_id, voucher_code, valid_from, valid_to, status)
 VALUES (2, 2, 'THEFILM-50000', CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'ACTIVE');
+INSERT INTO promo_voucher (voucher_id, promo_campaign_id, voucher_code, valid_from, valid_to, status)
+VALUES (3, 3, 'THEFILM-POPCORN', CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'ACTIVE');
+INSERT INTO promo_voucher (voucher_id, promo_campaign_id, voucher_code, valid_from, valid_to, status)
+VALUES (4, 4, 'THEFILM-HAPPYTUE', CURRENT_TIMESTAMP - INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'ACTIVE');
 
--- Local identity examples; BCrypt hash nằm ở bảng local_credential (mật khẩu: 123456).
-INSERT INTO app_user (app_user_id, oidc_issuer, oidc_subject, display_name, email, phone, status)
-VALUES (1, 'https://identity.thefilm.local/realms/thefilm', 'customer-demo-001', 'Nguyễn Minh Anh', 'minhanh@example.test', '09000000001', 'ACTIVE');
-INSERT INTO app_user (app_user_id, oidc_issuer, oidc_subject, display_name, email, phone, status)
-VALUES (2, 'https://identity.thefilm.local/realms/thefilm', 'employee-demo-001', 'Trần Quốc Bảo', 'quocbao@example.test', '09000000002', 'ACTIVE');
-INSERT INTO local_credential (app_user_id, password_hash) VALUES (1, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi');
-INSERT INTO local_credential (app_user_id, password_hash) VALUES (2, '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi');
+-- Local identity examples include BCrypt hash for testing (password: 123456).
+INSERT INTO app_user (app_user_id, oidc_issuer, oidc_subject, display_name, email, phone, password_hash, status)
+VALUES (1, 'https://identity.thefilm.local/realms/thefilm', 'customer-demo-001', 'Nguyễn Minh Anh', 'minhanh@example.test', '09000000001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'ACTIVE');
+INSERT INTO app_user (app_user_id, oidc_issuer, oidc_subject, display_name, email, phone, password_hash, status)
+VALUES (2, 'https://identity.thefilm.local/realms/thefilm', 'employee-demo-001', 'Trần Quốc Bảo', 'quocbao@example.test', '09000000002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', 'ACTIVE');
 
 INSERT INTO customer_profile (app_user_id, preferred_cinema_id, preferred_locale, date_of_birth, profile_status)
 VALUES (1, 1, 'vi-VN', DATE '1998-05-20', 'ACTIVE');

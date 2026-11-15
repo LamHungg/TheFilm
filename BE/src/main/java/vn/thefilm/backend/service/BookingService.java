@@ -22,4 +22,5 @@ public interface BookingService {
     PaymentResponse processPayment(String orderCode, PaymentRequest request);
     OrderResponse getOrderDetails(String orderCode);
     List<TicketResponse> getTickets(String orderCode);
+    List<OrderResponse> getOrdersByCustomer(Long appUserId);
 }

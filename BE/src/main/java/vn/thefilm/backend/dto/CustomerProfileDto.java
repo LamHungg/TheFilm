@@ -8,5 +8,7 @@ public record CustomerProfileDto(
         String displayName,
         Long preferredCinemaId,
         String preferredLocale,
-        LocalDate dateOfBirth) {
+        LocalDate dateOfBirth,
+        Long loyaltyPoints,
+        String memberTier) {
 }

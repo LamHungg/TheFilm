@@ -3,6 +3,7 @@ package vn.thefilm.backend.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -19,10 +20,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import vn.thefilm.backend.dto.ApiResponse;
 import vn.thefilm.backend.dto.CustomerProfileDto;
+import vn.thefilm.backend.dto.CustomerVoucherDto;
+import vn.thefilm.backend.dto.OrderResponse;
 import vn.thefilm.backend.dto.UpdateCustomerProfileRequest;
 import vn.thefilm.backend.enums.CustomerConsentStatus;
 import vn.thefilm.backend.enums.CustomerConsentType;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
+import vn.thefilm.backend.service.BookingService;
 import vn.thefilm.backend.service.CustomerAccountService;
 
 @RestController
@@ -31,14 +35,28 @@ import vn.thefilm.backend.service.CustomerAccountService;
 public class CustomerAccountController {
 
     private final CustomerAccountService customerAccountService;
+    private final BookingService bookingService;
 
-    public CustomerAccountController(CustomerAccountService customerAccountService) {
+    public CustomerAccountController(CustomerAccountService customerAccountService, BookingService bookingService) {
         this.customerAccountService = customerAccountService;
+        this.bookingService = bookingService;
     }
 
     @GetMapping("/profile")
     public ApiResponse<CustomerProfileDto> getProfile(Authentication authentication) {
         return ApiResponse.success(customer(authentication));
+    }
+
+    @GetMapping("/orders")
+    public ApiResponse<List<OrderResponse>> getMyOrders(Authentication authentication) {
+        CustomerProfileDto profile = customer(authentication);
+        if (bookingService == null) return ApiResponse.success(List.of());
+        return ApiResponse.success(bookingService.getOrdersByCustomer(profile.appUserId()));
+    }
+
+    @GetMapping("/vouchers")
+    public ApiResponse<List<CustomerVoucherDto>> getMyVouchers(Authentication authentication) {
+        return ApiResponse.success(customerAccountService.getActiveVouchers());
     }
 
     @PutMapping("/profile")

@@ -157,7 +157,6 @@ CREATE TABLE promo_campaign (
     valid_to TIMESTAMP WITH TIME ZONE NOT NULL,
     stackable CHAR(1) NOT NULL DEFAULT 'N',
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
-    CONSTRAINT ck_promo_discount_type CHECK (discount_type IN ('FIXED', 'PERCENT', 'POINTS')),
     CONSTRAINT ck_promo_valid_dates CHECK (valid_to > valid_from)
 );
 
@@ -199,8 +198,6 @@ CREATE TABLE sales_order (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_sales_order_idem UNIQUE (sales_channel, idempotency_key),
     CONSTRAINT fk_order_cinema FOREIGN KEY (cinema_id) REFERENCES cinema (cinema_id),
-    CONSTRAINT ck_order_type CHECK (order_type IN ('TICKET', 'FNB', 'COMBINED')),
-    CONSTRAINT ck_order_channel CHECK (sales_channel IN ('ONLINE', 'BOX', 'KIOSK', 'ADMIN')),
     CONSTRAINT ck_order_amounts CHECK (subtotal_amount >= 0 AND discount_amount >= 0 AND tax_amount >= 0 AND total_amount >= 0)
 );
 
@@ -217,6 +214,7 @@ CREATE TABLE sales_order_line (
     screening_type_snapshot VARCHAR(40),
     room_type_snapshot VARCHAR(120),
     seat_type_snapshot VARCHAR(120),
+    seat_code_snapshot VARCHAR(20),
     unit_price DECIMAL(18,2) NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
     discount_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
@@ -293,21 +291,13 @@ CREATE TABLE app_user (
     display_name VARCHAR(200),
     email VARCHAR(320),
     phone VARCHAR(30),
+    password_hash VARCHAR(255),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_app_user_oidc UNIQUE (oidc_issuer, oidc_subject),
-    CONSTRAINT ck_app_user_status CHECK (status IN ('ACTIVE', 'BLOCKED', 'ANONYMIZED'))
+    CONSTRAINT uq_app_user_oidc UNIQUE (oidc_issuer, oidc_subject)
 );
 CREATE INDEX ix_app_user_email ON app_user (email);
-
--- Chỉ có ở profile local (H2): mật khẩu đăng nhập thử nghiệm, tách khỏi app_user để khớp schema Oracle.
--- Ở profile oracle, đăng nhập do Keycloak đảm nhiệm và không có bảng này.
-CREATE TABLE local_credential (
-    app_user_id BIGINT PRIMARY KEY,
-    password_hash VARCHAR(255) NOT NULL,
-    CONSTRAINT fk_local_credential_user FOREIGN KEY (app_user_id) REFERENCES app_user (app_user_id)
-);
 
 CREATE TABLE customer_profile (
     app_user_id BIGINT PRIMARY KEY,
@@ -315,11 +305,12 @@ CREATE TABLE customer_profile (
     preferred_locale VARCHAR(10) NOT NULL DEFAULT 'vi-VN',
     date_of_birth DATE,
     profile_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    loyalty_points BIGINT NOT NULL DEFAULT 0,
+    member_tier VARCHAR(20) NOT NULL DEFAULT 'STANDARD',
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_customer_profile_user FOREIGN KEY (app_user_id) REFERENCES app_user (app_user_id),
-    CONSTRAINT fk_customer_profile_cinema FOREIGN KEY (preferred_cinema_id) REFERENCES cinema (cinema_id),
-    CONSTRAINT ck_customer_profile_status CHECK (profile_status IN ('ACTIVE', 'ANONYMIZED'))
+    CONSTRAINT fk_customer_profile_cinema FOREIGN KEY (preferred_cinema_id) REFERENCES cinema (cinema_id)
 );
 
 CREATE TABLE customer_consent (
@@ -330,9 +321,7 @@ CREATE TABLE customer_consent (
     consent_status VARCHAR(20) NOT NULL,
     captured_channel VARCHAR(30),
     captured_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_customer_consent_user FOREIGN KEY (app_user_id) REFERENCES app_user (app_user_id),
-    CONSTRAINT ck_customer_consent_type CHECK (consent_type IN ('TERMS', 'PRIVACY', 'MARKETING', 'COOKIE', 'AI_PROCESSING')),
-    CONSTRAINT ck_customer_consent_status CHECK (consent_status IN ('GRANTED', 'WITHDRAWN', 'DECLINED'))
+    CONSTRAINT fk_customer_consent_user FOREIGN KEY (app_user_id) REFERENCES app_user (app_user_id)
 );
 CREATE INDEX ix_customer_consent_lookup ON customer_consent (app_user_id, consent_type, captured_at);
 
@@ -367,7 +356,6 @@ CREATE TABLE employee (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_employee_code UNIQUE (chain_id, employee_code),
     CONSTRAINT fk_employee_user FOREIGN KEY (app_user_id) REFERENCES app_user (app_user_id),
-    CONSTRAINT ck_employee_status CHECK (status IN ('PENDING', 'ACTIVE', 'ON_LEAVE', 'TERMINATED')),
     CONSTRAINT ck_employee_dates CHECK (terminated_on IS NULL OR hired_on IS NULL OR terminated_on >= hired_on)
 );
 
@@ -385,8 +373,7 @@ CREATE TABLE employee_assignment (
     CONSTRAINT fk_emp_assign_employee FOREIGN KEY (employee_id) REFERENCES employee (employee_id),
     CONSTRAINT fk_emp_assign_cinema FOREIGN KEY (cinema_id) REFERENCES cinema (cinema_id),
     CONSTRAINT fk_emp_assign_actor FOREIGN KEY (changed_by) REFERENCES app_user (app_user_id),
-    CONSTRAINT ck_emp_assign_dates CHECK (valid_to IS NULL OR valid_to > valid_from),
-    CONSTRAINT ck_emp_assign_status CHECK (assignment_status IN ('ACTIVE', 'ENDED'))
+    CONSTRAINT ck_emp_assign_dates CHECK (valid_to IS NULL OR valid_to > valid_from)
 );
 CREATE INDEX ix_emp_assign_effective ON employee_assignment (employee_id, valid_from, valid_to);
 

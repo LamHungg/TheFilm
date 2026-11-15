@@ -25,6 +25,7 @@ import vn.thefilm.backend.dto.PaymentResponse;
 import vn.thefilm.backend.dto.SeatLayoutResponse;
 import vn.thefilm.backend.dto.TicketResponse;
 import vn.thefilm.backend.dto.CustomerProfileDto;
+import vn.thefilm.backend.dto.CustomerVoucherDto;
 import vn.thefilm.backend.exception.ResourceNotFoundException;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.BookingService;
@@ -101,6 +102,21 @@ public class BookingController {
         Long appUserId = authenticatedCustomerId(authentication);
         if (appUserId != null) requireOrderOwnerByCode(code, appUserId);
         return ApiResponse.success(bookingService.processPayment(code, request));
+    }
+
+    @GetMapping("/my-orders")
+    @Transactional(readOnly = true)
+    public ApiResponse<List<OrderResponse>> getMyOrders(Authentication authentication) {
+        Long appUserId = authenticatedCustomerId(authentication);
+        if (appUserId == null) return ApiResponse.success(List.of());
+        return ApiResponse.success(bookingService.getOrdersByCustomer(appUserId));
+    }
+
+    @GetMapping("/vouchers")
+    @Transactional(readOnly = true)
+    public ApiResponse<List<CustomerVoucherDto>> getPublicVouchers() {
+        if (customerAccountService == null) return ApiResponse.success(List.of());
+        return ApiResponse.success(customerAccountService.getActiveVouchers());
     }
 
     @GetMapping("/orders/{code}")

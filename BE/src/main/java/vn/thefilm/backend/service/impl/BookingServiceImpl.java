@@ -141,7 +141,7 @@ public class BookingServiceImpl implements BookingService {
                     + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             holdToken = UUID.randomUUID().toString();
             order = salesOrderRepository.save(SalesOrderEntity.createHoldDraft(draftNumber, holdToken,
-                    cinemaId, screening.getCinema().getLegalEntityId(), expiresAt));
+                    cinemaId, cinemaId, expiresAt));
         }
         for (ShowSeatEntity seat : seats) {
             seat.hold(order, expiresAt);
@@ -233,7 +233,7 @@ public class BookingServiceImpl implements BookingService {
         String code = "TF" + now.toLocalDate().toString().replace("-", "") + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Long cinemaId = screening.getCinema().getCinemaId();
         SalesOrderEntity order = new SalesOrderEntity(code, request.idempotencyKey(), cinemaId,
-                screening.getCinema().getLegalEntityId(), request.guestName(), request.guestEmail(), request.guestPhone(), subtotal,
+                cinemaId, request.guestName(), request.guestEmail(), request.guestPhone(), subtotal,
                 discount, vat, subtotal.subtract(discount).add(vat), expires);
         BigDecimal remainingDiscount = discount;
         BigDecimal remainingBase = subtotal;
@@ -294,19 +294,45 @@ public class BookingServiceImpl implements BookingService {
         if (lockedSeats.size() != seatIds.size()) throw new SeatUnavailableException("Ghế của đơn hàng không còn tồn tại.");
         if (order.getOrderStatus() == OrderStatus.ISSUED)
             return new PaymentResponse(orderCode, "SUCCEEDED", order.getOrderStatus().name(), null, order.getPaidAt());
-        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT || order.getExpiresAt() == null
-                || !order.getExpiresAt().isAfter(OffsetDateTime.now())) throw new IllegalArgumentException("Đơn hàng đã hết hạn hoặc không chờ thanh toán.");
         OffsetDateTime now = OffsetDateTime.now();
+        if (order.getOrderStatus() != OrderStatus.PENDING_PAYMENT || order.getExpiresAt() == null)
+            throw new IllegalArgumentException("Đơn hàng không còn chờ thanh toán.");
+        boolean paymentWindowExpired = !order.getExpiresAt().isAfter(now);
         PaymentTxnEntity payment = paymentTxnRepository.save(new PaymentTxnEntity(order, request.provider(), request.idempotencyKey(),
                 request.paymentMethod() == null ? request.provider() : request.paymentMethod(), order.getTotalAmount(), now, request.successful()));
         if (!request.successful()) return new PaymentResponse(orderCode, "FAILED", order.getOrderStatus().name(),
                 payment.getProviderTxnRef(), now);
         Map<Long, ShowSeatEntity> lockedSeatsById = new LinkedHashMap<>();
         lockedSeats.forEach(seat -> lockedSeatsById.put(seat.getShowSeatId(), seat));
-        for (ShowSeatEntity seat : lockedSeats) if (seat.getSeatStatus() != ShowSeatStatus.HELD
-                || seat.getCurrentOrder() == null || !order.getSalesOrderId().equals(seat.getCurrentOrder().getSalesOrderId())
-                || seat.getHoldExpiresAt() == null || !seat.getHoldExpiresAt().isAfter(now))
-            throw new SeatUnavailableException("Ghế giữ không còn hợp lệ.");
+        for (SalesOrderLineEntity line : order.getLines()) {
+            if (line.getItemType() == OrderLineType.TICKET && line.getScreening() != null
+                    && !line.getScreening().getStartsAt().isAfter(now))
+                throw new SeatUnavailableException("Suất chiếu đã bắt đầu; cần đối soát giao dịch thay vì phát hành vé.");
+        }
+        for (ShowSeatEntity seat : lockedSeats) {
+            boolean heldByThisOrder = seat.getSeatStatus() == ShowSeatStatus.HELD
+                    && seat.getCurrentOrder() != null
+                    && order.getSalesOrderId().equals(seat.getCurrentOrder().getSalesOrderId());
+            boolean validHold = heldByThisOrder && seat.getHoldExpiresAt() != null
+                    && seat.getHoldExpiresAt().isAfter(now);
+            boolean recoverableExpiredHold = paymentWindowExpired && heldByThisOrder;
+            boolean recoverableReleasedSeat = paymentWindowExpired
+                    && seat.getSeatStatus() == ShowSeatStatus.AVAILABLE && seat.getCurrentOrder() == null;
+            if (!validHold && !recoverableExpiredHold && !recoverableReleasedSeat)
+                throw new SeatUnavailableException("Ghế đã được giữ hoặc bán cho đơn khác; giao dịch cần được đối soát.");
+        }
+        if (paymentWindowExpired) {
+            OffsetDateTime recoveryHoldExpiresAt = now.plusSeconds(HOLD_SECONDS);
+            for (ShowSeatEntity seat : lockedSeats) {
+                boolean stillValidHold = seat.getSeatStatus() == ShowSeatStatus.HELD
+                        && seat.getCurrentOrder() != null
+                        && order.getSalesOrderId().equals(seat.getCurrentOrder().getSalesOrderId())
+                        && seat.getHoldExpiresAt() != null && seat.getHoldExpiresAt().isAfter(now);
+                if (stillValidHold) continue;
+                seat.hold(order, recoveryHoldExpiresAt);
+                seatHoldRepository.save(new SeatHoldEntity(seat, order, recoveryHoldExpiresAt));
+            }
+        }
         order.markPaid(now);
         for (SalesOrderLineEntity line : order.getLines()) {
             if (line.getItemType() != OrderLineType.TICKET) continue;
@@ -332,6 +358,16 @@ public class BookingServiceImpl implements BookingService {
     public OrderResponse getOrderDetails(String orderCode) {
         return toOrderResponse(salesOrderRepository.findByOrderNumber(orderCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng.")));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByCustomer(Long appUserId) {
+        if (appUserId == null) return List.of();
+        return salesOrderRepository.findByAppUserIdOrderByCreatedAtDesc(appUserId).stream()
+                .filter(o -> o.getOrderStatus() != OrderStatus.DRAFT)
+                .map(this::toOrderResponse)
+                .toList();
     }
 
     @Override
