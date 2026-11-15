@@ -7,49 +7,13 @@ import { Showtime } from '../models/showtime.model';
 import { Seat } from '../models/seat.model';
 import { FnbCombo } from '../models/combo.model';
 import { BuyerInfo, CreateOrderPayload, HoldSeatsResponse } from '../models/booking.model';
-import { CreateOrderResponse, Order, PaymentMethod, PayOrderPayload, PayOrderResponse } from '../models/order.model';
+import { CreateOrderResponse, Order, PaymentMethod, PayOrderPayload, PayOrderResponse, Ticket } from '../models/order.model';
 import { CinemaService } from './cinema.service';
 
-const MOCK_INITIAL_ORDERS: Order[] = [
-  {
-    id: 'ord-demo-01',
-    orderCode: 'TF2611019842',
-    bookingCode: 'TFM-842-990',
-    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=THEFILM-TFM-842-990-CONFIRMED',
-    movieTitle: 'Tầng Mây Cuối Cùng',
-    movieRating: 'T13',
-    cinemaName: 'THEFILM Nguyễn Trãi',
-    cinemaAddress: '136 Nguyễn Trãi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-    roomName: 'Phòng 02 (IMAX)',
-    format: 'IMAX Laser',
-    showDate: '2026-11-01',
-    showTime: '19:30 - 21:28',
-    seats: [
-      { id: 'seat-F-07', row: 'F', col: 7, code: 'F07', type: 'VIP', status: 'BOOKED', price: 160000 },
-      { id: 'seat-F-08', row: 'F', col: 8, code: 'F08', type: 'VIP', status: 'BOOKED', price: 160000 },
-    ],
-    combos: [
-      { id: 'fnb-02', name: 'Combo Couple Cinema', description: '1 Bắp lớn + 2 Nước ngọt', price: 129000, imageUrl: '', category: 'COMBO', quantity: 1 },
-    ],
-    ticketTotal: 320000,
-    fnbTotal: 129000,
-    discountTotal: 40000,
-    finalTotal: 409000,
-    vatRate: 0.08,
-    vatAmount: 30296,
-    paymentMethod: 'VNPAY_QR',
-    status: 'CONFIRMED',
-    createdAt: '2026-11-01 10:15:20',
-    buyer: {
-      fullName: 'Nguyễn Văn An',
-      email: 'an.nguyen@example.com',
-      phone: '0909123456',
-      needInvoice: false,
-    },
-  },
-];
-
-interface ApiResponse<T> { success: boolean; data: T; }
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -61,7 +25,7 @@ export class BookingService {
   get holdSession(): { salesOrderId: number; holdToken: string } {
     return { salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken };
   }
-  // Booking state signals
+
   readonly currentMovie = signal<Movie | null>(null);
   readonly currentCinema = signal<Cinema | null>(null);
   readonly currentShowtime = signal<Showtime | null>(null);
@@ -82,38 +46,31 @@ export class BookingService {
   readonly discountAmount = signal<number>(0);
   readonly voucherMessage = signal<string>('');
 
-  // Hold timer countdown (seconds)
-  readonly holdSeconds = signal<number>(600); // 10 minutes
-  private timerInterval: any = null;
+  readonly holdSeconds = signal<number>(600);
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
 
-  // Saved Orders in memory & localStorage
   readonly orders = signal<Order[]>(this.loadOrders());
 
-  // Computed totals
-  readonly ticketTotal = computed(() => {
-    return this.selectedSeats().reduce((sum, s) => sum + s.price, 0);
-  });
+  readonly ticketTotal = computed(() =>
+    this.selectedSeats().reduce((sum, s) => sum + s.price, 0)
+  );
 
-  readonly fnbTotal = computed(() => {
-    return this.selectedCombos().reduce((sum, c) => sum + c.price * c.quantity, 0);
-  });
+  readonly fnbTotal = computed(() =>
+    this.selectedCombos().reduce((sum, c) => sum + c.price * c.quantity, 0)
+  );
 
-  readonly subtotal = computed(() => {
-    return this.ticketTotal() + this.fnbTotal();
-  });
+  readonly subtotal = computed(() => this.ticketTotal() + this.fnbTotal());
 
   readonly vatAmount = computed(() => {
-    // Thuế giả lập tính trên giá trước thuế, tương ứng với backend.
     const taxableAmount = Math.max(0, this.subtotal() - this.discountAmount());
     return Math.round(taxableAmount * 0.08);
   });
 
-  readonly grandTotal = computed(() => {
-    return Math.max(0, this.subtotal() - this.discountAmount()) + this.vatAmount();
-  });
+  readonly grandTotal = computed(() =>
+    Math.max(0, this.subtotal() - this.discountAmount()) + this.vatAmount()
+  );
 
   constructor(private readonly http: HttpClient, private readonly cinemaService: CinemaService) {
-    // Watch for seat selection changes to start/stop timer
     effect(() => {
       const seats = this.selectedSeats();
       if (seats.length > 0 && !this.timerInterval) {
@@ -139,42 +96,6 @@ export class BookingService {
     this.holdSeconds.set(600);
   }
 
-  toggleSeat(seat: Seat): boolean {
-    if (seat.status === 'BOOKED' || seat.seatStatus === 'SOLD') return false;
-
-    const currentSelected = this.selectedSeats();
-    const index = currentSelected.findIndex((s) => s.id === seat.id);
-
-    if (index >= 0) {
-      // Unselect
-      this.selectedSeats.set(currentSelected.filter((s) => s.id !== seat.id));
-      this.updateSeatStatusInMatrix(seat.id, 'AVAILABLE');
-      return true;
-    } else {
-      // Max 8 seats per booking
-      if (currentSelected.length >= 8) {
-        alert('Quý khách chỉ có thể chọn tối đa 8 ghế cho mỗi lượt đặt.');
-        return false;
-      }
-      this.selectedSeats.set([...currentSelected, { ...seat, status: 'SELECTED' }]);
-      this.updateSeatStatusInMatrix(seat.id, 'SELECTED');
-      if (seat.showSeatId != null && this.currentShowtime()?.backendScreeningId) {
-        this.holdSeats([seat.showSeatId]).subscribe();
-      }
-      return true;
-    }
-  }
-
-  private updateSeatStatusInMatrix(seatId: string, status: 'AVAILABLE' | 'SELECTED'): void {
-    this.availableSeats.update((seats) =>
-      seats.map((s) => (s.id === seatId ? {
-        ...s,
-        status,
-        seatStatus: status === 'SELECTED' ? 'HELD' : 'AVAILABLE',
-      } : s))
-    );
-  }
-
   updateComboQuantity(combo: FnbCombo, delta: number): void {
     const combos = [...this.selectedCombos()];
     const existingIndex = combos.findIndex((c) => c.id === combo.id);
@@ -191,6 +112,9 @@ export class BookingService {
     }
 
     this.selectedCombos.set(combos);
+    if (this.voucherCode()) {
+      this.applyVoucher(this.voucherCode());
+    }
   }
 
   applyVoucher(code: string): { success: boolean; message: string } {
@@ -202,9 +126,19 @@ export class BookingService {
       return { success: false, message: 'Vui lòng nhập mã giảm giá' };
     }
 
+    const subtotal = this.ticketTotal() + this.fnbTotal();
+    if (clean === 'THEFILM-WELCOME10' || clean === 'WELCOME10' || clean === 'THEFILM-50000') {
+      // Backend BookingServiceImpl applies 10% of order subtotal for voucherCode requests.
+      const discount = Math.round(subtotal * 0.1);
+      this.voucherCode.set(clean);
+      this.discountAmount.set(discount);
+      this.voucherMessage.set(`Áp dụng mã ${clean}: giảm ${discount.toLocaleString('vi-VN')} ₫ (10%)`);
+      return { success: true, message: this.voucherMessage() };
+    }
+
     this.voucherCode.set('');
     this.discountAmount.set(0);
-    this.voucherMessage.set('Mã ưu đãi chưa được kết nối với hệ thống thanh toán giả lập.');
+    this.voucherMessage.set('Mã ưu đãi không hợp lệ hoặc đã hết hạn.');
     return { success: false, message: this.voucherMessage() };
   }
 
@@ -219,7 +153,6 @@ export class BookingService {
       this.holdSeconds.update((s) => {
         if (s <= 1) {
           this.stopHoldTimer();
-          alert('Hết thời gian giữ ghế. Các ghế đang chọn sẽ được giải phóng.');
           this.selectedSeats.set([]);
           return 0;
         }
@@ -251,27 +184,45 @@ export class BookingService {
   }
 
   holdSeats(seatIds: number[]): Observable<HoldSeatsResponse> {
-    const screeningId = this.currentShowtime()?.backendScreeningId;
-    if (!screeningId) return throwError(() => new Error('Suất chiếu chưa được kết nối.'));
-    const payload = { salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken || null, showSeatIds: seatIds };
-    return this.http.post<ApiResponse<HoldSeatsResponse>>(
-      `${this.bookingApi}/hold?screeningId=${encodeURIComponent(screeningId)}`, payload
-    ).pipe(
-      map(({ data }) => {
-        this.holdSalesOrderId = data.salesOrderId;
-        this.holdToken = data.holdToken;
-        this.availableSeats.update((seats) => seats.map((seat) => seatIds.includes(Number(seat.showSeatId))
-          ? { ...seat, seatStatus: 'HELD', status: 'SELECTED', holdExpiresAt: data.expiresAt }
-          : seat));
-        return data;
-      })
-    );
+    const showtime = this.currentShowtime();
+    const screeningId = showtime?.backendScreeningId ?? Number(showtime?.id);
+    if (!screeningId || !Number.isFinite(screeningId)) {
+      return throwError(() => new Error('Suất chiếu chưa được kết nối.'));
+    }
+    const payload = {
+      salesOrderId: this.holdSalesOrderId,
+      holdToken: this.holdToken || null,
+      showSeatIds: seatIds,
+    };
+    return this.http
+      .post<ApiResponse<HoldSeatsResponse>>(
+        `${this.bookingApi}/hold?screeningId=${encodeURIComponent(screeningId)}`,
+        payload
+      )
+      .pipe(
+        map(({ data }) => {
+          this.holdSalesOrderId = data.salesOrderId;
+          this.holdToken = data.holdToken;
+          this.availableSeats.update((seats) =>
+            seats.map((seat) =>
+              seatIds.includes(Number(seat.showSeatId))
+                ? { ...seat, seatStatus: 'HELD', status: 'SELECTED', holdExpiresAt: data.expiresAt }
+                : seat
+            )
+          );
+          return data;
+        })
+      );
   }
 
   releaseSeats(seatIds: number[]): Observable<string> {
-    return this.http.post<ApiResponse<string>>(`${this.bookingApi}/release`, {
-      salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken, showSeatIds: seatIds,
-    }).pipe(map(({ data }) => data));
+    return this.http
+      .post<ApiResponse<string>>(`${this.bookingApi}/release`, {
+        salesOrderId: this.holdSalesOrderId,
+        holdToken: this.holdToken,
+        showSeatIds: seatIds,
+      })
+      .pipe(map(({ data }) => data));
   }
 
   payOrder(orderCode: string, method: PaymentMethod): Observable<PayOrderResponse> {
@@ -281,125 +232,110 @@ export class BookingService {
       idempotencyKey: `pay-${orderCode}`,
       successful: true,
     };
-    return this.http.post<ApiResponse<PayOrderResponse>>(
-      `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}/pay`, payload
-    ).pipe(
-      map(({ data }) => data)
-    );
+    return this.http
+      .post<ApiResponse<PayOrderResponse>>(
+        `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}/pay`,
+        payload
+      )
+      .pipe(map(({ data }) => data));
   }
 
   getOrder(orderCode: string): Observable<Order | undefined> {
-    return this.http.get<ApiResponse<CreateOrderResponse>>(
-      `${this.bookingApi}/orders/${encodeURIComponent(orderCode)}`
-    ).pipe(
-      map(({ data }) => this.fromApiOrder(data))
-    );
-  }
-
-  private createMockOrder(paymentMethod: PaymentMethod): Order {
-    const movie = this.currentMovie();
-    const cinema = this.currentCinema();
-    const showtime = this.currentShowtime();
-    const seats = this.selectedSeats();
-    const combos = this.selectedCombos();
-    const buyer = this.buyerInfo();
-
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const orderCode = `TF261101${randomSuffix}`;
-    const bookingCode = `TFM-${randomSuffix}-OK`;
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=THEFILM-${bookingCode}`;
-
-    const newOrder: Order = {
-      id: `ord-${Date.now()}`,
-      orderCode,
-      bookingCode,
-      qrCodeUrl,
-      movieTitle: movie?.title || 'Phim rạp TheFilm',
-      movieRating: movie?.rating || 'T13',
-      cinemaName: cinema?.name || 'THEFILM Cinema',
-      cinemaAddress: cinema?.address || 'TP. Hồ Chí Minh',
-      roomName: showtime?.roomName || 'Phòng chiếu',
-      format: showtime?.format || '2D',
-      showDate: showtime?.date || '2026-11-01',
-      showTime: `${showtime?.startTime || '19:30'} - ${showtime?.endTime || '21:30'}`,
-      seats: [...seats],
-      combos: [...combos],
-      ticketTotal: this.ticketTotal(),
-      fnbTotal: this.fnbTotal(),
-      discountTotal: this.discountAmount(),
-      finalTotal: this.grandTotal(),
-      vatRate: 0.08,
-      vatAmount: this.vatAmount(),
-      paymentMethod,
-      status: 'CONFIRMED',
-      createdAt: new Date().toLocaleString('vi-VN'),
-      buyer: { ...buyer },
-    };
-
-    // Save order
-    const updatedOrders = [newOrder, ...this.orders()];
-    this.orders.set(updatedOrders);
-    this.saveOrders(updatedOrders);
-
-    // Stop timer & reset booking state
-    this.stopHoldTimer();
-    return newOrder;
+    return this.http
+      .get<ApiResponse<CreateOrderResponse>>(`${this.bookingApi}/orders/${encodeURIComponent(orderCode)}`)
+      .pipe(map(({ data }) => this.fromApiOrder(data)));
   }
 
   private fromApiOrder(data: CreateOrderResponse): Order {
+    const existing = this.orders().find((o) => o.orderCode === data.orderCode);
     const movie = this.currentMovie();
     const cinema = this.currentCinema();
     const showtime = this.currentShowtime();
-    const fallback: Order = {
-      id: data.orderCode,
-      orderCode: data.orderCode,
-      bookingCode: data.orderCode,
-      qrCodeUrl: '',
-      movieTitle: movie?.title || 'Phim rạp TheFilm',
-      movieRating: movie?.rating || 'T13',
-      cinemaName: cinema?.name || 'THEFILM Cinema',
-      cinemaAddress: cinema?.address || 'TP. Hồ Chí Minh',
-      roomName: showtime?.roomName || 'Phòng chiếu',
-      format: showtime?.format || '2D',
-      showDate: showtime?.date || '',
-      showTime: `${showtime?.startTime || ''} - ${showtime?.endTime || ''}`,
-      seats: [...this.selectedSeats()],
-      combos: [...this.selectedCombos()],
-      ticketTotal: 0,
-      fnbTotal: this.fnbTotal(),
-      discountTotal: 0,
-      finalTotal: 0,
-      vatRate: 0.08,
-      vatAmount: 0,
-      paymentMethod: 'VNPAY_QR',
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-      buyer: { ...this.buyerInfo() },
-    };
+
+    const tickets: Ticket[] = (data.tickets ?? []).map((ticket) => ({
+      ticketNumber: ticket.ticketNumber,
+      qrTokenHash: ticket.qrTokenHash,
+      qrData: ticket.qrData,
+      filmTitle: ticket.filmTitle,
+      cinemaName: ticket.cinemaName,
+      roomName: ticket.roomName,
+      screeningStartsAt: ticket.screeningStartsAt,
+      seatLabel: ticket.seatLabel,
+      status: ticket.status,
+    }));
+
+    const firstTicket = tickets[0];
+    const startDateObj = firstTicket?.screeningStartsAt ? new Date(firstTicket.screeningStartsAt) : null;
+    const derivedDate = startDateObj
+      ? `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}-${String(startDateObj.getDate()).padStart(2, '0')}`
+      : '';
+    const derivedTime = startDateObj
+      ? `${String(startDateObj.getHours()).padStart(2, '0')}:${String(startDateObj.getMinutes()).padStart(2, '0')}`
+      : '';
+
+    const ticketSeats: Seat[] =
+      existing?.seats?.length
+        ? existing.seats
+        : this.selectedSeats().length
+          ? [...this.selectedSeats()]
+          : tickets.map((t, idx) => ({
+              id: `tkt-${idx}-${t.ticketNumber}`,
+              row: (t.seatLabel || '').slice(0, 1),
+              col: Number((t.seatLabel || '').match(/\d+/)?.[0] ?? 0),
+              code: t.seatLabel || t.ticketNumber,
+              type: 'STANDARD',
+              status: 'BOOKED',
+              price: Number(data.lines?.[idx]?.unitPrice ?? 0),
+            }));
+
+    const fnbLineTotal = (data.lines ?? [])
+      .filter((line) => !line.seatType)
+      .reduce((sum, line) => sum + Number(line.unitPrice ?? 0), 0);
+
+    const qrPayload =
+      firstTicket?.qrData ||
+      firstTicket?.qrTokenHash ||
+      firstTicket?.ticketNumber ||
+      data.orderCode;
+    const qrCodeUrl = qrPayload
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrPayload)}`
+      : '';
+
     const order: Order = {
-      ...fallback,
       id: data.orderCode,
       orderCode: data.orderCode,
       bookingCode: data.orderCode,
-      qrCodeUrl: '',
+      qrCodeUrl,
+      movieTitle: existing?.movieTitle || firstTicket?.filmTitle || movie?.title || 'Phim rạp THEFILM',
+      movieRating: existing?.movieRating || movie?.rating || 'T13',
+      cinemaName: existing?.cinemaName || firstTicket?.cinemaName || cinema?.name || 'THEFILM Cinema',
+      cinemaAddress: existing?.cinemaAddress || cinema?.address || '',
+      roomName: existing?.roomName || firstTicket?.roomName || showtime?.roomName || 'Phòng chiếu',
+      format: existing?.format || showtime?.format || '2D',
+      showDate: existing?.showDate || showtime?.date || derivedDate,
+      showTime:
+        existing?.showTime ||
+        (showtime ? `${showtime.startTime} - ${showtime.endTime}` : derivedTime),
+      seats: ticketSeats,
+      combos: existing?.combos?.length ? existing.combos : [...this.selectedCombos()],
       ticketTotal: Number(data.subtotal),
+      fnbTotal: existing?.fnbTotal ?? (this.selectedCombos().length ? this.fnbTotal() : fnbLineTotal),
       discountTotal: Number(data.discount),
-      vatAmount: Number(data.vat),
       finalTotal: Number(data.total),
+      vatRate: 0.08,
+      vatAmount: Number(data.vat),
+      paymentMethod: existing?.paymentMethod ?? 'VNPAY_QR',
       paymentExpiresAt: data.paymentExpiresAt,
       status: data.status as Order['status'],
-      tickets: (data.tickets ?? []).map((ticket) => ({
-        ticketNumber: ticket.ticketNumber,
-        qrData: ticket.qrData,
-        filmTitle: ticket.filmTitle,
-        cinemaName: ticket.cinemaName,
-        roomName: ticket.roomName,
-        screeningStartsAt: ticket.screeningStartsAt,
-        seatLabel: ticket.seatLabel,
-        status: ticket.status,
-      })),
+      createdAt: existing?.createdAt || new Date().toISOString(),
+      buyer: existing?.buyer || { ...this.buyerInfo() },
+      tickets,
     };
-    const updatedOrders = [order, ...this.orders().filter((existing) => existing.orderCode !== order.orderCode)];
+
+    const updatedOrders = [
+      order,
+      ...this.orders().filter((item) => item.orderCode !== order.orderCode),
+    ];
     this.orders.set(updatedOrders);
     this.saveOrders(updatedOrders);
     this.stopHoldTimer();
@@ -415,13 +351,17 @@ export class BookingService {
       if (typeof window !== 'undefined' && window.localStorage) {
         const stored = localStorage.getItem('thefilm_orders');
         if (stored) {
-          return JSON.parse(stored);
+          const parsed = JSON.parse(stored) as Order[];
+          // Keep only real backend-issued orders (strip legacy mock entries).
+          return parsed.filter(
+            (o) => Boolean(o?.orderCode) && o.id !== 'ord-demo-01' && !o.bookingCode?.startsWith('TFM-')
+          );
         }
       }
     } catch (e) {
       console.warn('Cannot load orders from localStorage', e);
     }
-    return [...MOCK_INITIAL_ORDERS];
+    return [];
   }
 
   private saveOrders(orders: Order[]): void {

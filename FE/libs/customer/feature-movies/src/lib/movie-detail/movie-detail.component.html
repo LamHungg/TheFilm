@@ -99,8 +99,8 @@
             aria-label="Lọc phòng chiếu"
           >
             <option value="ALL">Phòng chiếu</option>
-            <option value="STANDARD">2D Thường</option>
-            <option value="IMAX">IMAX</option>
+            <option value="STANDARD">2D Standard</option>
+            <option value="VIP">VIP</option>
             <option value="GOLD_CLASS">Gold Class</option>
           </select>
 
@@ -152,7 +152,7 @@
             <div class="room-schedule-group" *ngFor="let room of group.rooms">
               <div class="room-head-row">
                 <span class="room-type-title">{{ room.format }} · {{ room.roomName | uppercase }}</span>
-                <span class="room-price-range">
+                <span class="room-price-range" *ngIf="room.minPrice > 0">
                   {{ formatPrice(room.minPrice) }}
                   <ng-container *ngIf="room.maxPrice > room.minPrice">
                     - {{ formatPrice(room.maxPrice) }}
@@ -166,7 +166,7 @@
                   *ngFor="let st of room.slots"
                   class="time-slot-btn"
                   [class.selected]="selectedShowtime?.id === st.id"
-                  [title]="'Còn ' + st.availableSeats + '/' + st.totalSeats + ' ghế · Giá từ ' + formatPrice(st.priceStandard)"
+                  [title]="'Còn ' + st.availableSeats + '/' + st.totalSeats + ' ghế' + (st.priceStandard > 0 ? ' · Giá từ ' + formatPrice(st.priceStandard) : '')"
                   (click)="selectSlot(group.cinema, room, st)"
                 >
                   {{ st.startTime }}
@@ -221,7 +221,11 @@
           <span class="meta-label">Thời lượng</span>
           <span class="meta-value">{{ formatDuration(movie.duration) }}</span>
         </div>
-        <div class="meta-row">
+        <div class="meta-row" *ngIf="movie.originalTitle">
+          <span class="meta-label">Tên gốc</span>
+          <span class="meta-value">{{ movie.originalTitle }}</span>
+        </div>
+        <div class="meta-row" *ngIf="movie.director">
           <span class="meta-label">Đạo diễn</span>
           <span class="meta-value">{{ movie.director }}</span>
         </div>
@@ -229,7 +233,7 @@
           <span class="meta-label">Phân loại độ tuổi</span>
           <span class="meta-value">{{ movie.rating }}</span>
         </div>
-        <div class="meta-row">
+        <div class="meta-row" *ngIf="movie.releaseDate">
           <span class="meta-label">Khởi chiếu</span>
           <span class="meta-value">{{ movie.releaseDate }}</span>
         </div>
@@ -248,7 +252,10 @@
         </div>
 
         <p class="summary-seats-info">
-          Giá từ {{ formatPrice(selectedShowtime.priceStandard) }} &middot; Còn {{ selectedShowtime.availableSeats }} ghế trống
+          <ng-container *ngIf="selectedShowtime.priceStandard > 0">
+            Giá từ {{ formatPrice(selectedShowtime.priceStandard) }} &middot;
+          </ng-container>
+          Còn {{ selectedShowtime.availableSeats }}/{{ selectedShowtime.totalSeats }} ghế trống
         </p>
 
         <p class="summary-helper">*Bạn có thể chọn ghế ở bước tiếp theo</p>

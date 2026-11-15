@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { formatVND } from '@the-film/shared/util';
 import {
   Movie,
@@ -34,6 +35,17 @@ interface CinemaScheduleGroup {
   rooms: GroupedRoomShowtime[];
 }
 
+const WEEKDAY_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const WEEKDAY_FULL = [
+  'Chủ Nhật',
+  'Thứ Hai',
+  'Thứ Ba',
+  'Thứ Tư',
+  'Thứ Năm',
+  'Thứ Sáu',
+  'Thứ Bảy',
+];
+
 @Component({
   selector: 'thefilm-movie-detail',
   standalone: true,
@@ -45,14 +57,8 @@ export class MovieDetailComponent implements OnInit {
   movie: Movie | null = null;
   cinemas: Cinema[] = [];
 
-  availableDates: DateOption[] = [
-    { shortDate: '01/11', weekday: 'CN', fullLabel: 'Chủ Nhật, 01 tháng 11 năm 2026', date: '2026-11-01' },
-    { shortDate: '02/11', weekday: 'T2', fullLabel: 'Thứ Hai, 02 tháng 11 năm 2026', date: '2026-11-02' },
-    { shortDate: '03/11', weekday: 'T3', fullLabel: 'Thứ Ba, 03 tháng 11 năm 2026', date: '2026-11-03' },
-    { shortDate: '04/11', weekday: 'T4', fullLabel: 'Thứ Tư, 04 tháng 11 năm 2026', date: '2026-11-04' },
-    { shortDate: '05/11', weekday: 'T5', fullLabel: 'Thứ Năm, 05 tháng 11 năm 2026', date: '2026-11-05' },
-  ];
-  selectedDate = '2026-11-01';
+  availableDates: DateOption[] = [];
+  selectedDate = '';
 
   selectedCity = '';
   cinemaSearch = '';
@@ -72,8 +78,12 @@ export class MovieDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private cinemaService: CinemaService,
-    private bookingService: BookingService
-  ) {}
+    private bookingService: BookingService,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.availableDates = this.buildUpcomingDates(5);
+    this.selectedDate = this.availableDates[0]?.date || '';
+  }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -86,36 +96,88 @@ export class MovieDetailComponent implements OnInit {
         } else {
           this.router.navigate(['/movies']);
         }
+        this.cdr.markForCheck();
       });
     });
+  }
+
+  private buildUpcomingDates(count: number): DateOption[] {
+    const today = new Date();
+    const list: DateOption[] = [];
+    for (let i = 0; i < count; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const wdIdx = d.getDay();
+      list.push({
+        shortDate: `${day}/${month}`,
+        weekday: WEEKDAY_SHORT[wdIdx],
+        fullLabel: `${WEEKDAY_FULL[wdIdx]}, ${day} tháng ${month} năm ${year}`,
+        date: `${year}-${month}-${day}`,
+      });
+    }
+    return list;
   }
 
   private loadCinemasAndShowtimes(): void {
     this.cinemaService.getCinemas().subscribe((cinemas) => {
       this.cinemas = cinemas;
-      if (this.movie) {
-        this.cinemaService.getShowtimes(this.movie.id).subscribe((sts) => {
-          this.allShowtimes = sts;
-          this.applyShowtimeFilter();
+      this.fetchShowtimesForDate();
+    });
+  }
+
+  private fetchShowtimesForDate(): void {
+    if (!this.movie) return;
+    this.cinemaService
+      .getShowtimes(this.movie.id, undefined, this.selectedDate)
+      .subscribe((sts) => {
+        this.allShowtimes = sts;
+        this.applyShowtimeFilter();
+        this.loadSeatPricesForShowtimes(sts);
+        this.cdr.markForCheck();
+      });
+  }
+
+  private loadSeatPricesForShowtimes(showtimes: Showtime[]): void {
+    if (showtimes.length === 0) return;
+    const priceCalls = showtimes.map((st) => this.cinemaService.getScreeningSeats(st.id));
+    forkJoin(priceCalls).subscribe({
+      next: (seatLists) => {
+        this.allShowtimes = this.allShowtimes.map((st, idx) => {
+          const seats = seatLists[idx] ?? [];
+          const positivePrices = seats.map((s) => s.price).filter((p) => p > 0);
+          const minPrice = positivePrices.length ? Math.min(...positivePrices) : 0;
+          const maxPrice = positivePrices.length ? Math.max(...positivePrices) : 0;
+          return {
+            ...st,
+            priceStandard: seats.find((s) => s.type === 'STANDARD')?.price ?? minPrice,
+            priceVip: seats.find((s) => s.type === 'VIP')?.price ?? maxPrice,
+            priceCouple: seats.find((s) => s.type === 'COUPLE')?.price ?? maxPrice,
+          };
         });
-      }
+        this.applyShowtimeFilter();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Keep schedule visible even if a room price preview request fails.
+      },
     });
   }
 
   get availableCities(): string[] {
-    return Array.from(new Set(this.cinemas.map((c) => c.city)));
+    return Array.from(new Set(this.cinemas.map((c) => c.city).filter(Boolean)));
   }
 
   get selectedDateLabel(): string {
     return (
-      this.availableDates.find((d) => d.date === this.selectedDate)?.fullLabel ||
-      'Chủ Nhật, 01 tháng 11 năm 2026'
+      this.availableDates.find((d) => d.date === this.selectedDate)?.fullLabel || ''
     );
   }
 
   onDateChange(date: string): void {
     this.selectedDate = date;
-    this.applyShowtimeFilter();
+    this.fetchShowtimesForDate();
   }
 
   shiftDate(direction: -1 | 1): void {
@@ -133,7 +195,11 @@ export class MovieDetailComponent implements OnInit {
     const matchingCinemas = this.cinemas.filter((c) => {
       if (this.selectedCity && c.city !== this.selectedCity) return false;
       if (this.selectedCinemaId && c.id !== this.selectedCinemaId) return false;
-      if (keyword && !c.name.toLowerCase().includes(keyword) && !c.address.toLowerCase().includes(keyword)) {
+      if (
+        keyword &&
+        !c.name.toLowerCase().includes(keyword) &&
+        !c.address.toLowerCase().includes(keyword)
+      ) {
         return false;
       }
       return true;
@@ -144,10 +210,7 @@ export class MovieDetailComponent implements OnInit {
     for (const cinema of matchingCinemas) {
       let slots = this.allShowtimes.filter((s) => s.cinemaId === cinema.id);
 
-      // Filter by exact date if this movie has date-specific entries for the selected date;
-      // otherwise keep existing mock schedule so all date pills remain previewable.
-      const hasExactDate = slots.some((s) => s.date === this.selectedDate);
-      if (hasExactDate) {
+      if (this.selectedDate) {
         slots = slots.filter((s) => s.date === this.selectedDate);
       }
 
@@ -168,6 +231,7 @@ export class MovieDetailComponent implements OnInit {
       const roomMap = new Map<string, GroupedRoomShowtime>();
       for (const st of sortedSlots) {
         const key = `${st.format}_${st.roomName}`;
+        const slotMax = Math.max(st.priceStandard, st.priceVip, st.priceCouple);
         const existing = roomMap.get(key);
         if (!existing) {
           roomMap.set(key, {
@@ -175,25 +239,24 @@ export class MovieDetailComponent implements OnInit {
             format: st.format,
             roomType: st.roomType,
             minPrice: st.priceStandard,
-            maxPrice: st.priceVip,
+            maxPrice: slotMax,
             slots: [st],
           });
         } else {
           existing.slots.push(st);
           existing.minPrice = Math.min(existing.minPrice, st.priceStandard);
-          existing.maxPrice = Math.max(existing.maxPrice, st.priceVip);
+          existing.maxPrice = Math.max(existing.maxPrice, slotMax);
         }
       }
 
-      const brandVariant: 'red' | 'gold' | 'navy' =
-        cinema.brand.includes('PREMIUM')
-          ? 'gold'
-          : cinema.id === 'cin-01'
-            ? 'red'
-            : 'navy';
+      const hasGold = sortedSlots.some((s) => s.roomType === 'GOLD_CLASS');
+      const brandVariant: 'red' | 'gold' | 'navy' = hasGold
+        ? 'gold'
+        : cinema.id === '1'
+          ? 'red'
+          : 'navy';
 
-      const badgeLabel =
-        cinema.brand.includes('PREMIUM') ? 'PREMIUM' : cinema.rooms.some((r) => r.type === 'IMAX') ? 'IMAX' : 'CINEMA';
+      const badgeLabel = hasGold ? 'GOLD CLASS' : 'CINEMA';
 
       groups.push({
         cinema,
@@ -205,21 +268,23 @@ export class MovieDetailComponent implements OnInit {
 
     this.cinemaGroups = groups;
 
-    // Keep current selection if still visible; otherwise auto-select the first available slot
-    const stillVisible =
-      this.selectedShowtime &&
-      groups.some((g) => g.rooms.some((r) => r.slots.some((s) => s.id === this.selectedShowtime?.id)));
+    const currentStillVisible = this.selectedShowtime
+      ? groups
+          .flatMap((g) => g.rooms)
+          .flatMap((r) => r.slots)
+          .find((s) => s.id === this.selectedShowtime?.id)
+      : undefined;
 
-    if (!stillVisible) {
-      if (groups.length > 0 && groups[0].rooms.length > 0 && groups[0].rooms[0].slots.length > 0) {
-        const firstGroup = groups[0];
-        const firstRoom = firstGroup.rooms[0];
-        this.selectSlot(firstGroup.cinema, firstRoom, firstRoom.slots[0]);
-      } else {
-        this.selectedShowtime = null;
-        this.selectedSlotCinema = null;
-        this.selectedSlotRoomLabel = '';
-      }
+    if (currentStillVisible) {
+      this.selectedShowtime = currentStillVisible;
+    } else if (groups.length > 0 && groups[0].rooms.length > 0 && groups[0].rooms[0].slots.length > 0) {
+      const firstGroup = groups[0];
+      const firstRoom = firstGroup.rooms[0];
+      this.selectSlot(firstGroup.cinema, firstRoom, firstRoom.slots[0]);
+    } else {
+      this.selectedShowtime = null;
+      this.selectedSlotCinema = null;
+      this.selectedSlotRoomLabel = '';
     }
   }
 

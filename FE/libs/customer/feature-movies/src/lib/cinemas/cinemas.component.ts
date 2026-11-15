@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { Cinema, CinemaService } from '@the-film/customer/data-access';
@@ -15,16 +15,28 @@ export class CinemasComponent implements OnInit {
 
   constructor(
     private cinemaService: CinemaService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.cinemaService.getCinemas().subscribe((cinemas) => {
       this.cinemas = cinemas;
+      this.cdr.markForCheck();
     });
   }
 
+  get availableCitiesText(): string {
+    const cities = Array.from(new Set(this.cinemas.map((c) => c.city).filter(Boolean)));
+    return cities.length ? cities.join(' · ') : 'Đang tải khu vực...';
+  }
+
+  getHeaderClass(index: number): string {
+    const classes = ['brand-red', 'brand-navy', 'brand-teal'];
+    return classes[index % classes.length];
+  }
+
   viewShowtimes(cinemaId: string): void {
-    this.router.navigate(['/movies']);
+    this.router.navigate(['/movies'], { queryParams: { cinemaId } });
   }
 }

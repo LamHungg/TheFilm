@@ -1,287 +1,389 @@
 .my-tickets-page {
-  min-height: 100vh;
-  background-color: #f8fafc;
-  padding: 3rem 1.25rem 5rem;
+  min-height: calc(100vh - 80px);
+  background: #ffffff;
+  color: #333333;
 }
 
-.page-container {
-  max-width: 960px;
+.figma-split-layout {
+  max-width: 1440px;
   margin: 0 auto;
+  min-height: calc(100vh - 80px);
+  display: flex;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+  }
 }
 
-.page-header {
-  margin-bottom: 2rem;
+/* ==================== LEFT GREY SIDEBAR (FIGMA #F5F5F5) ==================== */
+.tickets-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  background: #f5f5f5;
+  border-right: 1px solid #dadfe8;
+  padding: 40px 24px;
 
-  .subtitle {
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #c90e29;
-    letter-spacing: 0.08em;
-    display: block;
-    margin-bottom: 0.35rem;
+  @media (max-width: 900px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #dadfe8;
+    padding: 16px;
   }
 
-  .page-title {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0 0 0.5rem;
+  .ticket-tabs {
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 900px) {
+      flex-direction: row;
+      gap: 12px;
+    }
+
+    .tab-divider {
+      height: 1px;
+      background: #dadfe8;
+      margin: 4px 0;
+
+      @media (max-width: 900px) {
+        display: none;
+      }
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 16px 12px;
+      border: none;
+      border-left: 3px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #414a62;
+      font-size: 16px;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.18s ease;
+
+      &:hover {
+        color: #118eea;
+        background: rgba(17, 142, 234, 0.05);
+      }
+
+      &.active {
+        color: #118eea;
+        font-weight: 700;
+        border-left-color: #118eea;
+        background: rgba(17, 142, 234, 0.08);
+      }
+
+      .tab-icon {
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+/* ==================== RIGHT CONTENT AREA ==================== */
+.tickets-content {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 56px 64px;
+
+  @media (max-width: 1100px) {
+    padding: 32px 28px 48px;
   }
 
-  .page-desc {
-    color: #64748b;
-    font-size: 0.95rem;
-    margin: 0;
+  @media (max-width: 768px) {
+    padding: 24px 16px 40px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #333333;
+      margin: 0 0 6px;
+    }
+
+    .page-desc {
+      font-size: 15px;
+      color: #5a637a;
+      margin: 0;
+    }
+  }
+}
+
+/* Filter Chips & Search */
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.category-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .filter-chip {
+    padding: 8px 18px;
+    border-radius: 23px;
+    border: 1px solid #9da8be;
+    background: #ffffff;
+    color: #5a637a;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &:hover {
+      border-color: #118eea;
+      color: #118eea;
+    }
+
+    &.active {
+      border-color: #118eea;
+      color: #118eea;
+      background: #f0f8ff;
+      font-weight: 700;
+    }
   }
 }
 
 .search-ticket-box {
-  margin-bottom: 2rem;
-
   .search-input-group {
     display: flex;
     align-items: center;
-    background-color: #ffffff;
-    border: 1.5px solid #cbd5e1;
-    border-radius: 10px;
-    padding: 0.35rem 0.5rem 0.35rem 1rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    gap: 8px;
+    height: 40px;
+    padding: 0 6px 0 12px;
+    border: 1px solid #bdc5d4;
+    border-radius: 8px;
+    background: #ffffff;
 
     svg {
-      color: #94a3b8;
-      margin-right: 0.5rem;
+      color: #8f98aa;
+      flex-shrink: 0;
     }
 
     input {
-      flex: 1;
-      height: 40px;
       border: none;
       outline: none;
-      font-size: 0.95rem;
-      color: #1e293b;
+      width: 220px;
+      font-size: 13px;
+      color: #333333;
+      background: transparent;
+
+      @media (max-width: 520px) {
+        width: 140px;
+      }
     }
 
     .btn-search {
-      background-color: #0f172a;
-      color: #ffffff;
+      height: 30px;
+      padding: 0 14px;
       border: none;
-      padding: 0.65rem 1.25rem;
       border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.85rem;
+      background: linear-gradient(135deg, #2b4b87 0%, #1e3562 100%);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
-
-      &:hover {
-        background-color: #c90e29;
-      }
     }
   }
 }
 
-.ticket-tabs {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 2px solid #e2e8f0;
-  margin-bottom: 2rem;
-
-  .tab-btn {
-    background: none;
-    border: none;
-    padding: 0.75rem 0.25rem;
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #64748b;
-    cursor: pointer;
-    position: relative;
-    transition: color 0.15s ease;
-
-    &:hover {
-      color: #c90e29;
-    }
-
-    &.active {
-      color: #c90e29;
-
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background-color: #c90e29;
-        border-radius: 2px;
-      }
-    }
-  }
-}
-
+/* Figma Hairline Ticket Rows */
 .ticket-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  border-top: 1px solid #dadfe8;
 }
 
 .ticket-card {
-  background-color: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  display: grid;
-  grid-template-columns: 1fr;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 22px 0;
+  border-bottom: 1px solid #dadfe8;
 
-  @media (min-width: 640px) {
-    grid-template-columns: 180px 1fr;
+  @media (max-width: 820px) {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .card-qr {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 1.5rem;
+  .card-media {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 14px;
+    flex-shrink: 0;
 
-    @media (min-width: 640px) {
-      border-bottom: none;
-      border-right: 1px dashed #cbd5e1;
-    }
-
-    .qr-code-img {
-      width: 120px;
-      height: 120px;
-      background: #fff;
-      padding: 0.25rem;
-      border: 1px solid #e2e8f0;
+    .poster-box,
+    .poster-placeholder {
+      width: 96px;
+      height: 138px;
       border-radius: 8px;
-      margin-bottom: 0.75rem;
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
-    .code-box {
-      text-align: center;
+    .ticket-poster {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
-      .label {
-        font-size: 0.68rem;
-        color: #64748b;
-        font-weight: 700;
+    .poster-placeholder {
+      background: linear-gradient(135deg, #1a2c50, #2b4b87);
+      color: #f2c46f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .qr-mini-frame {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid #dadfe8;
+      border-radius: 8px;
+      background: #ffffff;
+
+      .qr-code-img {
+        width: 78px;
+        height: 78px;
         display: block;
       }
 
-      .code {
-        font-size: 0.95rem;
-        font-weight: 900;
-        color: #c90e29;
-        font-family: monospace;
+      .mini-code {
+        font-size: 10px;
+        font-weight: 700;
+        color: #1a2c50;
       }
     }
   }
 
-  .card-content {
-    padding: 1.5rem;
+  .card-info {
+    flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 8px;
 
-    .card-status-row {
+    .title-line {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 1rem;
+      align-items: center;
+      gap: 10px;
       flex-wrap: wrap;
-      gap: 0.5rem;
 
-      .movie-header {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-
-        h3 {
-          font-size: 1.25rem;
-          font-weight: 800;
-          color: #0f172a;
-          margin: 0;
-        }
-      }
-
-      .status-badge {
-        font-size: 0.75rem;
-        font-weight: 800;
-        padding: 0.25rem 0.65rem;
-        border-radius: 4px;
-        background-color: #e2e8f0;
-        color: #475569;
-
-        &.confirmed {
-          background-color: #d1fae5;
-          color: #047857;
-        }
+      h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333333;
+        margin: 0;
       }
     }
 
-    .details-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-
-      .detail-item {
-        font-size: 0.85rem;
-
-        .label {
-          color: #64748b;
-          display: block;
-          margin-bottom: 0.15rem;
-        }
-
-        .val {
-          font-weight: 700;
-          color: #1e293b;
-
-          &.highlight {
-            color: #0f172a;
-          }
-
-          &.seats {
-            color: #b45309;
-          }
-
-          &.price {
-            color: #c90e29;
-            font-size: 0.95rem;
-          }
-        }
-      }
+    .datetime-line {
+      font-size: 14px;
+      color: #414a62;
+      margin: 0;
     }
 
-    .card-footer-actions {
+    .location-line {
       display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 14px;
+
+      .cinema-name {
+        color: #8f98aa;
+      }
+
+      .room-tag {
+        color: #414a62;
+        font-weight: 500;
+      }
+    }
+
+    .meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 13px;
+      color: #5a637a;
+
+      strong {
+        color: #333333;
+      }
+
+      .price {
+        color: #1a2c50;
+      }
+    }
+  }
+
+  .card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    flex-shrink: 0;
+
+    @media (max-width: 820px) {
+      width: 100%;
+      flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      padding-top: 1rem;
-      border-top: 1px solid #f1f5f9;
-      flex-wrap: wrap;
-      gap: 0.75rem;
+    }
 
-      .created-at {
-        font-size: 0.75rem;
-        color: #94a3b8;
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #64748b;
+      color: #ffffff;
+
+      &.confirmed {
+        background: #118eea;
+        color: #ffffff;
       }
+    }
 
-      .btn-qr-modal {
-        background-color: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-        padding: 0.4rem 0.85rem;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        cursor: pointer;
+    .btn-qr-modal {
+      padding: 8px 16px;
+      border: 1.5px solid #1a2c50;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #1a2c50;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
 
-        &:hover {
-          background-color: #fecaca;
-        }
+      &:hover {
+        background: #1a2c50;
+        color: #ffffff;
       }
     }
   }
@@ -289,121 +391,225 @@
 
 .empty-state {
   text-align: center;
-  padding: 4rem 1rem;
-  background-color: #ffffff;
+  padding: 56px 24px;
+  border: 1px dashed #dadfe8;
   border-radius: 12px;
-  border: 1px dashed #cbd5e1;
-
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
+  margin-top: 16px;
 
   h3 {
-    font-size: 1.3rem;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
+    font-size: 20px;
+    color: #333333;
+    margin: 0 0 8px;
   }
 
   p {
-    color: #64748b;
-    margin-bottom: 1.5rem;
+    color: #5a637a;
+    margin: 0 0 20px;
   }
 
   .btn-book-movie {
-    display: inline-block;
-    background-color: #c90e29;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 24px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #2b4b87 0%, #1e3562 100%);
     color: #ffffff;
-    text-decoration: none;
-    padding: 0.75rem 1.75rem;
-    border-radius: 999px;
     font-weight: 700;
-    transition: all 0.15s ease;
-
-    &:hover {
-      background-color: #a80b22;
-      transform: translateY(-1px);
-    }
+    text-decoration: none;
   }
 }
 
-// Modal
+/* ==================== FIGMA MODAL: CHI TIẾT GIAO DỊCH ==================== */
 .qr-modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  z-index: 1100;
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.58);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 20px;
+}
 
-  .modal-box {
-    background-color: #ffffff;
-    border-radius: 16px;
-    padding: 2rem;
-    max-width: 400px;
-    width: 100%;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+.figma-ticket-modal {
+  position: relative;
+  width: min(620px, 100%);
+  filter: drop-shadow(0 20px 50px rgba(0, 0, 0, 0.35));
 
-    .close-modal {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: none;
-      border: none;
-      font-size: 1.25rem;
-      cursor: pointer;
-      color: #94a3b8;
+  .close-modal {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-size: 16px;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  }
+
+  .modal-navy-top {
+    background: #1a2c50;
+    color: #ffffff;
+    border-radius: 16px 16px 0 0;
+    padding: 28px 36px 24px;
+
+    @media (max-width: 600px) {
+      padding: 22px 20px;
     }
 
-    h3 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #0f172a;
-      margin: 0 0 0.25rem;
-    }
-
-    .subtitle {
-      font-size: 0.85rem;
-      color: #64748b;
-      margin-bottom: 1.5rem;
-    }
-
-    .big-qr-img {
-      width: 220px;
-      height: 220px;
-      margin: 0 auto 1.25rem;
+    .modal-eyebrow {
       display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #9da8be;
+      margin-bottom: 6px;
     }
 
-    .modal-code {
-      background-color: #f8fafc;
-      padding: 0.75rem;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      margin-bottom: 1rem;
-
-      span {
-        font-size: 0.75rem;
-        color: #64748b;
-        display: block;
-      }
-
-      strong {
-        font-size: 1.35rem;
-        color: #c90e29;
-        font-family: monospace;
-      }
+    .modal-movie-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #f2c46f;
+      margin: 0 0 22px;
+      padding-right: 36px;
     }
 
-    .modal-tip {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      margin: 0;
+    .modal-split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 24px;
+      align-items: stretch;
+
+      @media (max-width: 560px) {
+        grid-template-columns: 1fr;
+        gap: 14px;
+
+        .vertical-rule {
+          display: none;
+        }
+      }
+
+      .vertical-rule {
+        width: 1px;
+        background: rgba(157, 168, 190, 0.45);
+      }
+
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .spec-entry {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+
+        .lbl {
+          font-size: 12px;
+          color: #9da8be;
+        }
+
+        strong {
+          font-size: 15px;
+          font-weight: 500;
+          color: #ffffff;
+        }
+
+        .code-gold {
+          font-size: 18px;
+          font-weight: 800;
+          color: #f2c46f;
+        }
+      }
+    }
+  }
+
+  .modal-stub-bottom {
+    position: relative;
+    min-height: 220px;
+    overflow: hidden;
+
+    .stub-bg-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .stub-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 24px 36px 36px;
+
+      @media (max-width: 560px) {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        padding: 20px 20px 32px;
+      }
+
+      .stub-specs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        color: #333333;
+
+        .stub-row {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          span {
+            font-size: 12px;
+            color: #414a62;
+          }
+
+          strong {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a2c50;
+          }
+        }
+
+        .modal-tip {
+          font-size: 12px;
+          color: #414a62;
+          margin: 4px 0 0;
+          line-height: 1.4;
+        }
+      }
+
+      .big-qr-frame {
+        padding: 10px;
+        background: #ffffff;
+        border: 1.5px solid #333333;
+        border-radius: 8px;
+        flex-shrink: 0;
+
+        .big-qr-img {
+          width: 140px;
+          height: 140px;
+          display: block;
+        }
+      }
     }
   }
 }

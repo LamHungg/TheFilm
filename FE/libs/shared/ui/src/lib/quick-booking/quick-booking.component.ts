@@ -18,12 +18,13 @@ export interface QuickBookingSearchParams {
   styleUrls: ['./quick-booking.component.scss'],
 })
 export class QuickBookingComponent {
+  private readonly today = new Date();
   @Input() cinemas: Cinema[] = [];
   @Input() selectedCinemaId = '';
   @Input() movieSearchTerm = '';
-  @Input() dayVal = '01';
-  @Input() monthVal = '11';
-  @Input() yearVal = '2026';
+  @Input() dayVal = String(this.today.getDate()).padStart(2, '0');
+  @Input() monthVal = String(this.today.getMonth() + 1).padStart(2, '0');
+  @Input() yearVal = String(this.today.getFullYear());
   @Input() selectedRoomType = 'ALL';
 
   @Output() search = new EventEmitter<QuickBookingSearchParams>();

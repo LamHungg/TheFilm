@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, inject, isDevMode } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AUTH_CONFIG, AuthService, UserProfile } from '@the-film/customer/data-access';
+import { AuthService } from '@the-film/customer/data-access';
 
 @Component({
   selector: 'thefilm-auth',
@@ -12,10 +12,6 @@ import { AUTH_CONFIG, AuthService, UserProfile } from '@the-film/customer/data-a
   styleUrl: './auth.component.scss',
 })
 export class AuthComponent implements OnDestroy {
-  get quickTestAvailable(): boolean {
-    return isDevMode() && this.authConfig.mockAuthEnabled === true;
-  }
-
   isLoginMode = true;
   isLoading = false;
   loadingMessage = '';
@@ -43,8 +39,8 @@ export class AuthComponent implements OnDestroy {
   }
 
   private readonly authService = inject(AuthService);
-  private readonly authConfig = inject(AUTH_CONFIG);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
   private redirectTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
@@ -105,12 +101,13 @@ export class AuthComponent implements OnDestroy {
       error: (err) => {
         this.isLoading = false;
         this.loadingMessage = '';
-        const msg = err?.error?.message || err?.message;
+        const msg = err?.error?.error?.message || err?.error?.message || err?.message;
         if (msg && typeof msg === 'string') {
           this.errorMessage = msg;
         } else {
           this.errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra lại email hoặc mật khẩu.';
         }
+        this.cdr.markForCheck();
       },
     });
   }
@@ -159,38 +156,15 @@ export class AuthComponent implements OnDestroy {
         error: (err) => {
           this.isLoading = false;
           this.loadingMessage = '';
-          const msg = err?.error?.message || err?.message;
+          const msg = err?.error?.error?.message || err?.error?.message || err?.message;
           if (msg && typeof msg === 'string') {
             this.errorMessage = msg;
           } else {
             this.errorMessage = 'Đăng ký không thành công. Email này có thể đã được sử dụng.';
           }
+          this.cdr.markForCheck();
         },
       });
-  }
-
-  async quickTestSignIn(): Promise<void> {
-    if (this.authService.isAuthenticated()) {
-      await this.navigateToMember();
-      return;
-    }
-    if (!this.quickTestAvailable || this.isLoading) return;
-    this.clearRedirectTimeout();
-    this.errorMessage = '';
-    this.isLoading = true;
-    this.loadingMessage = 'Đang tạo phiên thử nghiệm…';
-
-    const testUser: UserProfile = {
-      displayName: 'Nguyen Van A',
-      email: 'an.nguyen@example.com',
-    };
-
-    try {
-      this.authService.setSession('mock-jwt-token', testUser, Date.now() + 60 * 60 * 1000);
-      await this.navigateToMember();
-    } catch {
-      this.showActionError();
-    }
   }
 
   private async navigateToMember(): Promise<void> {

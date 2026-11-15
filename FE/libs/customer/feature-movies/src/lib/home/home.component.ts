@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -34,18 +34,21 @@ export class HomeComponent implements OnInit {
 
   constructor(
     private cinemaService: CinemaService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.cinemaService.getMovies().subscribe((movies) => {
       this.movies = movies;
       this.nowShowingMovies = movies.filter((m) => m.status === 'NOW_SHOWING').slice(0, 4);
-      this.upcomingMovies = movies.filter((m) => m.status === 'COMING_SOON');
+      this.upcomingMovies = movies.filter((m) => m.status !== 'NOW_SHOWING');
+      this.cdr.markForCheck();
     });
 
     this.cinemaService.getCinemas().subscribe((cinemas) => {
       this.cinemas = cinemas;
+      this.cdr.markForCheck();
     });
   }
 
@@ -81,7 +84,12 @@ export class HomeComponent implements OnInit {
         return;
       }
     }
-    this.router.navigate(['/movies']);
+    this.router.navigate(['/movies'], {
+      queryParams: {
+        cinemaId: params.cinemaId || undefined,
+        q: params.movieSearchTerm || undefined,
+      },
+    });
   }
 
   goToMovie(movie: Movie): void {
