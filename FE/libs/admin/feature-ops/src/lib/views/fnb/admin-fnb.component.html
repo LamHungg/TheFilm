@@ -1,0 +1,131 @@
+<div class="fnb-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; F&B & KHO</div>
+      <h1 class="page-title">Quầy F&B và quản lý tồn kho</h1>
+      <p class="page-desc">
+        Dữ liệu theo phạm vi rạp · Mọi thay đổi có người thao tác và thời điểm.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Thêm sản phẩm F&B</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- KPI Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Product Table Card -->
+  <div class="table-card">
+    <div class="card-inner-table">
+      <div class="table-header-row">
+        <div class="col-head col-code">MÃ SP</div>
+        <div class="col-head col-name">TÊN SẢN PHẨM</div>
+        <div class="col-head col-cat">DANH MỤC</div>
+        <div class="col-head col-stock">TỒN KHO</div>
+        <div class="col-head col-price">ĐƠN GIÁ</div>
+        <div class="col-head col-status">TRẠNG THÁI</div>
+      </div>
+
+      <div class="table-body">
+        @for (p of getFilteredProducts(); track p.code) {
+          <div class="table-data-row">
+            <div class="col-cell col-code font-bold text-red">{{ p.code }}</div>
+            <div class="col-cell col-name font-medium">{{ p.name }}</div>
+            <div class="col-cell col-cat">
+              <span class="cat-pill">{{ p.category }}</span>
+            </div>
+            <div class="col-cell col-stock" [class.text-warning]="p.isWarning">{{ p.stock }}</div>
+            <div class="col-cell col-price font-bold">{{ p.price }}</div>
+            <div class="col-cell col-status" [class.text-green]="!p.isWarning" [class.text-warning]="p.isWarning">
+              {{ p.status }}
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Thêm Sản Phẩm F&B Mới -->
+  @if (isModalOpen) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm sản phẩm F&B mới</h2>
+            <p class="modal-subtitle">Đăng ký mặt hàng ẩm thực / combo bắp nước tại quầy rạp</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
+        </div>
+
+        @if (saveError) {
+          <div class="alert-box error">{{ saveError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateProduct()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Mã sản phẩm (*)</label>
+              <input type="text" [(ngModel)]="newProduct.code" name="code" class="form-input" placeholder="VD: FNB-008" required />
+            </div>
+
+            <div class="form-group">
+              <label>Danh mục phân loại (*)</label>
+              <select [(ngModel)]="newProduct.category" name="category" class="form-select">
+                <option value="Bắp">Bắp rang bơ</option>
+                <option value="Nước">Nước ngọt / Nước giải khát</option>
+                <option value="Combo">Combo bắp nước</option>
+                <option value="Snack">Snack & Ăn vặt</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Tên món / Tên sản phẩm (*)</label>
+              <input type="text" [(ngModel)]="newProduct.name" name="name" class="form-input" placeholder="VD: Combo Bắp Phô Mai L + 2 Pepsi Zero" required />
+            </div>
+
+            <div class="form-group">
+              <label>Giá bán niêm yết (VNĐ) (*)</label>
+              <input type="number" [(ngModel)]="newProduct.priceValue" name="priceValue" class="form-input" min="0" step="1000" required />
+            </div>
+
+            <div class="form-group">
+              <label>Số lượng tồn kho ban đầu (*)</label>
+              <input type="number" [(ngModel)]="newProduct.stock" name="stock" class="form-input" min="0" required />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save">
+              Xác nhận thêm món
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
