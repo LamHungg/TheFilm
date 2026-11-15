@@ -1,0 +1,187 @@
+<div class="showtimes-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; LỊCH CHIẾU</div>
+      <h1 class="page-title">Lập lịch và điều hành suất chiếu</h1>
+      <p class="page-desc">
+        Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Tạo suất chiếu</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Scheduler Control Bar -->
+  <div class="scheduler-controls-bar">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Chọn rạp chiếu</span>
+      <select class="ctrl-select-native" [ngModel]="selectedCinemaId" (ngModelChange)="onCinemaChange($event)">
+        @for (c of cinemas; track c.cinemaId) {
+          <option [value]="c.cinemaId">{{ c.cinemaName }} ({{ c.cinemaCode }})</option>
+        }
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <span class="ctrl-label">Loại phòng</span>
+      <div class="ctrl-select-mock">Tất cả loại phòng ({{ rooms.length }} phòng)</div>
+    </div>
+
+    <div class="ctrl-actions">
+      <button class="btn-outline-action" type="button" (click)="loadSchedule()">Làm mới lịch</button>
+    </div>
+  </div>
+
+  <!-- Timeline Grid Card -->
+  <div class="timeline-card">
+    <div class="timeline-header">
+      <span class="timeline-title">LỊCH THEO PHÒNG CHIẾU - {{ cinemas.length > 0 ? (cinemas[0].cinemaName) : 'Đang tải' }}</span>
+      @if (loading) {
+        <span class="loading-tag">Đang tải dữ liệu...</span>
+      }
+    </div>
+
+    @if (!loading && roomsTimeline.length === 0) {
+      <div class="empty-state">
+        <p>Rạp chưa có phòng chiếu nào hoặc chưa thiết lập cấu hình.</p>
+      </div>
+    }
+
+    <div class="timeline-rows-container">
+      @for (row of roomsTimeline; track row.roomId) {
+        <div class="timeline-row">
+          <div class="room-col">
+            <span class="room-name">{{ row.roomName }}</span>
+            <span class="room-type-tag">{{ row.roomTypeName || 'Standard' }}</span>
+          </div>
+
+          <div class="shows-stream">
+            @if (row.shows.length === 0) {
+              <div class="no-shows-text">Chưa có suất chiếu nào được xếp hôm nay</div>
+            }
+            @for (show of row.shows; track show.screeningId) {
+              <div class="show-block" [class.cancelled]="show.status === 'CANCELLED'">
+                <div class="show-badge-row">
+                  <span class="show-time">{{ show.time }}</span>
+                  <span class="format-badge">{{ show.format }}</span>
+                </div>
+                <div class="show-movie" [title]="show.movie">{{ show.movie }}</div>
+                <div class="show-occupancy">Loại: {{ show.type }} · Trạng thái: {{ show.status }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- MODAL: Tạo Suất Chiếu Mới -->
+  @if (isCreateModalOpen) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Tạo suất chiếu mới</h2>
+            <p class="modal-subtitle">Xếp lịch chiếu cho phim và phòng chiếu theo thời gian thực</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
+        </div>
+
+        @if (createError) {
+          <div class="alert-box error">{{ createError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateScreening()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Cụm rạp (*)</label>
+              <select [(ngModel)]="newScreening.cinemaId" name="cinemaId" class="form-select" (ngModelChange)="onCinemaChange($event)">
+                @for (c of cinemas; track c.cinemaId) {
+                  <option [value]="c.cinemaId">{{ c.cinemaName }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Phòng chiếu (*)</label>
+              <select [(ngModel)]="newScreening.roomId" name="roomId" class="form-select">
+                @for (r of rooms; track r.roomId) {
+                  <option [value]="r.roomId">{{ r.roomName }} ({{ r.roomCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Chọn phim (*)</label>
+              <select [(ngModel)]="newScreening.filmId" name="filmId" class="form-select" (ngModelChange)="onFilmSelected($event)">
+                @for (f of films; track f.filmId) {
+                  <option [value]="f.filmId">{{ f.titleLocal }} ({{ f.filmCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Phiên bản phim (*)</label>
+              <select [(ngModel)]="newScreening.filmVersionId" name="filmVersionId" class="form-select">
+                @if (availableVersions.length === 0) {
+                  <option [value]="1">Bản chuẩn 2D mặc định (ID: 1)</option>
+                }
+                @for (v of availableVersions; track v.filmVersionId) {
+                  <option [value]="v.filmVersionId">{{ v.versionCode }} (Định dạng: {{ v.formatCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Loại suất chiếu (*)</label>
+              <select [(ngModel)]="newScreening.screeningTypeCode" name="screeningTypeCode" class="form-select">
+                <option value="STANDARD">STANDARD (Chiếu thường)</option>
+                <option value="SNEAK_PREVIEW">SNEAK_PREVIEW (Suất chiếu sớm)</option>
+                <option value="MIDNIGHT">MIDNIGHT (Suất nửa đêm)</option>
+                <option value="ADVANCE">ADVANCE (Vé mở bán trước)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Ngày chiếu (*)</label>
+              <input type="date" [(ngModel)]="newScreening.startDate" name="startDate" class="form-input" required />
+            </div>
+
+            <div class="form-group">
+              <label>Giờ bắt đầu (*)</label>
+              <input type="time" [(ngModel)]="newScreening.startTime" name="startTime" class="form-input" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Thời gian dọn phòng (phút)</label>
+              <input type="number" [(ngModel)]="newScreening.cleanupMinutes" name="cleanupMinutes" class="form-input" min="0" max="120" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isCreating">
+              {{ isCreating ? 'Đang lưu...' : 'Xác nhận tạo suất chiếu' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
