@@ -1,0 +1,206 @@
+<div class="ticketing-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; BÁN VÉ</div>
+      <h1 class="page-title">Bán vé tại quầy và soát QR vé</h1>
+      <p class="page-desc">
+        Dữ liệu theo ca làm việc · Lưu đầy đủ nhân viên, quầy và thời gian giao dịch.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="selectedSeats.clear()">Làm mới đơn quầy</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Middle Layout -->
+  <div class="ops-middle-layout">
+    <!-- Left Column: Chọn suất & Sơ đồ ghế -->
+    <div class="pos-seat-card">
+      <h2 class="card-title-red">CHỌN SUẤT CHIẾU & SƠ ĐỒ GHẾ</h2>
+
+      <!-- Movie and Showtime Selectors -->
+      <div class="form-row">
+        <div class="field-item">
+          <label class="field-label">Chọn phim</label>
+          <select class="field-select" [ngModel]="selectedFilmId" (ngModelChange)="onFilmChange($event)">
+            @for (f of films; track f.filmId) {
+              <option [value]="f.filmId">{{ f.titleLocal }} ({{ f.filmCode }})</option>
+            }
+          </select>
+        </div>
+        <div class="field-item">
+          <label class="field-label">Suất / phòng chiếu</label>
+          <select class="field-select" [ngModel]="selectedScreeningId" (ngModelChange)="onScreeningChange($event)">
+            @for (s of screenings; track s.screeningId) {
+              <option [value]="s.screeningId">
+                {{ s.startsAt | date:'HH:mm' }} · {{ s.roomName || 'Phòng' }} ({{ s.formatCode }})
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- POS Seats Grid -->
+      <div class="pos-screen-box">
+        <div class="pos-screen-line"></div>
+        <span class="pos-screen-text">MÀN HÌNH CHIẾU</span>
+      </div>
+
+      <div class="pos-seats-grid">
+        @for (row of rows; track row) {
+          <div class="seat-row">
+            <span class="row-label">{{ row }}</span>
+            <div class="seat-cells">
+              @for (col of cols; track col) {
+                <button
+                  type="button"
+                  class="pos-seat"
+                  [class.selected]="isSeatSelected(row + col)"
+                  [class.occupied]="row === 'B' && (col === 4 || col === 5)"
+                  (click)="toggleSeat(row + col)"
+                  [title]="row + col"
+                >
+                  {{ row }}{{ col }}
+                </button>
+              }
+            </div>
+            <span class="row-label">{{ row }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="pos-legend">
+        <div class="legend-item"><span class="legend-swatch empty"></span> Trống</div>
+        <div class="legend-item"><span class="legend-swatch selected"></span> Đang chọn</div>
+        <div class="legend-item"><span class="legend-swatch occupied"></span> Đã bán</div>
+      </div>
+    </div>
+
+    <!-- Right Column: Cart & QR Scanner -->
+    <div class="pos-sidebar-col">
+      <!-- Order Cart Card -->
+      <div class="order-cart-card">
+        <h2 class="card-title-red">CHI TIẾT ĐƠN HÀNG TẠI QUẦY</h2>
+
+        <div class="cart-items">
+          @if (selectedSeats.size === 0) {
+            <div class="cart-empty-text">Chưa có ghế nào được chọn. Vui lòng bấm vào ghế trên sơ đồ.</div>
+          }
+          @for (st of getSelectedSeatsArray(); track st) {
+            <div class="cart-row">
+              <span class="item-name">Vé ghế {{ st }} (Standard)</span>
+              <span class="item-price">{{ seatPrice | number }} ₫</span>
+            </div>
+          }
+
+          <div class="cart-row">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="hasFnb" />
+              <span>Combo Bắp ngọt + Nước lớn</span>
+            </label>
+            <span class="item-price">{{ hasFnb ? (fnbPrice | number) + ' ₫' : '0 ₫' }}</span>
+          </div>
+        </div>
+
+        <div class="cart-total-row">
+          <span class="total-label">TỔNG CẦN THU</span>
+          <span class="total-value">{{ getTotalPrice() | number }} ₫</span>
+        </div>
+
+        <!-- Payment method selector -->
+        <div class="payment-tabs">
+          <button
+            class="pay-pill"
+            [class.active]="paymentMethod === 'cash'"
+            (click)="paymentMethod = 'cash'"
+            type="button"
+          >
+            TIỀN MẶT
+          </button>
+          <button
+            class="pay-pill"
+            [class.active]="paymentMethod === 'pos'"
+            (click)="paymentMethod = 'pos'"
+            type="button"
+          >
+            QUẸT THẺ / QR PAY
+          </button>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="btn-checkout" type="button" (click)="checkout()">
+          Thu tiền & in vé tại quầy
+        </button>
+        <p class="checkout-hint">Lưu nhân viên thu ngân · máy in vé tự động kích hoạt</p>
+      </div>
+
+      <!-- QR Scanner Card -->
+      <div class="qr-scanner-card">
+        <h2 class="card-title-red">SOÁT VÉ QR (LIVE CHECK)</h2>
+
+        <div class="scan-input-group">
+          <input
+            type="text"
+            class="scan-input"
+            [(ngModel)]="ticketCodeInput"
+            placeholder="Quét mã hoặc nhập mã vé..."
+          />
+          <button class="btn-verify" type="button" (click)="checkTicket()" [disabled]="isChecking">
+            {{ isChecking ? 'Đang kiểm...' : 'Kiểm tra' }}
+          </button>
+        </div>
+
+        @if (scanResult) {
+          <div class="scan-status-pill" [class.invalid]="!scanResult.valid">
+            {{ scanResult.valid ? '✓ VÉ HỢP LỆ · CHO PHÉP VÀO' : '✕ VÉ KHÔNG HỢP LỆ' }}
+            <div class="scan-msg">{{ scanResult.message }}</div>
+          </div>
+        }
+
+        <p class="scan-footnote">Kết nối trực tiếp API Backend · Chống vé quét lặp</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Thành công đơn quầy -->
+  @if (isSuccessModalOpen) {
+    <div class="modal-backdrop" (click)="finishOrder()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2 class="modal-title text-green">Giao dịch quầy thành công!</h2>
+          <button class="btn-close" (click)="finishOrder()" type="button">✕</button>
+        </div>
+
+        <div class="success-body">
+          <div class="order-code-badge">MÃ ĐƠN: {{ lastOrderCode }}</div>
+          <p class="success-desc">Đơn vé đã được lưu vào hệ thống và kích hoạt in vé.</p>
+          <div class="order-summary-box">
+            <div><strong>Phim:</strong> {{ selectedMovieTitle }}</div>
+            <div><strong>Suất chiếu:</strong> {{ selectedShowtime }}</div>
+            <div><strong>Ghế đã mua:</strong> {{ getSelectedSeatsArray().join(', ') }}</div>
+            <div><strong>Tổng tiền thanh toán:</strong> {{ getTotalPrice() | number }} ₫ ({{ paymentMethod === 'cash' ? 'Tiền mặt' : 'Thẻ/QR' }})</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-save" (click)="finishOrder()">Hoàn tất & Tiếp tục bán vé</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
