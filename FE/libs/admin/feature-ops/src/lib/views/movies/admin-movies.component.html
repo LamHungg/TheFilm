@@ -1,0 +1,224 @@
+<div class="movies-view">
+  <!-- Toast Notification -->
+  @if (toastMessage) {
+    <div class="toast-banner">
+      <span class="toast-icon">✓</span>
+      <span>{{ toastMessage }}</span>
+    </div>
+  }
+
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; PHIM</div>
+      <h1 class="page-title">Danh mục phim và quyền chiếu</h1>
+      <p class="page-desc">
+        Dữ liệu kết nối trực tiếp cơ sở dữ liệu · Tự động đồng bộ với phòng chiếu & suất chiếu.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()">
+        + Tạo hồ sơ phim
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- KPI Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Movie Table Card -->
+  <div class="table-card">
+    <div class="card-inner-table">
+      <div class="table-header-row">
+        <div class="col-head col-code">MÃ PHIM</div>
+        <div class="col-head col-title">TÊN PHIM</div>
+        <div class="col-head col-duration">THỜI LƯỢNG</div>
+        <div class="col-head col-rating">PHÂN LOẠI</div>
+        <div class="col-head col-status">TRẠNG THÁI</div>
+      </div>
+
+      <div class="table-body">
+        @if (isLoading) {
+          <div class="loading-state">Đang tải dữ liệu từ máy chủ...</div>
+        } @else if (filteredMovies.length === 0) {
+          <div class="empty-state">Không có phim nào phù hợp điều kiện lọc.</div>
+        } @else {
+          @for (m of filteredMovies; track m.filmId) {
+            <div class="table-data-row">
+              <div class="col-cell col-code font-mono">{{ m.filmCode }}</div>
+              <div class="col-cell col-title">
+                <div class="title-with-poster">
+                  @if (m.posterUri) {
+                    <img [src]="m.posterUri" alt="Poster" class="table-poster-thumb" />
+                  }
+                  <div class="title-texts">
+                    <span class="title-vn">{{ m.titleLocal }}</span>
+                    @if (m.titleOriginal) {
+                      <span class="title-orig">{{ m.titleOriginal }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div class="col-cell col-duration">{{ m.runtimeMinutes }} phút</div>
+              <div class="col-cell col-rating">
+                <span
+                  class="rating-tag"
+                  [class.rating-p]="getAgeClassificationName(m.ageClassificationId) === 'P'"
+                >
+                  {{ getAgeClassificationName(m.ageClassificationId) }}
+                </span>
+              </div>
+              <div
+                class="col-cell col-status"
+                [class.text-green]="m.approvalStatus === 'APPROVED'"
+                [class.text-amber]="m.approvalStatus === 'DRAFT'"
+              >
+                {{ m.approvalStatus === 'APPROVED' ? 'Đã duyệt chiếu' : (m.approvalStatus === 'DRAFT' ? 'Bản nháp' : m.approvalStatus) }}
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE FILM MODAL -->
+  @if (showCreateModal) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-titles">
+            <h2 class="modal-title">Tạo hồ sơ phim mới</h2>
+            <p class="modal-subtitle">Nhập thông tin phim vào hệ thống phân phối của cụm rạp THEFILM</p>
+          </div>
+          <button class="btn-close-modal" type="button" (click)="closeCreateModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Mã phim (Code) <span class="required">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="VD: THEFILM-005"
+                [(ngModel)]="newFilm.filmCode"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Thời lượng (Phút) <span class="required">*</span></label>
+              <input
+                type="number"
+                class="form-control"
+                min="1"
+                max="999"
+                [(ngModel)]="newFilm.runtimeMinutes"
+              />
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Tên phim (Tiếng Việt) <span class="required">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="VD: Bí Mật Đảo Hoang"
+                [(ngModel)]="newFilm.titleLocal"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tên gốc (Tiếng Anh)</label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="VD: The Island Mystery"
+                [(ngModel)]="newFilm.titleOriginal"
+              />
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Phân loại độ tuổi</label>
+              <select class="form-control" [(ngModel)]="newFilm.ageClassificationId">
+                @for (opt of lookups.ageClassifications; track opt.id) {
+                  <option [value]="opt.id">{{ opt.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Poster URL (Ảnh bìa)</label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="https://..."
+                [(ngModel)]="newFilm.posterUri"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Thể loại phim</label>
+            <div class="genre-pill-selector">
+              @for (g of lookups.genres; track g.id) {
+                <button
+                  type="button"
+                  class="genre-select-pill"
+                  [class.selected]="isGenreSelected(g.id)"
+                  (click)="toggleGenre(g.id)"
+                >
+                  {{ isGenreSelected(g.id) ? '✓ ' : '+ ' }}{{ g.name }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tóm tắt nội dung</label>
+            <textarea
+              class="form-control"
+              rows="3"
+              placeholder="Nhập tóm tắt kịch bản và giới thiệu..."
+              [(ngModel)]="newFilm.synopsis"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" type="button" (click)="closeCreateModal()">Hủy</button>
+          <button
+            class="btn-submit"
+            type="button"
+            [disabled]="isSubmitting"
+            (click)="submitCreate()"
+          >
+            {{ isSubmitting ? 'Đang tạo...' : 'Lưu & tạo bản ghi' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
