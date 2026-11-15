@@ -1,0 +1,318 @@
+<div class="org-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; TỔ CHỨC & RẠP</div>
+      <h1 class="page-title">Chuỗi, pháp nhân và rạp chiếu</h1>
+      <p class="page-desc">
+        Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-outline-action" type="button" (click)="openCinemaModal()">+ Thêm rạp chiếu</button>
+      <button class="btn-primary-action" type="button" (click)="openEntityModal()">+ Thêm pháp nhân</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- TAB 0: PHÁP NHÂN -->
+  @if (tabs[0].active) {
+    <div class="ops-middle-layout">
+      <!-- Entity Table -->
+      <div class="table-card">
+        <div class="card-inner-table">
+          <div class="table-header-row">
+            <div class="col-head col-code">MÃ</div>
+            <div class="col-head col-name">PHÁP NHÂN</div>
+            <div class="col-head col-tax">MÃ SỐ THUẾ</div>
+            <div class="col-head col-status">TRẠNG THÁI</div>
+          </div>
+
+          <div class="table-body">
+            @for (e of legalEntities; track e.legalEntityId) {
+              <div
+                class="table-data-row"
+                [class.selected]="selectedEntity?.legalEntityId === e.legalEntityId"
+                (click)="selectEntity(e)"
+              >
+                <div class="col-cell col-code font-bold">{{ e.entityCode }}</div>
+                <div class="col-cell col-name font-medium">{{ e.legalName }}</div>
+                <div class="col-cell col-tax">{{ e.taxIdentifier || 'Chưa cập nhật' }}</div>
+                <div class="col-cell col-status text-green">{{ e.status }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Seller Profile Detail -->
+      <div class="detail-card">
+        <h2 class="detail-header-title">HỒ SƠ PHÁP NHÂN & XUẤT HÓA ĐƠN</h2>
+
+        @if (selectedEntity) {
+          <div class="field-group">
+            <label class="field-label">Tên pháp nhân đầy đủ</label>
+            <div class="field-box">{{ selectedEntity.legalName }}</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Mã pháp nhân</label>
+            <div class="field-box font-bold text-red">{{ selectedEntity.entityCode }}</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Mã số thuế doanh nghiệp</label>
+            <div class="field-box">{{ selectedEntity.taxIdentifier || '0316889922' }}</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Trạng thái hồ sơ</label>
+            <div class="field-box text-green font-semibold">{{ selectedEntity.status }}</div>
+          </div>
+
+          <div class="detail-footer-actions">
+            <div class="badge-in-use">ĐANG HOẠT ĐỘNG</div>
+          </div>
+        } @else {
+          <div class="empty-text">Chọn một pháp nhân từ danh sách để xem hồ sơ.</div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- TAB 1: RẠP CHIẾU -->
+  @if (tabs[1].active) {
+    <div class="table-card full-width-card">
+      <div class="table-header-title">
+        <span>DANH SÁCH TẤT CẢ CỤM RẠP TRỰC THUỘC ({{ cinemas.length }})</span>
+      </div>
+      <div class="card-inner-table">
+        <div class="table-header-row cinemas-grid">
+          <div class="col-head">MÃ RẠP</div>
+          <div class="col-head">TÊN CỤM RẠP</div>
+          <div class="col-head">ĐỊA CHỈ HOẠT ĐỘNG</div>
+          <div class="col-head">TỈNH / TP</div>
+          <div class="col-head">HOTLINE / EMAIL</div>
+          <div class="col-head">TRẠNG THÁI</div>
+        </div>
+
+        <div class="table-body">
+          @for (c of cinemas; track c.cinemaId) {
+            <div
+              class="table-data-row cinemas-grid"
+              [class.selected]="selectedCinema?.cinemaId === c.cinemaId"
+              (click)="selectCinema(c)"
+            >
+              <div class="col-cell font-bold text-red">{{ c.cinemaCode }}</div>
+              <div class="col-cell font-medium">{{ c.cinemaName }}</div>
+              <div class="col-cell text-muted">{{ c.addressLine }}</div>
+              <div class="col-cell">{{ c.provinceName || 'Toàn quốc' }}</div>
+              <div class="col-cell text-muted">{{ c.phone || '1900 6868' }} · {{ c.email || 'info@thefilm.vn' }}</div>
+              <div class="col-cell text-green font-semibold">{{ c.status }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: CHUỖI & THƯƠNG HIỆU -->
+  @if (tabs[2].active) {
+    <div class="table-card full-width-card">
+      <div class="table-header-title">
+        <span>CHUỖI ĐIỆN ẢNH VÀ HỆ THỐNG THƯƠNG HIỆU</span>
+      </div>
+      <div class="card-inner-table">
+        <div class="table-header-row chains-grid">
+          <div class="col-head">MÃ CHUỖI</div>
+          <div class="col-head">TÊN CHUỖI DOANH NGHIỆP</div>
+          <div class="col-head">TRẠNG THÁI</div>
+        </div>
+
+        <div class="table-body">
+          @for (ch of chains; track ch.chainId) {
+            <div class="table-data-row chains-grid">
+              <div class="col-cell font-bold text-red">{{ ch.chainCode }}</div>
+              <div class="col-cell font-medium">{{ ch.chainName }}</div>
+              <div class="col-cell text-green font-semibold">{{ ch.status }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Bottom Cinema Properties Panel -->
+  @if (selectedCinema) {
+    <section class="cinema-props-card">
+      <h2 class="props-heading">THÔNG SỐ VẬN HÀNH · {{ selectedCinema.cinemaName }} ({{ selectedCinema.cinemaCode }})</h2>
+      <div class="props-grid">
+        <div class="field-group">
+          <label class="field-label">Tên rạp</label>
+          <div class="field-box">{{ selectedCinema.cinemaName }}</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Địa chỉ</label>
+          <div class="field-box">{{ selectedCinema.addressLine }}, {{ selectedCinema.provinceName }}</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Giờ vận hành / múi giờ</label>
+          <div class="field-box">08:00 – 01:30 ({{ selectedCinema.timeZone }})</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Hotline liên hệ</label>
+          <div class="field-box">{{ selectedCinema.phone || '1900 6868' }}</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email hỗ trợ</label>
+          <div class="field-box">{{ selectedCinema.email || 'support@thefilm.vn' }}</div>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Trạng thái</label>
+          <div class="field-box text-green">{{ selectedCinema.status }}</div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- MODAL: Thêm Cụm Rạp Mới -->
+  @if (isCinemaModalOpen) {
+    <div class="modal-backdrop" (click)="closeCinemaModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm cụm rạp chiếu mới</h2>
+            <p class="modal-subtitle">Đăng ký chi nhánh cụm rạp mới vào hệ thống TheFilm</p>
+          </div>
+          <button class="btn-close" (click)="closeCinemaModal()" type="button">✕</button>
+        </div>
+
+        @if (cinemaError) {
+          <div class="alert-box error">{{ cinemaError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateCinema()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Pháp nhân quản lý (*)</label>
+              <select [(ngModel)]="newCinema.legalEntityId" name="legalEntityId" class="form-select">
+                @for (e of legalEntities; track e.legalEntityId) {
+                  <option [value]="e.legalEntityId">{{ e.legalName }} ({{ e.entityCode }})</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mã rạp (*)</label>
+              <input type="text" [(ngModel)]="newCinema.cinemaCode" name="cinemaCode" class="form-input" placeholder="VD: TF03" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Tên cụm rạp (*)</label>
+              <input type="text" [(ngModel)]="newCinema.cinemaName" name="cinemaName" class="form-input" placeholder="VD: THEFILM Landmark 81" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Địa chỉ chi tiết (*)</label>
+              <input type="text" [(ngModel)]="newCinema.addressLine" name="addressLine" class="form-input" placeholder="VD: Tầng B1, TTTM Vincom Landmark 81, Bình Thạnh" required />
+            </div>
+
+            <div class="form-group">
+              <label>Tỉnh / Thành phố</label>
+              <input type="text" [(ngModel)]="newCinema.provinceName" name="provinceName" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label>Số điện thoại</label>
+              <input type="text" [(ngModel)]="newCinema.phone" name="phone" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label>Email liên hệ</label>
+              <input type="email" [(ngModel)]="newCinema.email" name="email" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label>Múi giờ</label>
+              <input type="text" [(ngModel)]="newCinema.timeZone" name="timeZone" class="form-input" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCinemaModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isCinemaSaving">
+              {{ isCinemaSaving ? 'Đang lưu...' : 'Xác nhận tạo rạp' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: Thêm Pháp Nhân Mới -->
+  @if (isEntityModalOpen) {
+    <div class="modal-backdrop" (click)="closeEntityModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm pháp nhân mới</h2>
+            <p class="modal-subtitle">Đăng ký pháp nhân doanh nghiệp để xuất hóa đơn và ký hợp đồng</p>
+          </div>
+          <button class="btn-close" (click)="closeEntityModal()" type="button">✕</button>
+        </div>
+
+        @if (entityError) {
+          <div class="alert-box error">{{ entityError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateEntity()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Chuỗi doanh nghiệp (*)</label>
+              <select [(ngModel)]="newEntity.chainId" name="chainId" class="form-select">
+                @for (ch of chains; track ch.chainId) {
+                  <option [value]="ch.chainId">{{ ch.chainName }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mã pháp nhân (*)</label>
+              <input type="text" [(ngModel)]="newEntity.entityCode" name="entityCode" class="form-input" placeholder="VD: LE03" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Tên pháp nhân công ty (*)</label>
+              <input type="text" [(ngModel)]="newEntity.legalName" name="legalName" class="form-input" placeholder="VD: CÔNG TY TNHH THEFILM SÀI GÒN" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Mã số thuế doanh nghiệp (*)</label>
+              <input type="text" [(ngModel)]="newEntity.taxIdentifier" name="taxIdentifier" class="form-input" placeholder="VD: 0316998877" required />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeEntityModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isEntitySaving">
+              {{ isEntitySaving ? 'Đang lưu...' : 'Xác nhận tạo pháp nhân' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
