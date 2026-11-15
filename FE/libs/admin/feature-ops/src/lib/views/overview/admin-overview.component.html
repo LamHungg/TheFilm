@@ -1,0 +1,110 @@
+<div class="overview-view">
+  <!-- Page Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; TỔNG QUAN</div>
+      <h1 class="page-title">Tổng quan vận hành</h1>
+      <p class="page-desc">
+        Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button">
+        Tạo báo cáo
+      </button>
+    </div>
+  </header>
+
+  <!-- 4 KPI Cards Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Operation Alert Banner -->
+  <section class="operation-alert-banner">
+    <span class="alert-text">
+      3 suất cần xác nhận thiết bị · 2 hóa đơn giả lập đang timeout · 1 ca chưa chốt
+    </span>
+  </section>
+
+  <!-- Two Column Content Grid: Schedule & Tasks -->
+  <div class="ops-middle-layout">
+    <!-- Left Column: Lịch điều hành (Schedule) -->
+    <div class="ops-schedule-card">
+      <div class="card-header">
+        <h2 class="card-title">Lịch vận hành hôm nay</h2>
+        <div class="date-badge">01/11/2026</div>
+      </div>
+
+      <!-- Schedule Table -->
+      <div class="schedule-table-wrap">
+        <div class="table-header-row">
+          <div class="col-head col-movie">GIỜ / PHIM</div>
+          <div class="col-head col-room">PHÒNG</div>
+          <div class="col-head col-seats">GHẾ ĐÃ BÁN</div>
+          <div class="col-head col-status">TRẠNG THÁI</div>
+        </div>
+
+        <div class="table-body">
+          @for (item of showtimes; track item.timeMovie) {
+            <div class="table-data-row">
+              <div class="col-cell col-movie">{{ item.timeMovie }}</div>
+              <div class="col-cell col-room">{{ item.room }}</div>
+              <div class="col-cell col-seats">{{ item.seats }}</div>
+              <div
+                class="col-cell col-status"
+                [class.text-green]="item.isGreen"
+              >
+                {{ item.status }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Việc cần xử lý (Tasks) -->
+    <div class="ops-tasks-card">
+      <div class="card-header">
+        <h2 class="card-title">Hàng đợi nghiệp vụ</h2>
+      </div>
+
+      <div class="tasks-list">
+        @for (task of tasks; track task.title) {
+          <div class="task-row">
+            <div class="task-content">
+              <span class="task-title">{{ task.title }}</span>
+              <span class="task-sub">{{ task.sub }}</span>
+            </div>
+            <div class="task-badge-open">
+              {{ task.status }}
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Panel: Hiệu quả theo rạp (Bar Chart) -->
+  <section class="ops-chart-card">
+    <h2 class="chart-title">Doanh thu theo rạp · 7 ngày</h2>
+    <div class="chart-bars-container">
+      @for (item of chartDays; track item.day) {
+        <div class="chart-col">
+          <div
+            class="chart-bar"
+            [style.height.px]="item.height"
+            [style.background-color]="item.color"
+          ></div>
+          <span class="chart-day-label">{{ item.day }}</span>
+        </div>
+      }
+    </div>
+  </section>
+</div>
