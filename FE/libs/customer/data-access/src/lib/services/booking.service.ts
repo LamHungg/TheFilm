@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal, computed, effect } from '@angular/core';
-import { Observable, map, throwError } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { Movie } from '../models/movie.model';
 import { Cinema } from '../models/cinema.model';
 import { Showtime } from '../models/showtime.model';
@@ -9,6 +9,19 @@ import { FnbCombo } from '../models/combo.model';
 import { BuyerInfo, CreateOrderPayload, HoldSeatsResponse } from '../models/booking.model';
 import { CreateOrderResponse, Order, PaymentMethod, PayOrderPayload, PayOrderResponse, Ticket } from '../models/order.model';
 import { CinemaService } from './cinema.service';
+
+export interface ApiVoucher {
+  voucherId: number;
+  voucherCode: string;
+  campaignCode: string;
+  campaignName: string;
+  discountType: string;
+  discountValue: number;
+  maxDiscount: number | null;
+  validFrom: string | null;
+  validTo: string | null;
+  status: string;
+}
 
 interface ApiResponse<T> {
   success: boolean;
@@ -246,6 +259,53 @@ export class BookingService {
       .pipe(map(({ data }) => this.fromApiOrder(data)));
   }
 
+  simulateWebhookPayment(orderCode: string): Observable<any> {
+    return this.http.post<any>(`/api/v1/public/payments/webhook/simulate?orderCode=${encodeURIComponent(orderCode)}`, {});
+  }
+
+  getMyOrders(): Observable<Order[]> {
+    return this.http
+      .get<ApiResponse<CreateOrderResponse[]>>('/api/v1/customer/orders')
+      .pipe(
+        map(({ data }) => {
+          const list = (data || []).map((item) => this.fromApiOrder(item));
+          return list;
+        }),
+        catchError(() => {
+          return this.http
+            .get<ApiResponse<CreateOrderResponse[]>>(`${this.bookingApi}/my-orders`)
+            .pipe(
+              map(({ data }) => (data || []).map((item) => this.fromApiOrder(item))),
+              catchError(() => of([]))
+            );
+        })
+      );
+  }
+
+  getVouchers(): Observable<ApiVoucher[]> {
+    return this.http
+      .get<ApiResponse<ApiVoucher[]>>('/api/v1/customer/vouchers')
+      .pipe(
+        map(({ data }) => data || []),
+        catchError(() => {
+          return this.http
+            .get<ApiResponse<ApiVoucher[]>>(`${this.bookingApi}/vouchers`)
+            .pipe(
+              map(({ data }) => data || []),
+              catchError(() => of([]))
+            );
+        })
+      );
+  }
+
+  removeOrder(orderCode: string): void {
+    const updated = this.orders().filter(
+      (item) => item.orderCode !== orderCode && item.id !== orderCode
+    );
+    this.orders.set(updated);
+    this.saveOrders(updated);
+  }
+
   private fromApiOrder(data: CreateOrderResponse): Order {
     const existing = this.orders().find((o) => o.orderCode === data.orderCode);
     const movie = this.currentMovie();
@@ -346,6 +406,19 @@ export class BookingService {
     return this.orders().find((o) => o.id === id || o.orderCode === id || o.bookingCode === id);
   }
 
+  private getLoggedInEmail(): string | null {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        const raw = sessionStorage.getItem('thefilm.auth.session');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return (parsed?.user?.email || '').trim().toLowerCase() || null;
+        }
+      }
+    } catch {}
+    return null;
+  }
+
   private loadOrders(): Order[] {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -353,9 +426,17 @@ export class BookingService {
         if (stored) {
           const parsed = JSON.parse(stored) as Order[];
           // Keep only real backend-issued orders (strip legacy mock entries).
-          return parsed.filter(
+          const valid = parsed.filter(
             (o) => Boolean(o?.orderCode) && o.id !== 'ord-demo-01' && !o.bookingCode?.startsWith('TFM-')
           );
+          const loggedEmail = this.getLoggedInEmail();
+          if (loggedEmail) {
+            return valid.filter((o) => {
+              const email = (o.buyer?.email || '').trim().toLowerCase();
+              return !email || email === loggedEmail;
+            });
+          }
+          return valid;
         }
       }
     } catch (e) {

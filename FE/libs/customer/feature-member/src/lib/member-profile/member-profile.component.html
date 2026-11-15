@@ -1,131 +1,616 @@
-<div class="member-profile-page">
+<div class="member-page">
   <div class="page-container">
-    <ng-container *ngIf="isAuthenticated(); else unauthenticated">
-      <p *ngIf="loadingProfile" role="status" aria-live="polite">Đang tải hồ sơ thành viên…</p>
+    <!-- Top Figma Header / Breadcrumbs -->
+    <header class="figma-page-header">
+      <div class="header-inner-row">
+        <div>
+          <nav class="step-breadcrumb" aria-label="Đường dẫn">
+            <a routerLink="/" class="crumb-link">Trang chủ</a>
+            <span class="crumb-separator">/</span>
+            <span class="crumb-current">Thành viên THEFILM</span>
+          </nav>
+          <h1 class="figma-title">THÀNH VIÊN THEFILM</h1>
+          <p class="figma-subtitle">
+            Quản lý hồ sơ cá nhân, hạng thẻ VIP và trải nghiệm đặc quyền điện ảnh độc quyền
+          </p>
+        </div>
 
-      <div *ngIf="profileError" role="alert">
-        <p>{{ profileError }}</p>
-        <button type="button" class="btn-action" (click)="loadProfile()">Thử tải lại</button>
+        <div class="header-right-badges" *ngIf="isAuthenticated() && profile as member">
+          <div class="quick-stat-box">
+            <span class="stat-label">HẠNG THẺ</span>
+            <strong class="stat-value tier-gold">{{ currentTierName }}</strong>
+          </div>
+          <div class="quick-stat-box">
+            <span class="stat-label">ĐIỂM TÍCH LŨY</span>
+            <strong class="stat-value points-gold">{{ memberPoints | number }} P</strong>
+          </div>
+        </div>
       </div>
+    </header>
 
-      <p *ngIf="saveSuccess" role="status" aria-live="polite">{{ saveSuccess }}</p>
-
-      <ng-container *ngIf="profile as member">
-      <section class="membership-digital-card" aria-label="Thẻ thành viên THEFILM">
-        <div class="card-bg-glow"></div>
-        <div class="card-content">
-          <div class="card-top">
-            <div class="brand-mini">
-              <div class="logo-box" aria-hidden="true">T</div>
-              <span>THEFILM MEMBER CLUB</span>
+    <!-- Main Split Layout (When Authenticated) -->
+    <main class="member-split-layout" *ngIf="isAuthenticated(); else unauthenticatedView">
+      <!-- ==================== LEFT SIDEBAR (FIGMA #F5F5F5) ==================== -->
+      <aside class="member-sidebar">
+        <!-- Digital VIP Member Card -->
+        <div class="digital-vip-card" aria-label="Thẻ thành viên điện tử THEFILM">
+          <div class="vip-card-glow"></div>
+          <div class="vip-card-inner">
+            <div class="vip-card-header">
+              <div class="brand-badge">
+                <span class="brand-text">THEFILM</span>
+              </div>
+              <span class="vip-tier-chip" [class.standard]="currentTierCode === 'STANDARD'" [class.vvip]="currentTierCode === 'VVIP'">
+                {{ tierBadge }}
+              </span>
             </div>
-            <span class="tier-pill">Hạng thành viên: Chưa có dữ liệu</span>
-          </div>
 
-          <div class="member-name-block">
-            <span class="greeting">Xin chào,</span>
-            <h2 class="name">{{ member.displayName || 'Chưa cập nhật họ tên' }}</h2>
-            <span *ngIf="member.appUserId != null" class="member-id">
-              ID tài khoản: <strong>#{{ member.appUserId }}</strong>
-            </span>
-          </div>
-
-          <div class="card-bottom">
-            <div class="point-item">
-              <span class="label">Điểm thưởng:</span>
-              <span class="val">Chưa có dữ liệu</span>
+            <div class="vip-card-body">
+              <div class="avatar-row">
+                <div class="avatar-ring">
+                  <span class="avatar-letter">
+                    {{ (profile?.displayName || 'T').charAt(0) | uppercase }}
+                  </span>
+                </div>
+                <div class="name-meta">
+                  <span class="card-greeting">Xin chào,</span>
+                  <h3 class="card-user-name" [title]="profile?.displayName || ''">
+                    {{ profile?.displayName || 'Thành viên THEFILM' }}
+                  </h3>
+                  <span class="card-id-code">
+                    ID: <strong>#TF-{{ profile?.appUserId ? ('0000' + profile.appUserId).slice(-4) : '0001' }}</strong>
+                  </span>
+                </div>
+              </div>
             </div>
-            <div class="point-item">
-              <span class="label">Trạng thái chấp thuận:</span>
-              <span class="val">Chưa có dữ liệu</span>
+
+            <div class="vip-card-footer">
+              <div class="points-col">
+                <span class="footer-lbl">Điểm thưởng</span>
+                <span class="footer-val">{{ memberPoints | number }} P</span>
+              </div>
+              <div class="status-col">
+                <span class="footer-lbl">Trạng thái</span>
+                <span class="status-active-badge">
+                  <span class="pulse-dot"></span> Đang hoạt động
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <section *ngIf="!isEditing" class="benefits-grid" aria-label="Thông tin hồ sơ">
-        <article class="benefit-box">
-          <div class="icon" aria-hidden="true">✉️</div>
-          <h4>Email</h4>
-          <p>{{ member.email || 'Chưa cung cấp email' }}</p>
-        </article>
+        <!-- Sidebar Navigation Menu -->
+        <nav class="sidebar-nav" aria-label="Menu tài khoản thành viên">
+          <button
+            type="button"
+            class="nav-tab-btn"
+            [class.active]="activeTab === 'PROFILE'"
+            (click)="setTab('PROFILE')"
+          >
+            <svg class="tab-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="tab-text">Hồ sơ tài khoản</span>
+          </button>
 
-        <article class="benefit-box">
-          <div class="icon" aria-hidden="true">🎬</div>
-          <h4>Rạp yêu thích</h4>
-          <p>{{ favoriteCinemaName }}</p>
-          <p *ngIf="loadingCinemas" aria-live="polite">Đang tải danh sách rạp…</p>
-          <p *ngIf="cinemaError" role="status">{{ cinemaError }}</p>
-        </article>
+          <button
+            type="button"
+            class="nav-tab-btn"
+            [class.active]="activeTab === 'MEMBERSHIP'"
+            (click)="setTab('MEMBERSHIP')"
+          >
+            <svg class="tab-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span class="tab-text">Hạng thẻ &amp; Đặc quyền</span>
+          </button>
 
-        <article class="benefit-box">
-          <div class="icon" aria-hidden="true">🎂</div>
-          <h4>Ngày sinh</h4>
-          <p>{{ member.dateOfBirth ? (member.dateOfBirth | date:'dd/MM/yyyy') : 'Chưa cập nhật' }}</p>
-        </article>
+          <button
+            type="button"
+            class="nav-tab-btn"
+            [class.active]="activeTab === 'VOUCHERS'"
+            (click)="setTab('VOUCHERS')"
+          >
+            <svg class="tab-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
+              <path d="M13 5v2"></path>
+              <path d="M13 17v2"></path>
+              <path d="M13 11v2"></path>
+            </svg>
+            <span class="tab-text">Ưu đãi &amp; Voucher</span>
+            <span class="tab-counter">{{ vouchers.length }}</span>
+          </button>
 
-        <article class="benefit-box">
-          <div class="icon" aria-hidden="true">👤</div>
-          <h4>Chỉnh sửa hồ sơ</h4>
-          <p>Cập nhật họ tên, ngày sinh và rạp yêu thích của bạn.</p>
-          <button type="button" class="btn-action" (click)="beginEdit()">Chỉnh sửa thông tin</button>
-        </article>
-      </section>
+          <div class="nav-divider"></div>
 
-      <section *ngIf="isEditing" class="vouchers-section" aria-labelledby="profile-edit-title">
-        <h3 id="profile-edit-title">Chỉnh sửa hồ sơ</h3>
-        <form #profileForm="ngForm" class="benefit-box" (ngSubmit)="saveProfile()">
-          <label for="display-name">Họ và tên</label>
-          <input
-            id="display-name"
-            name="displayName"
-            type="text"
-            [(ngModel)]="editDisplayName"
-            required
-            maxlength="200"
-            autocomplete="name"
-          />
+          <a routerLink="/my-tickets" class="nav-tab-btn link-tickets">
+            <svg class="tab-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+              <path d="M7 3v18"></path>
+              <path d="M3 7.5h4"></path>
+              <path d="M3 12h18"></path>
+              <path d="M3 16.5h4"></path>
+              <path d="M17 3v18"></path>
+              <path d="M17 7.5h4"></path>
+              <path d="M17 16.5h4"></path>
+            </svg>
+            <span class="tab-text">Vé của tôi &amp; Mã QR</span>
+            <span class="tab-arrow">&rarr;</span>
+          </a>
+        </nav>
 
-          <label for="date-of-birth">Ngày sinh</label>
-          <input
-            id="date-of-birth"
-            name="dateOfBirth"
-            type="date"
-            [(ngModel)]="editDateOfBirth"
-            [max]="maxDateOfBirth"
-            autocomplete="bday"
-          />
+        <!-- Sidebar Bottom Action -->
+        <div class="sidebar-bottom">
+          <button type="button" class="btn-logout-sidebar" (click)="logout()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Đăng xuất</span>
+          </button>
+        </div>
+      </aside>
 
-          <label for="favorite-cinema">Rạp yêu thích</label>
-          <select id="favorite-cinema" name="preferredCinemaId" [(ngModel)]="editPreferredCinemaId">
-            <option [ngValue]="null">Chưa chọn rạp</option>
-            <option *ngIf="savedCinemaOptionId as savedCinemaId" [ngValue]="savedCinemaId">
-              {{ cinemaLabel(savedCinemaId) }}
-            </option>
-            <option *ngFor="let cinema of cinemas" [ngValue]="cinema.id">{{ cinema.name }}</option>
-          </select>
-          <p *ngIf="loadingCinemas" role="status">Đang tải danh sách rạp…</p>
-          <p *ngIf="cinemaError" role="status">{{ cinemaError }}</p>
+      <!-- ==================== RIGHT CONTENT PANE ==================== -->
+      <section class="member-content">
+        <!-- Global Feedback Banners -->
+        <div *ngIf="loadingProfile" class="feedback-banner loading" role="status">
+          <span class="spinner-ring" aria-hidden="true"></span>
+          <span>Đang đồng bộ thông tin tài khoản thành viên…</span>
+        </div>
 
-          <p *ngIf="saveError" role="alert">{{ saveError }}</p>
-          <div>
-            <button type="submit" class="btn-action" [disabled]="saving || profileForm.invalid">
-              {{ saving ? 'Đang lưu…' : 'Lưu thay đổi' }}
-            </button>
-            <button type="button" (click)="cancelEdit()" [disabled]="saving">Hủy</button>
+        <div *ngIf="profileError" class="feedback-banner error" role="alert">
+          <span class="feedback-icon">⚠️</span>
+          <div class="feedback-text">
+            <strong>Không thể tải dữ liệu</strong>
+            <p>{{ profileError }}</p>
           </div>
-        </form>
-      </section>
-      </ng-container>
-    </ng-container>
+          <button type="button" class="btn-retry" (click)="loadProfile()">Tải lại</button>
+        </div>
 
-    <ng-template #unauthenticated>
-      <section class="benefits-grid unauthenticated-card" aria-labelledby="member-login-title">
-        <article class="benefit-box">
-          <h1 id="member-login-title">Đăng nhập để xem hồ sơ thành viên</h1>
-          <p>Vui lòng đăng nhập để xem và cập nhật thông tin hồ sơ của bạn.</p>
-          <a routerLink="/auth" class="btn-action">Đăng nhập</a>
-        </article>
+        <div *ngIf="saveSuccess" class="feedback-banner success" role="status">
+          <span class="feedback-icon">✓</span>
+          <div class="feedback-text">
+            <strong>Thành công!</strong>
+            <p>{{ saveSuccess }}</p>
+          </div>
+          <button type="button" class="btn-close-banner" (click)="saveSuccess = ''" aria-label="Đóng">✕</button>
+        </div>
+
+        <!-- ==================== TAB 1: PROFILE DETAILS & EDIT ==================== -->
+        <div class="tab-pane" *ngIf="activeTab === 'PROFILE'">
+          <!-- View Mode -->
+          <div *ngIf="!isEditing" class="profile-view-wrapper">
+            <div class="content-header-row">
+              <div>
+                <h2 class="pane-title">Thông tin tài khoản</h2>
+                <p class="pane-subtitle">Thông tin định danh và rạp chiếu ưa thích của bạn tại THEFILM</p>
+              </div>
+              <button type="button" class="figma-btn-primary btn-edit-profile" (click)="beginEdit()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                <span>Chỉnh sửa hồ sơ</span>
+              </button>
+            </div>
+
+            <!-- Profile Info Grid -->
+            <div class="profile-info-grid">
+              <!-- Item 1: Display Name -->
+              <article class="info-card">
+                <div class="card-icon-box navy">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <div class="card-text-block">
+                  <span class="info-label">HỌ VÀ TÊN</span>
+                  <strong class="info-value">{{ profile?.displayName || 'Chưa cập nhật họ tên' }}</strong>
+                  <span class="info-hint">Khách hàng thành viên THEFILM</span>
+                </div>
+              </article>
+
+              <!-- Item 2: Email -->
+              <article class="info-card">
+                <div class="card-icon-box blue">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </div>
+                <div class="card-text-block">
+                  <span class="info-label">ĐỊA CHỈ EMAIL</span>
+                  <strong class="info-value">{{ profile?.email || 'Chưa cập nhật email' }}</strong>
+                  <span class="verified-tag">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Đã xác thực
+                  </span>
+                </div>
+              </article>
+
+              <!-- Item 3: Date of Birth -->
+              <article class="info-card">
+                <div class="card-icon-box gold">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
+                <div class="card-text-block">
+                  <span class="info-label">NGÀY SINH</span>
+                  <strong class="info-value">
+                    {{ profile?.dateOfBirth ? (profile.dateOfBirth | date: 'dd/MM/yyyy') : 'Chưa cập nhật' }}
+                  </strong>
+                  <span class="birthday-benefit-hint">🎁 Nhận vé xem phim miễn phí tháng sinh nhật</span>
+                </div>
+              </article>
+
+              <!-- Item 4: Favorite Cinema -->
+              <article class="info-card">
+                <div class="card-icon-box red">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                </div>
+                <div class="card-text-block">
+                  <span class="info-label">RẠP CHIẾU YÊU THÍCH</span>
+                  <strong class="info-value cinema-name-highlight">{{ favoriteCinemaName }}</strong>
+                  <span class="info-hint" *ngIf="loadingCinemas">Đang tải cụm rạp…</span>
+                  <span class="info-hint" *ngIf="!loadingCinemas">Ưu tiên hiển thị lịch chiếu cụm rạp này</span>
+                </div>
+              </article>
+            </div>
+
+            <!-- Quick Cinema Perks Banner -->
+            <div class="member-perks-banner">
+              <div class="perk-item">
+                <div class="perk-bullet">⚡</div>
+                <div class="perk-detail">
+                  <strong>Đặt vé trực tuyến 24/7</strong>
+                  <p>Giữ ghế yêu thích nhanh chóng, không lo hết vé giờ cao điểm.</p>
+                </div>
+              </div>
+
+              <div class="perk-item">
+                <div class="perk-bullet">🍿</div>
+                <div class="perk-detail">
+                  <strong>Ưu đãi Bắp &amp; Nước</strong>
+                  <p>Giảm ngay 10% khi mua kèm combo bắp nước trực tiếp trên website.</p>
+                </div>
+              </div>
+
+              <div class="perk-item">
+                <div class="perk-bullet">🎟️</div>
+                <div class="perk-detail">
+                  <strong>Vé điện tử tiện lợi</strong>
+                  <p>Mã QR quét ngay tại cửa vào phòng chiếu, không cần in vé giấy.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Mode Form -->
+          <div *ngIf="isEditing" class="profile-edit-wrapper">
+            <div class="content-header-row">
+              <div>
+                <h2 class="pane-title">Chỉnh sửa thông tin hồ sơ</h2>
+                <p class="pane-subtitle">Cập nhật họ tên, ngày sinh và rạp chiếu gần bạn nhất</p>
+              </div>
+              <button type="button" class="btn-cancel-top" (click)="cancelEdit()">✕ Đóng</button>
+            </div>
+
+            <form #profileForm="ngForm" class="figma-form-card" (ngSubmit)="saveProfile()">
+              <div class="form-grid">
+                <!-- Field 1: Họ tên -->
+                <div class="form-group full-width">
+                  <label for="edit-display-name" class="form-label">
+                    HỌ VÀ TÊN <span class="required-star">*</span>
+                  </label>
+                  <input
+                    id="edit-display-name"
+                    name="displayName"
+                    type="text"
+                    class="figma-input"
+                    [(ngModel)]="editDisplayName"
+                    required
+                    maxlength="200"
+                    placeholder="Nhập họ và tên của bạn"
+                    autocomplete="name"
+                  />
+                  <span class="field-hint">Họ và tên sẽ hiển thị trên thẻ thành viên và vé xem phim điện tử.</span>
+                </div>
+
+                <!-- Field 2: Ngày sinh -->
+                <div class="form-group">
+                  <label for="edit-date-of-birth" class="form-label">NGÀY SINH</label>
+                  <input
+                    id="edit-date-of-birth"
+                    name="dateOfBirth"
+                    type="date"
+                    class="figma-input"
+                    [(ngModel)]="editDateOfBirth"
+                    [max]="maxDateOfBirth"
+                    autocomplete="bday"
+                  />
+                  <span class="field-hint">Dùng để nhận quà sinh nhật và kiểm tra độ tuổi phim phù hợp.</span>
+                </div>
+
+                <!-- Field 3: Rạp yêu thích -->
+                <div class="form-group">
+                  <label for="edit-favorite-cinema" class="form-label">RẠP CHIẾU YÊU THÍCH</label>
+                  <select
+                    id="edit-favorite-cinema"
+                    name="preferredCinemaId"
+                    class="figma-select"
+                    [(ngModel)]="editPreferredCinemaId"
+                  >
+                    <option [ngValue]="null">-- Chưa chọn rạp yêu thích --</option>
+                    <option *ngIf="savedCinemaOptionId as savedCinemaId" [ngValue]="savedCinemaId">
+                      {{ cinemaLabel(savedCinemaId) }}
+                    </option>
+                    <option *ngFor="let cinema of cinemas" [ngValue]="cinema.id">
+                      {{ cinema.name }}
+                    </option>
+                  </select>
+                  <span class="field-hint">Lịch chiếu và rạp mặc định khi bạn bắt đầu đặt vé.</span>
+                </div>
+              </div>
+
+              <!-- Form Error Alert -->
+              <div *ngIf="saveError" class="form-error-alert" role="alert">
+                <span class="alert-icon">⚠️</span>
+                <span>{{ saveError }}</span>
+              </div>
+
+              <!-- Form Buttons -->
+              <div class="form-actions-row">
+                <button
+                  type="submit"
+                  class="figma-btn-primary btn-save-submit"
+                  [disabled]="saving || profileForm.invalid"
+                >
+                  <span *ngIf="saving" class="btn-spinner" aria-hidden="true"></span>
+                  <span>{{ saving ? 'Đang lưu…' : 'Lưu thay đổi' }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="figma-btn-secondary btn-cancel-edit"
+                  (click)="cancelEdit()"
+                  [disabled]="saving"
+                >
+                  Hủy bỏ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 2: MEMBERSHIP TIERS & BENEFITS ==================== -->
+        <div class="tab-pane" *ngIf="activeTab === 'MEMBERSHIP'">
+          <div class="content-header-row">
+            <div>
+              <h2 class="pane-title">Hạng thẻ &amp; Đặc quyền thành viên</h2>
+              <p class="pane-subtitle">Tích lũy điểm thưởng qua mỗi lần đặt vé để nâng hạng và mở khóa vô vàn đặc quyền</p>
+            </div>
+          </div>
+
+          <!-- Tier Progress Box -->
+          <div class="tier-progress-card">
+            <div class="progress-top-row">
+              <div class="progress-info">
+                <span class="progress-tag">TIẾN TRÌNH NÂNG HẠNG</span>
+                <h3 class="progress-current-title">
+                  Bạn đang ở hạng <span class="gold-text">{{ currentTierName }}</span>
+                </h3>
+              </div>
+              <div class="points-badge-box">
+                <span class="badge-sub">Điểm hiện có</span>
+                <strong class="badge-num">{{ memberPoints | number }} / {{ nextTierPoints | number }} P</strong>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" [style.width.%]="tierProgressPercent"></div>
+            </div>
+
+            <div class="progress-bottom-row">
+              <span>Hạng hiện tại: <strong>{{ currentTierCode }}</strong></span>
+              <span class="next-hint" *ngIf="currentTierCode !== 'VVIP'">
+                Còn <strong>{{ (nextTierPoints - memberPoints) | number }} điểm</strong> nữa để nâng hạng <strong>{{ currentTierCode === 'STANDARD' ? 'VIP MEMBER' : 'VVIP DIAMOND' }}</strong>
+              </span>
+              <span class="next-hint" *ngIf="currentTierCode === 'VVIP'">
+                🎉 Bạn đã đạt thứ hạng cao nhất <strong>VVIP DIAMOND</strong>!
+              </span>
+            </div>
+          </div>
+
+          <!-- 3 Tiers Cards Grid -->
+          <div class="tier-cards-grid">
+            <!-- Tier 1: Standard -->
+            <article class="tier-spec-card" [class.highlight-current]="currentTierCode === 'STANDARD'">
+              <div class="current-badge-ribbon" *ngIf="currentTierCode === 'STANDARD'">HẠNG CỦA BẠN</div>
+              <div class="tier-header standard">
+                <span class="tier-name">STANDARD</span>
+                <span class="tier-points-req">0 - 499 Điểm</span>
+              </div>
+              <ul class="tier-benefits-list">
+                <li><span class="check">✓</span> Tích lũy <strong>1 điểm cho mỗi 10.000đ</strong> chi tiêu vé &amp; bắp nước</li>
+                <li><span class="check">✓</span> Đổi điểm nhận vé xem phim và voucher giảm giá</li>
+                <li><span class="check">✓</span> Nhận bản tin điện ảnh và ưu đãi sớm</li>
+              </ul>
+            </article>
+
+            <!-- Tier 2: VIP -->
+            <article class="tier-spec-card" [class.highlight-current]="currentTierCode === 'VIP'">
+              <div class="current-badge-ribbon" *ngIf="currentTierCode === 'VIP'">HẠNG CỦA BẠN</div>
+              <div class="tier-header vip">
+                <span class="tier-name">VIP MEMBER</span>
+                <span class="tier-points-req">500 - 1.499 Điểm</span>
+              </div>
+              <ul class="tier-benefits-list">
+                <li><span class="check">✓</span> Tích lũy <strong>1 điểm cho mỗi 10.000đ</strong> chi tiêu</li>
+                <li><span class="check">✓</span> <strong>Tặng 01 vé xem phim 2D</strong> vào tháng sinh nhật</li>
+                <li><span class="check">✓</span> Giảm <strong>10%</strong> toàn bộ menu Bắp &amp; Nước</li>
+                <li><span class="check">✓</span> Lối vào ưu tiên check-in tại quầy vé</li>
+              </ul>
+            </article>
+
+            <!-- Tier 3: VVIP Diamond -->
+            <article class="tier-spec-card" [class.highlight-current]="currentTierCode === 'VVIP'">
+              <div class="current-badge-ribbon" *ngIf="currentTierCode === 'VVIP'">HẠNG CỦA BẠN</div>
+              <div class="tier-header vvip">
+                <span class="tier-name">VVIP DIAMOND</span>
+                <span class="tier-points-req">1.500+ Điểm</span>
+              </div>
+              <ul class="tier-benefits-list">
+                <li><span class="check">✓</span> Tích lũy <strong>1 điểm cho mỗi 10.000đ</strong> chi tiêu</li>
+                <li><span class="check">✓</span> <strong>Tặng 04 vé xem phim 2D</strong> trong năm</li>
+                <li><span class="check">✓</span> Combo Bắp &amp; Nước VIP ngày sinh nhật</li>
+                <li><span class="check">✓</span> Miễn phụ thu khi chọn ghế Sweetbox</li>
+                <li><span class="check">✓</span> Thư mời dự lễ ra mắt phim &amp; suất chiếu sớm</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 3: VOUCHERS & COUPONS ==================== -->
+        <div class="tab-pane" *ngIf="activeTab === 'VOUCHERS'">
+          <div class="content-header-row">
+            <div>
+              <h2 class="pane-title">Kho Voucher &amp; Ưu đãi của bạn</h2>
+              <p class="pane-subtitle">Áp dụng mã giảm giá khi thanh toán tại bước Đặt vé để nhận chiết khấu tốt nhất (Dữ liệu thực từ hệ thống)</p>
+            </div>
+            <button type="button" class="figma-btn-secondary" (click)="loadVouchers()" [disabled]="loadingVouchers">
+              <span *ngIf="loadingVouchers" class="btn-spinner"></span>
+              <span>{{ loadingVouchers ? 'Đang tải…' : 'Làm mới' }}</span>
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="loadingVouchers" class="pane-loading-box">
+            <div class="figma-spinner"></div>
+            <p>Đang tải danh sách voucher ưu đãi…</p>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="voucherError && !loadingVouchers" class="pane-error-box">
+            <span class="error-emoji">⚠️</span>
+            <p>{{ voucherError }}</p>
+            <button type="button" class="figma-btn-secondary" (click)="loadVouchers()">Thử lại</button>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loadingVouchers && !voucherError && vouchers.length === 0" class="pane-empty-box">
+            <div class="empty-icon-circle">🎟️</div>
+            <h3 class="empty-title">Chưa có mã ưu đãi nào</h3>
+            <p class="empty-desc">Các mã giảm giá dành riêng cho thành viên sẽ xuất hiện tại đây khi rạp phát hành chiến dịch khuyến mãi.</p>
+          </div>
+
+          <!-- Voucher Cards List -->
+          <div class="vouchers-grid" *ngIf="!loadingVouchers && !voucherError && vouchers.length > 0">
+            <article class="tix-voucher-card" *ngFor="let v of vouchers">
+              <!-- Left Ticket Scallop Stub -->
+              <div class="voucher-stub">
+                <span class="stub-discount">{{ v.discountDisplay }}</span>
+                <span class="stub-badge">{{ v.badge }}</span>
+              </div>
+
+              <!-- Right Ticket Content -->
+              <div class="voucher-body">
+                <div class="voucher-body-header">
+                  <h3 class="voucher-title">{{ v.title }}</h3>
+                  <span class="voucher-condition">{{ v.minSpend }}</span>
+                </div>
+                <p class="voucher-desc">{{ v.description }}</p>
+
+                <div class="voucher-footer-row">
+                  <div class="expiry-block">
+                    <span class="expiry-lbl">Hạn sử dụng:</span>
+                    <strong class="expiry-val">{{ v.expiryDate }}</strong>
+                  </div>
+
+                  <div class="voucher-actions">
+                    <button
+                      type="button"
+                      class="btn-copy-code"
+                      (click)="copyVoucherCode(v.code)"
+                      [class.copied]="copiedVoucher === v.code"
+                      title="Nhấp để sao chép mã"
+                    >
+                      <span>{{ copiedVoucher === v.code ? '✓ Đã chép' : v.code }}</span>
+                    </button>
+
+                    <a routerLink="/movies" class="figma-btn-primary btn-use-voucher">
+                      Dùng ngay
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== UNAUTHENTICATED VIEW ==================== -->
+    <ng-template #unauthenticatedView>
+      <section class="unauth-hero-card" aria-labelledby="unauth-title">
+        <div class="unauth-glow"></div>
+        <div class="unauth-inner">
+          <div class="unauth-brand-badge">
+            <span class="unauth-badge-text">THEFILM MEMBER PASS</span>
+          </div>
+
+          <h2 id="unauth-title" class="unauth-title">
+            Trải nghiệm trọn vẹn đặc quyền<br />dành riêng cho thành viên THEFILM
+          </h2>
+
+          <p class="unauth-desc">
+            Đăng nhập hoặc đăng ký tài khoản để tích điểm đổi vé xem phim miễn phí, nhận quà sinh nhật và quản lý vé điện tử một cách tiện lợi.
+          </p>
+
+          <!-- 3 Feature Highlights -->
+          <div class="unauth-features-row">
+            <div class="feature-box">
+              <div class="feature-icon">🎟️</div>
+              <strong>Tích điểm 5 - 12%</strong>
+              <p>Quy đổi điểm thưởng nhận vé xem phim và combo bắp nước miễn phí.</p>
+            </div>
+
+            <div class="feature-box">
+              <div class="feature-icon">🎂</div>
+              <strong>Quà tặng sinh nhật</strong>
+              <p>Vé 2D miễn phí và ưu đãi đặc quyền trong tháng sinh nhật của bạn.</p>
+            </div>
+
+            <div class="feature-box">
+              <div class="feature-icon">⚡</div>
+              <strong>Đặt vé 1 chạm</strong>
+              <p>Lưu rạp yêu thích, thanh toán nhanh chóng và nhận mã QR vào phòng chiếu.</p>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="unauth-actions-group">
+            <a routerLink="/auth" class="figma-btn-primary btn-unauth-login">
+              <span>ĐĂNG NHẬP / ĐĂNG KÝ NGAY</span>
+            </a>
+            <a routerLink="/movies" class="figma-btn-secondary btn-unauth-explore">
+              Xem lịch chiếu phim
+            </a>
+          </div>
+        </div>
       </section>
     </ng-template>
   </div>

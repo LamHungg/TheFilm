@@ -115,6 +115,35 @@
       margin: 0;
     }
   }
+
+  .tickets-loading-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #ebf5ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    font-weight: 500;
+
+    .spinner-ring {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #bfdbfe;
+      border-top-color: #1e40af;
+      border-radius: 50%;
+      animation: spin-tickets 0.8s linear infinite;
+    }
+  }
+}
+
+@keyframes spin-tickets {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Filter Chips & Search */

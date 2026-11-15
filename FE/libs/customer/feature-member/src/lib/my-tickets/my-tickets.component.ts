@@ -1,11 +1,18 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, of } from 'rxjs';
 import { BadgeComponent } from '@the-film/shared/ui';
 import { formatVND } from '@the-film/shared/util';
-import { Order, Seat, FnbCombo, BookingService, CinemaService } from '@the-film/customer/data-access';
+import {
+  AuthService,
+  Order,
+  Seat,
+  FnbCombo,
+  BookingService,
+  CinemaService,
+} from '@the-film/customer/data-access';
 
 @Component({
   selector: 'thefilm-my-tickets',
@@ -20,18 +27,24 @@ export class MyTicketsComponent implements OnInit {
   categoryFilter: 'ALL' | 'MOVIE' | 'COMBO' = 'ALL';
   searchCode = '';
   modalOrder: Order | null = null;
+  isLoading = true;
   private posterByTitle = new Map<string, string>();
 
-  constructor(
-    private bookingService: BookingService,
-    private cinemaService: CinemaService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  readonly authService = inject(AuthService);
+  private readonly bookingService = inject(BookingService);
+  private readonly cinemaService = inject(CinemaService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
-    this.orders = this.bookingService.orders();
-    this.syncOrdersFromBackend();
+    this.syncOrders();
+    this.loadPosters();
+  }
 
+  isAuthenticated(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  private loadPosters(): void {
     this.cinemaService.getMovies().subscribe((movies) => {
       movies.forEach((m) => {
         if (m.title && m.posterUrl) {
@@ -42,17 +55,71 @@ export class MyTicketsComponent implements OnInit {
     });
   }
 
-  private syncOrdersFromBackend(): void {
-    const storedOrders = this.bookingService.orders().filter((o) => Boolean(o.orderCode));
-    if (storedOrders.length === 0) return;
-    forkJoin(
-      storedOrders.map((o) =>
-        this.bookingService.getOrder(o.orderCode).pipe(catchError(() => of(null)))
-      )
-    ).subscribe(() => {
-      this.orders = this.bookingService.orders();
+  private syncOrders(): void {
+    this.isLoading = true;
+
+    if (this.authService.isAuthenticated()) {
+      // 1. Fetch real orders strictly belonging to this account from backend!
+      this.bookingService.getMyOrders().subscribe({
+        next: (backendOrders) => {
+          this.isLoading = false;
+          this.orders = backendOrders;
+
+          // Clean up stale or non-owned orders from localStorage
+          const localStored = this.bookingService.orders();
+          const backendCodes = new Set(backendOrders.map((b) => b.orderCode));
+
+          localStored.forEach((stored) => {
+            if (!backendCodes.has(stored.orderCode)) {
+              // Verify if this local order exists and belongs to this user
+              this.bookingService.getOrder(stored.orderCode).subscribe({
+                next: (verified) => {
+                  if (verified) {
+                    this.orders = [
+                      verified,
+                      ...this.orders.filter((o) => o.orderCode !== verified.orderCode),
+                    ];
+                    this.cdr.markForCheck();
+                  }
+                },
+                error: (err: { status?: number; error?: { error?: { code?: string } } }) => {
+                  // If 404 RESOURCE_NOT_FOUND (order belongs to another account or deleted), purge it!
+                  if (err?.status === 404 || err?.error?.error?.code === 'RESOURCE_NOT_FOUND') {
+                    this.bookingService.removeOrder(stored.orderCode);
+                  }
+                },
+              });
+            }
+          });
+
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoading = false;
+          this.orders = this.bookingService.orders();
+          this.cdr.markForCheck();
+        },
+      });
+    } else {
+      // Unauthenticated mode: only show valid local orders
+      this.isLoading = false;
+      const storedOrders = this.bookingService.orders().filter((o) => Boolean(o.orderCode));
+      this.orders = storedOrders;
+
+      // Verify each stored order; remove any stale 404s
+      storedOrders.forEach((o) => {
+        this.bookingService.getOrder(o.orderCode).subscribe({
+          error: (err: { status?: number; error?: { error?: { code?: string } } }) => {
+            if (err?.status === 404 || err?.error?.error?.code === 'RESOURCE_NOT_FOUND') {
+              this.bookingService.removeOrder(o.orderCode);
+              this.orders = this.orders.filter((item) => item.orderCode !== o.orderCode);
+              this.cdr.markForCheck();
+            }
+          },
+        });
+      });
       this.cdr.markForCheck();
-    });
+    }
   }
 
   get activeOrders(): Order[] {
@@ -126,7 +193,7 @@ export class MyTicketsComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((fetched) => {
         if (fetched) {
-          this.orders = this.bookingService.orders();
+          this.orders = [fetched, ...this.orders.filter((o) => o.orderCode !== fetched.orderCode)];
           this.cdr.markForCheck();
         }
       });
@@ -137,11 +204,11 @@ export class MyTicketsComponent implements OnInit {
   }
 
   getSeatCodes(seats: Seat[]): string {
-    return seats.map((s) => s.code).join(', ');
+    return (seats || []).map((s) => s.code).join(', ');
   }
 
   getCombosText(combos: FnbCombo[]): string {
-    return combos.map((c) => `${c.name} (x${c.quantity})`).join(', ');
+    return (combos || []).map((c) => `${c.name} (x${c.quantity})`).join(', ');
   }
 
   formatMoney(amount: number): string {

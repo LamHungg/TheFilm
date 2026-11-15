@@ -85,8 +85,14 @@
         </div>
       </div>
 
+      <!-- Loading State -->
+      <div class="tickets-loading-banner" *ngIf="isLoading">
+        <span class="spinner-ring" aria-hidden="true"></span>
+        <span>Đang đồng bộ vé của bạn từ hệ thống…</span>
+      </div>
+
       <!-- Clean Figma Hairline Ticket Feed -->
-      <div class="ticket-list" *ngIf="displayedOrders.length > 0">
+      <div class="ticket-list" *ngIf="!isLoading && displayedOrders.length > 0">
         <article class="ticket-card" *ngFor="let order of displayedOrders">
           <!-- Left Visuals: Movie Poster + Crisp QR Thumbnail -->
           <div class="card-media">
@@ -139,10 +145,17 @@
       </div>
 
       <!-- Empty State -->
-      <div class="empty-state" *ngIf="displayedOrders.length === 0">
-        <h3>Chưa có vé nào phù hợp</h3>
-        <p>Bạn chưa có vé trong mục này hoặc không tìm thấy mã đặt vé khớp với tìm kiếm.</p>
-        <a routerLink="/movies" class="btn-book-movie">Khám phá phim &amp; Đặt vé ngay</a>
+      <div class="empty-state" *ngIf="!isLoading && displayedOrders.length === 0">
+        <ng-container *ngIf="!isAuthenticated(); else authedEmpty">
+          <h3>Đăng nhập để xem vé của bạn</h3>
+          <p>Vui lòng đăng nhập vào tài khoản THEFILM để quản lý vé xem phim và lịch sử giao dịch cá nhân.</p>
+          <a routerLink="/auth" class="btn-book-movie">Đăng nhập ngay</a>
+        </ng-container>
+        <ng-template #authedEmpty>
+          <h3>Chưa có vé nào phù hợp</h3>
+          <p>Bạn chưa có vé trong mục này hoặc không tìm thấy mã đặt vé khớp với tìm kiếm.</p>
+          <a routerLink="/movies" class="btn-book-movie">Khám phá phim &amp; Đặt vé ngay</a>
+        </ng-template>
       </div>
     </section>
   </div>

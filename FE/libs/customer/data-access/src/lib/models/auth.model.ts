@@ -8,6 +8,8 @@ export interface UserProfile {
   preferredLocale?: string | null;
   dateOfBirth?: string | null;
   avatarUrl?: string | null;
+  loyaltyPoints?: number | null;
+  memberTier?: string | null;
 }
 
 export interface AuthState {

@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
-import { AuthService, UserProfile } from '@the-film/customer/data-access';
+import { AuthService, UserProfile, BookingService, ApiVoucher } from '@the-film/customer/data-access';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -23,6 +23,18 @@ interface UpdateCustomerProfileRequest {
   dateOfBirth: string | null;
 }
 
+export interface MemberVoucher {
+  id: string;
+  code: string;
+  title: string;
+  discountDisplay: string;
+  description: string;
+  minSpend: string;
+  expiryDate: string;
+  category: 'TICKET' | 'FNB' | 'ALL';
+  badge: string;
+}
+
 @Component({
   selector: 'thefilm-member-profile',
   standalone: true,
@@ -30,10 +42,14 @@ interface UpdateCustomerProfileRequest {
   templateUrl: './member-profile.component.html',
   styleUrl: './member-profile.component.scss',
 })
-export class MemberProfileComponent implements OnInit {
+export class MemberProfileComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
+  private readonly bookingService = inject(BookingService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  activeTab: 'PROFILE' | 'MEMBERSHIP' | 'VOUCHERS' = 'PROFILE';
 
   profile: UserProfile | null = null;
   cinemas: CinemaOption[] = [];
@@ -50,19 +66,78 @@ export class MemberProfileComponent implements OnInit {
   editPreferredCinemaId: number | null = null;
   readonly maxDateOfBirth = this.localDateToday();
 
+  // Loyalty Points & Tiers (Real data synchronized with DB and orders)
+  memberPoints = 0;
+  nextTierPoints = 500;
+  currentTierName = 'Standard Member';
+  tierBadge = 'STANDARD';
+  currentTierCode: 'STANDARD' | 'VIP' | 'VVIP' = 'STANDARD';
+
+  // Exclusive Vouchers for Members (Loaded from Backend / DB)
+  loadingVouchers = false;
+  voucherError = '';
+  copiedVoucher = '';
+  private copyTimeout: ReturnType<typeof setTimeout> | null = null;
+  vouchers: MemberVoucher[] = [];
+
   ngOnInit(): void {
     if (!this.authService.isAuthenticated()) {
       this.loadingProfile = false;
       this.loadingCinemas = false;
+      this.loadingVouchers = false;
       return;
     }
 
     this.loadProfile();
     this.loadCinemas();
+    this.loadVouchers();
+  }
+
+  ngOnDestroy(): void {
+    if (this.copyTimeout) {
+      clearTimeout(this.copyTimeout);
+    }
   }
 
   isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
+  }
+
+  setTab(tab: 'PROFILE' | 'MEMBERSHIP' | 'VOUCHERS'): void {
+    this.activeTab = tab;
+  }
+
+  updateLoyaltyInfo(points: number, tierCode?: string | null): void {
+    this.memberPoints = points;
+    const raw = (tierCode || '').toUpperCase();
+    if (raw === 'VVIP' || points >= 1500) {
+      this.currentTierCode = 'VVIP';
+      this.currentTierName = 'VVIP Diamond';
+      this.tierBadge = 'VVIP PASS';
+      this.nextTierPoints = 2000;
+    } else if (raw === 'VIP' || points >= 500) {
+      this.currentTierCode = 'VIP';
+      this.currentTierName = 'VIP Member';
+      this.tierBadge = 'VIP PASS';
+      this.nextTierPoints = 1500;
+    } else {
+      this.currentTierCode = 'STANDARD';
+      this.currentTierName = 'Standard Member';
+      this.tierBadge = 'STANDARD';
+      this.nextTierPoints = 500;
+    }
+  }
+
+  copyVoucherCode(code: string): void {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+    }
+    this.copiedVoucher = code;
+    if (this.copyTimeout) clearTimeout(this.copyTimeout);
+    this.copyTimeout = setTimeout(() => {
+      this.copiedVoucher = '';
+      this.cdr.markForCheck();
+    }, 2500);
   }
 
   get favoriteCinemaName(): string {
@@ -75,6 +150,15 @@ export class MemberProfileComponent implements OnInit {
     const savedCinemaId = this.profile?.preferredCinemaId;
     if (savedCinemaId == null || this.cinemas.some((cinema) => cinema.id === savedCinemaId)) return null;
     return savedCinemaId;
+  }
+
+  get tierProgressPercent(): number {
+    if (this.currentTierCode === 'VVIP') return 100;
+    if (this.currentTierCode === 'VIP') {
+      const progress = (this.memberPoints - 500) / (this.nextTierPoints - 500);
+      return Math.max(0, Math.min(100, Math.round(progress * 100)));
+    }
+    return Math.max(0, Math.min(100, Math.round((this.memberPoints / this.nextTierPoints) * 100)));
   }
 
   loadProfile(): void {
@@ -91,6 +175,33 @@ export class MemberProfileComponent implements OnInit {
       next: (profile) => {
         this.profile = profile;
         this.loadingProfile = false;
+        let pts = profile?.loyaltyPoints ?? 0;
+        this.updateLoyaltyInfo(pts, profile?.memberTier);
+
+        // Compute and sync from user's actual orders (1 point per 10,000 VND spent)
+        this.bookingService.getMyOrders().subscribe({
+          next: (orders) => {
+            const paidSpent = (orders || [])
+              .filter(
+                (o) =>
+                  o.status === 'CONFIRMED' ||
+                  o.status === 'ISSUED' ||
+                  (o.status as string) === 'PAID' ||
+                  o.status === 'PENDING_PAYMENT'
+              )
+              .reduce((sum, o) => sum + (o.finalTotal || 0), 0);
+            const orderPts = Math.floor(paidSpent / 10000);
+            if (orderPts > pts) {
+              pts = orderPts;
+              this.updateLoyaltyInfo(pts);
+            }
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            // Already using profile points
+          },
+        });
+
         if (this.isEditing) this.beginEdit();
         this.cdr.markForCheck();
       },
@@ -100,6 +211,67 @@ export class MemberProfileComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  loadVouchers(): void {
+    this.loadingVouchers = true;
+    this.voucherError = '';
+    this.bookingService.getVouchers().subscribe({
+      next: (apiVouchers) => {
+        this.loadingVouchers = false;
+        this.vouchers = (apiVouchers || []).map((v) => {
+          const isPercent = v.discountType === 'PERCENT';
+          const discountDisplay = isPercent
+            ? `-${v.discountValue}%`
+            : `-${this.formatCurrency(v.discountValue)}`;
+
+          const description = isPercent
+            ? `Giảm ${v.discountValue}% giá trị đơn hàng${v.maxDiscount ? ` (tối đa ${this.formatCurrency(v.maxDiscount)})` : ''}.`
+            : `Giảm trực tiếp ${this.formatCurrency(v.discountValue)} khi đặt vé xem phim hoặc bắp nước.`;
+
+          const minSpend = v.maxDiscount
+            ? `Tối đa ${this.formatCurrency(v.maxDiscount)}`
+            : 'Không giới hạn';
+
+          const expiryDate = v.validTo ? this.formatDate(v.validTo) : 'Không thời hạn';
+          const badge = isPercent ? 'ƯU ĐÃI PHẦN TRĂM' : 'VOUCHER GIẢM TIỀN';
+
+          return {
+            id: String(v.voucherId),
+            code: v.voucherCode,
+            title: v.campaignName,
+            discountDisplay,
+            description,
+            minSpend,
+            expiryDate,
+            category: 'ALL',
+            badge,
+          };
+        });
+        this.cdr.markForCheck();
+      },
+      error: (err: unknown) => {
+        this.loadingVouchers = false;
+        this.voucherError = this.friendlyError(err, 'Chưa thể tải danh sách voucher.');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private formatCurrency(value: number): string {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  }
+
+  private formatDate(dateStr: string): string {
+    try {
+      const d = new Date(dateStr);
+      const day = ('0' + d.getDate()).slice(-2);
+      const month = ('0' + (d.getMonth() + 1)).slice(-2);
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateStr;
+    }
   }
 
   loadCinemas(): void {
@@ -173,7 +345,7 @@ export class MemberProfileComponent implements OnInit {
         this.profile = profile;
         this.saving = false;
         this.isEditing = false;
-        this.saveSuccess = 'Hồ sơ của bạn đã được cập nhật.';
+        this.saveSuccess = 'Hồ sơ thành viên của bạn đã được cập nhật thành công.';
         this.cdr.markForCheck();
       },
       error: (error: unknown) => {
@@ -182,6 +354,14 @@ export class MemberProfileComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.profile = null;
+    this.isEditing = false;
+    this.activeTab = 'PROFILE';
+    this.cdr.markForCheck();
   }
 
   cinemaLabel(cinemaId: number): string {

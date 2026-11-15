@@ -67,8 +67,18 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   private seatPollTimer: ReturnType<typeof setInterval> | null = null;
   private seatRequestVersion = 0;
   private seatLoadInFlight = false;
-  private pendingOrder: Order | null = null;
+  pendingOrder: Order | null = null;
+  showQrPaymentModal = false;
+  isConfirmingPayment = false;
+  copiedField = '';
+  private copyTimer: ReturnType<typeof setTimeout> | null = null;
   private holdTimer: ReturnType<typeof setInterval> | null = null;
+  private paymentPollTimer: ReturnType<typeof setInterval> | null = null;
+
+  readonly bankName = 'MBBank - Ngân hàng TMCP Quân Đội';
+  readonly bankCode = 'MB';
+  readonly bankAccountNo = '0567846199999';
+  readonly bankAccountName = 'DANG LAM HUNG';
 
   constructor(
     private route: ActivatedRoute,
@@ -100,6 +110,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopHoldCountdown();
+    this.stopPaymentPolling();
     if (this.seatPollTimer) clearInterval(this.seatPollTimer);
     if (this.step < 4) this.bookingService.stopHoldTimer();
   }
@@ -295,14 +306,46 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   prevStep(): void {
-    if (this.pendingOrder) { this.paymentMessage = 'Đơn đã được tạo. Vui lòng hoàn tất thanh toán giả lập hoặc chờ đơn hết hạn.'; return; }
+    if (this.showQrPaymentModal) {
+      this.showQrPaymentModal = false;
+      return;
+    }
     if (this.step > 1) {
       this.step--;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
-  submitPayment(): void {
+  get vietQrUrl(): string {
+    if (!this.pendingOrder) return '';
+    const amount = this.pendingOrder.finalTotal || this.grandTotal;
+    const memo = this.pendingOrder.orderCode;
+    return `https://img.vietqr.io/image/MB-0567846199999-qr_only.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=DANG%20LAM%20HUNG`;
+  }
+
+  onQrImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (this.pendingOrder && !img.src.includes('api.qrserver.com')) {
+      const amount = this.pendingOrder.finalTotal || this.grandTotal;
+      const memo = this.pendingOrder.orderCode;
+      const fallbackData = `2|99|0567846199999|DANG LAM HUNG||0|0|${amount}|${memo}|transfer_p2p`;
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fallbackData)}`;
+    }
+  }
+
+  copyPaymentField(text: string, field: string): void {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+    this.copiedField = field;
+    if (this.copyTimer) clearTimeout(this.copyTimer);
+    this.copyTimer = setTimeout(() => {
+      this.copiedField = '';
+      this.changeDetector.markForCheck();
+    }, 2500);
+  }
+
+  proceedToPayment(): void {
     if (!this.buyer.fullName.trim() || !this.buyer.phone.trim() || !this.buyer.email.trim()
       || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.buyer.email.trim())
       || (this.buyer.needInvoice && (!this.buyer.companyName?.trim() || !this.buyer.taxCode?.trim() || !this.buyer.companyAddress?.trim()))) {
@@ -339,32 +382,119 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
         unitPrice: combo.price,
       })).filter((item) => Number.isFinite(item.productId)),
     };
-    (this.pendingOrder ? of(this.pendingOrder) : this.bookingService.createOrder(payload)).pipe(
-      switchMap((order) => { this.pendingOrder = order; return of(order); }),
-      switchMap((order) => this.bookingService.payOrder(order.orderCode, this.selectedPaymentMethod).pipe(
-        switchMap((payment) => {
-          if (!['SUCCEEDED', 'SUCCESS'].includes(payment.paymentStatus.toUpperCase())) {
-            this.paymentMessage = 'Thanh toán chưa thành công. Vui lòng thử lại.';
-            return of(order);
-          }
-          return this.bookingService.getOrder(order.orderCode).pipe(switchMap((updated) => of(updated || order)));
-        })
-      )),
-      catchError((err) => {
+
+    const orderReq$ = this.pendingOrder ? of(this.pendingOrder) : this.bookingService.createOrder(payload);
+
+    orderReq$.pipe(
+      finalize(() => {
+        this.isProcessingPayment = false;
+        this.changeDetector.markForCheck();
+      })
+    ).subscribe({
+      next: (order) => {
+        this.pendingOrder = order;
+        this.showQrPaymentModal = true;
+        this.startPaymentPolling();
+        this.changeDetector.markForCheck();
+      },
+      error: (err) => {
         this.paymentMessage =
           err?.error?.error?.message ||
           err?.error?.message ||
-          'Không thể hoàn tất thanh toán. Vui lòng kiểm tra kết nối và thử lại.';
-        return of(null);
-      }),
-      finalize(() => { this.isProcessingPayment = false; this.changeDetector.markForCheck(); })
-    ).subscribe((order) => {
-      if (!order || this.paymentMessage) return;
-      this.confirmedOrder = order;
-      this.stopHoldCountdown();
-      this.step = 4;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+          'Không thể khởi tạo đơn hàng. Vui lòng kiểm tra kết nối và thử lại.';
+      }
     });
+  }
+
+  submitPayment(): void {
+    this.proceedToPayment();
+  }
+
+  startPaymentPolling(): void {
+    this.stopPaymentPolling();
+    this.paymentPollTimer = setInterval(() => {
+      if (!this.pendingOrder || !this.showQrPaymentModal) {
+        this.stopPaymentPolling();
+        return;
+      }
+      this.bookingService.getOrder(this.pendingOrder.orderCode).subscribe({
+        next: (order) => {
+          if (order && (order.status === 'ISSUED' || (order.status as string) === 'PAID')) {
+            this.handlePaymentSuccessful(order);
+          }
+        },
+        error: () => {
+          // ignore transient poll error
+        }
+      });
+    }, 2500);
+  }
+
+  stopPaymentPolling(): void {
+    if (this.paymentPollTimer) {
+      clearInterval(this.paymentPollTimer);
+      this.paymentPollTimer = null;
+    }
+  }
+
+  private handlePaymentSuccessful(order: Order): void {
+    this.stopPaymentPolling();
+    this.confirmedOrder = order;
+    this.showQrPaymentModal = false;
+    this.pendingOrder = null;
+    this.stopHoldCountdown();
+    this.step = 4;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.changeDetector.markForCheck();
+  }
+
+  confirmQrPayment(): void {
+    if (!this.pendingOrder) return;
+    this.isConfirmingPayment = true;
+    this.paymentMessage = '';
+    this.bookingService.getOrder(this.pendingOrder.orderCode).pipe(
+      finalize(() => {
+        this.isConfirmingPayment = false;
+        this.changeDetector.markForCheck();
+      })
+    ).subscribe({
+      next: (order) => {
+        if (order && (order.status === 'ISSUED' || (order.status as string) === 'PAID')) {
+          this.handlePaymentSuccessful(order);
+        } else {
+          this.paymentMessage = 'Hệ thống chưa nhận được tiền từ ngân hàng cho đơn ' + this.pendingOrder!.orderCode + '. Nếu bạn vừa chuyển khoản, vui lòng đợi 5-10 giây để ngân hàng gửi tín hiệu Webhook.';
+        }
+      },
+      error: () => {
+        this.paymentMessage = 'Chưa kiểm tra được thanh toán. Vui lòng thử lại sau giây lát.';
+      }
+    });
+  }
+
+  simulateTransfer(): void {
+    if (!this.pendingOrder) return;
+    this.isConfirmingPayment = true;
+    this.paymentMessage = 'Đang kích hoạt giả lập nhận tiền Webhook...';
+    this.bookingService.simulateWebhookPayment(this.pendingOrder.orderCode).pipe(
+      finalize(() => {
+        this.isConfirmingPayment = false;
+        this.changeDetector.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.bookingService.getOrder(this.pendingOrder!.orderCode).subscribe((ord) => {
+          if (ord) this.handlePaymentSuccessful(ord);
+        });
+      },
+      error: (err) => {
+        this.paymentMessage = 'Lỗi giả lập: ' + (err?.error?.message || err?.message || 'Không thành công');
+      }
+    });
+  }
+
+  closeQrModal(): void {
+    this.stopPaymentPolling();
+    this.showQrPaymentModal = false;
   }
 
   paymentMessage = '';
@@ -450,7 +580,12 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       ? { ...seat, seatStatus: 'AVAILABLE', status: 'AVAILABLE', holdExpiresAt: null }
       : seat));
     this.holdExpiresAt = null;
-    this.showHoldExpired = true;
+    if (this.pendingOrder && this.showQrPaymentModal) {
+      this.paymentMessage = 'Thời gian giữ ghế đã hết. Nếu bạn đã chuyển khoản, đừng chuyển lần nữa; hệ thống vẫn đang kiểm tra mã đơn ' + this.pendingOrder.orderCode + '.';
+      this.showHoldExpired = false;
+    } else {
+      this.showHoldExpired = true;
+    }
     this.loadSeats();
   }
 

@@ -282,9 +282,9 @@
               <div class="payment-head">
                 <div>
                   <h3>Phương thức thanh toán</h3>
-                  <p>Thanh toán thử nghiệm · Không thu tiền thật</p>
+                  <p>Hỗ trợ thanh toán bảo mật qua VietQR, VNPAY, Ví điện tử và Thẻ ngân hàng</p>
                 </div>
-                <button type="button" class="link-see-all" (click)="showPaymentModal = true">Xem bảng chọn nhanh</button>
+                <button type="button" class="link-see-all" (click)="showPaymentModal = true">Xem tất cả</button>
               </div>
 
               <div class="methods-list">
@@ -446,9 +446,9 @@
               class="btn-confirm-pay btn-primary-navy full-cta"
               *ngIf="step === 3"
               [disabled]="isProcessingPayment || holdSeconds <= 0"
-              (click)="submitPayment()"
+              (click)="proceedToPayment()"
             >
-              {{ isProcessingPayment ? 'ĐANG XỬ LÝ THANH TOÁN...' : 'XÁC NHẬN & THANH TOÁN ' + formatMoney(grandTotal) }}
+              {{ isProcessingPayment ? 'ĐANG TẠO ĐƠN HÀNG...' : 'XÁC NHẬN & QUÉT MÃ QR (' + formatMoney(grandTotal) + ')' }}
             </button>
           </div>
         </aside>
@@ -618,5 +618,116 @@
       <p>Ghế đã được làm mới. Vui lòng chọn lại chỗ ngồi để tiếp tục đặt vé.</p>
       <button type="button" class="btn-primary-navy" (click)="showHoldExpired = false; step = 1">Chọn lại ghế</button>
     </section>
+  </div>
+
+  <!-- ==================== REAL PAYMENT QR MODAL (VIETQR / VNPAY-QR) ==================== -->
+  <div class="figma-modal-backdrop qr-payment-backdrop" *ngIf="showQrPaymentModal && pendingOrder" (click)="closeQrModal()" role="presentation">
+    <div class="figma-payment-modal qr-payment-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+      <div class="modal-head">
+        <div>
+          <span class="qr-modal-eyebrow">VIETQR NỘI ĐỊA 24/7 · VNPAY-QR</span>
+          <h3 id="qr-modal-title">Quét mã QR thanh toán vé</h3>
+        </div>
+        <button type="button" class="close-btn" (click)="closeQrModal()" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="qr-payment-content">
+        <!-- Left: QR Code Box -->
+        <div class="qr-card-box">
+          <div class="qr-canvas-frame">
+            <img [src]="vietQrUrl" (error)="onQrImageError($event)" alt="Mã VietQR thanh toán" class="vietqr-img" />
+          </div>
+          <div class="qr-scan-guide">
+            <span class="guide-icon">📱</span>
+            <span>Mở app ngân hàng bất kỳ hoặc ví MoMo / VNPAY để quét mã</span>
+          </div>
+        </div>
+
+        <!-- Right: Transfer Details -->
+        <div class="transfer-specs-box">
+          <div class="bank-brand-row">
+            <span class="bank-logo-chip">MB</span>
+            <div class="bank-meta">
+              <strong>{{ bankName }}</strong>
+              <span>Chủ tài khoản: <strong>{{ bankAccountName }}</strong></span>
+            </div>
+          </div>
+
+          <div class="spec-field-card">
+            <div class="field-info">
+              <span class="field-lbl">Số tài khoản</span>
+              <strong class="field-val">{{ bankAccountNo }}</strong>
+            </div>
+            <button type="button" class="btn-copy-chip" (click)="copyPaymentField(bankAccountNo, 'acc')">
+              {{ copiedField === 'acc' ? '✓ Đã chép' : 'Sao chép' }}
+            </button>
+          </div>
+
+          <div class="spec-field-card highlight-amount">
+            <div class="field-info">
+              <span class="field-lbl">Số tiền thanh toán</span>
+              <strong class="field-val amount">{{ formatMoney(pendingOrder.finalTotal) }}</strong>
+            </div>
+            <button type="button" class="btn-copy-chip" (click)="copyPaymentField(pendingOrder.finalTotal.toString(), 'amount')">
+              {{ copiedField === 'amount' ? '✓ Đã chép' : 'Sao chép' }}
+            </button>
+          </div>
+
+          <div class="spec-field-card highlight-memo">
+            <div class="field-info">
+              <span class="field-lbl">Nội dung chuyển khoản (Bắt buộc)</span>
+              <strong class="field-val memo">{{ pendingOrder.orderCode }}</strong>
+            </div>
+            <button type="button" class="btn-copy-chip" (click)="copyPaymentField(pendingOrder.orderCode, 'memo')">
+              {{ copiedField === 'memo' ? '✓ Đã chép' : 'Sao chép' }}
+            </button>
+          </div>
+
+          <div class="memo-notice-alert">
+            <span class="alert-dot">⚠️</span>
+            <span *ngIf="holdSecondsRemaining > 0">Vui lòng giữ nguyên <strong>{{ pendingOrder.orderCode }}</strong> trong nội dung chuyển tiền để hệ thống tự động xác thực và xuất vé ngay.</span>
+            <span *ngIf="holdSecondsRemaining === 0">Thời gian giữ ghế đã hết. Nếu bạn đã chuyển tiền, đừng chuyển lần nữa; giữ lại mã đơn <strong>{{ pendingOrder.orderCode }}</strong> để hệ thống đối soát.</span>
+          </div>
+
+          <div class="webhook-live-status">
+            <span class="live-pulse-dot"></span>
+            <span>{{ holdSecondsRemaining > 0 ? 'Đang tự động lắng nghe giao dịch từ App MBBank...' : 'Đang tiếp tục kiểm tra trạng thái đơn hàng...' }}</span>
+          </div>
+
+          <div class="hold-time-status">
+            <span>Thời gian giữ vé còn lại:</span>
+            <strong class="time-left">{{ formattedCountdown }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <p class="modal-err-msg" *ngIf="paymentMessage">{{ paymentMessage }}</p>
+
+      <div class="modal-footer-actions">
+        <button
+          type="button"
+          class="btn-primary-navy btn-confirm-transferred"
+          [disabled]="isConfirmingPayment"
+          (click)="confirmQrPayment()"
+        >
+          <span *ngIf="isConfirmingPayment" class="btn-spinner"></span>
+          <span>{{ isConfirmingPayment ? 'ĐANG KIỂM TRA GIAO DỊCH...' : '🔍 KIỂM TRA TRẠNG THÁI THANH TOÁN' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn-simulate-test"
+          [disabled]="isConfirmingPayment"
+          (click)="simulateTransfer()"
+          title="Dành cho demo: Kích hoạt webhook giả lập tiền đã vào tài khoản MB"
+        >
+          ⚡ Giả lập nhận tiền (Demo)
+        </button>
+
+        <button type="button" class="btn-outline-cancel" (click)="closeQrModal()" [disabled]="isConfirmingPayment">
+          Đóng lại
+        </button>
+      </div>
+    </div>
   </div>
 </div>
