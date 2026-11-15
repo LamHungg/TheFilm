@@ -1,5 +1,6 @@
 package vn.thefilm.backend.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
@@ -19,4 +20,5 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrderEntity, Lo
     @Query("SELECT o FROM SalesOrderEntity o WHERE o.orderNumber = :orderNumber")
     Optional<SalesOrderEntity> findByOrderNumberForUpdate(@Param("orderNumber") String orderNumber);
     Optional<SalesOrderEntity> findBySalesChannelAndIdempotencyKey(SalesChannel salesChannel, String idempotencyKey);
+    List<SalesOrderEntity> findByAppUserIdOrderByCreatedAtDesc(Long appUserId);
 }

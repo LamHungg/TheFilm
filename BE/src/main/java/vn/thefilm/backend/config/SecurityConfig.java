@@ -119,6 +119,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         .requestMatchers("/api/v1/admin/**").authenticated()
                         .anyRequest().permitAll())
+                .addFilterBefore(new DevAdminAuthFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(mockAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(userAccountStatusFilter, MockCustomerAuthenticationFilter.class)
                 .build();

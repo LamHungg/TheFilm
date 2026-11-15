@@ -40,7 +40,7 @@ class DevAdminAuthFilter extends OncePerRequestFilter {
                     .expiresAt(Instant.now().plusSeconds(3600))
                     .build();
             TheFilmUserPrincipal principal = new TheFilmUserPrincipal("dev-admin", "http://localhost:8080/dev",
-                    "admin@thefilm.local", "dev-admin", "Dev Admin", null);
+                    "admin@thefilm.local", "dev-admin", "Dev Admin", 2L);
             JwtAuthenticationToken authentication = new JwtAuthenticationToken(jwt,
                     List.of(new SimpleGrantedAuthority("ROLE_CHAIN_ADMIN")), "dev-admin") {
                 @Override
