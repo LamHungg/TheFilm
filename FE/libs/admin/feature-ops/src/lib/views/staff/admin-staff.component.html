@@ -1,0 +1,175 @@
+<div class="staff-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; NHÂN SỰ</div>
+      <h1 class="page-title">Nhân sự, ca làm và phân quyền</h1>
+      <p class="page-desc">
+        Dữ liệu nhân sự chi nhánh · Lưu lịch sử chấm công, phân ca và tính lương.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Thêm nhân viên mới</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Middle Layout -->
+  <div class="ops-middle-layout">
+    <!-- Staff Table -->
+    <div class="table-card">
+      <div class="table-header-title">
+        <span>DANH SÁCH NHÂN SỰ ({{ staffList.length }})</span>
+        @if (loading) {
+          <span class="loading-tag">Đang tải...</span>
+        }
+      </div>
+
+      <div class="card-inner-table">
+        <div class="table-header-row">
+          <div class="col-head col-id">MÃ NV</div>
+          <div class="col-head col-name">HỌ TÊN</div>
+          <div class="col-head col-phone">ĐIỆN THOẠI</div>
+          <div class="col-head col-email">EMAIL</div>
+          <div class="col-head col-status">TRẠNG THÁI</div>
+        </div>
+
+        <div class="table-body">
+          @if (!loading && staffList.length === 0) {
+            <div class="empty-cell">Chưa có nhân viên nào trong danh sách.</div>
+          }
+          @for (s of staffList; track s.employeeId) {
+            <div
+              class="table-data-row"
+              [class.selected]="selectedStaff?.employeeId === s.employeeId"
+              (click)="selectStaff(s)"
+            >
+              <div class="col-cell col-id font-bold text-red">{{ s.employeeCode }}</div>
+              <div class="col-cell col-name font-medium">{{ s.fullName }}</div>
+              <div class="col-cell col-phone">{{ s.phone || 'Chưa cập nhật' }}</div>
+              <div class="col-cell col-email text-muted">{{ s.email || '—' }}</div>
+              <div class="col-cell col-status" [class.text-green]="s.status === 'ACTIVE'">
+                {{ s.status === 'ACTIVE' ? 'Đang làm việc' : s.status }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff Detail Panel -->
+    <div class="detail-card">
+      @if (selectedStaff) {
+        <div class="detail-top">
+          <div class="avatar-lg">{{ getInitials(selectedStaff.fullName) }}</div>
+          <div class="staff-title-box">
+            <h2 class="staff-name">{{ selectedStaff.fullName }}</h2>
+            <span class="staff-role">{{ selectedStaff.employeeCode }} · Chuỗi ID: {{ selectedStaff.chainId }}</span>
+          </div>
+        </div>
+
+        <div class="badge-active-pill" [class.inactive]="selectedStaff.status !== 'ACTIVE'">
+          {{ selectedStaff.status === 'ACTIVE' ? 'ĐANG LÀM VIỆC' : selectedStaff.status }}
+        </div>
+
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Mã số nhân viên</span>
+            <span class="info-val font-bold text-red">{{ selectedStaff.employeeCode }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Số điện thoại</span>
+            <span class="info-val">{{ selectedStaff.phone || 'Chưa cập nhật' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Email cơ quan</span>
+            <span class="info-val">{{ selectedStaff.email || 'Chưa có' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Ngày vào làm việc</span>
+            <span class="info-val">{{ selectedStaff.hiredOn ? (selectedStaff.hiredOn | date:'dd/MM/yyyy') : 'Chính thức' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Tài khoản User ID</span>
+            <span class="info-val">{{ selectedStaff.appUserId ? ('User #' + selectedStaff.appUserId) : 'Chưa liên kết tài khoản' }}</span>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-cell">Chọn nhân viên từ bảng để xem hồ sơ chi tiết.</div>
+      }
+    </div>
+  </div>
+
+  <!-- MODAL: Thêm Nhân Viên Mới -->
+  @if (isModalOpen) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm hồ sơ nhân viên mới</h2>
+            <p class="modal-subtitle">Tạo hồ sơ nhân sự mới trong chuỗi điện ảnh TheFilm</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
+        </div>
+
+        @if (saveError) {
+          <div class="alert-box error">{{ saveError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateStaff()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Mã nhân viên (*)</label>
+              <input type="text" [(ngModel)]="newStaff.employeeCode" name="employeeCode" class="form-input" placeholder="VD: NV-005" required />
+            </div>
+
+            <div class="form-group">
+              <label>Họ và tên (*)</label>
+              <input type="text" [(ngModel)]="newStaff.fullName" name="fullName" class="form-input" placeholder="VD: Phạm Nhật Huy" required />
+            </div>
+
+            <div class="form-group">
+              <label>Số điện thoại (*)</label>
+              <input type="text" [(ngModel)]="newStaff.phone" name="phone" class="form-input" placeholder="VD: 0912 345 678" required />
+            </div>
+
+            <div class="form-group">
+              <label>Email cơ quan</label>
+              <input type="email" [(ngModel)]="newStaff.email" name="email" class="form-input" placeholder="VD: huy.pn@thefilm.vn" />
+            </div>
+
+            <div class="form-group">
+              <label>Ngày sinh</label>
+              <input type="date" [(ngModel)]="newStaff.dateOfBirth" name="dateOfBirth" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label>Ngày nhận việc</label>
+              <input type="date" [(ngModel)]="newStaff.hiredOn" name="hiredOn" class="form-input" />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isSaving">
+              {{ isSaving ? 'Đang lưu...' : 'Xác nhận thêm nhân viên' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
