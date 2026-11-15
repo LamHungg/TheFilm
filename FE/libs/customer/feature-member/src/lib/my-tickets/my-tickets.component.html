@@ -1,119 +1,219 @@
 <div class="my-tickets-page">
-  <div class="page-container">
-    <div class="page-header">
-      <span class="subtitle">VÍ VÉ & LỊCH SỬ ĐẶT VÉ (CUS-F14 · CUS-F15)</span>
-      <h1 class="page-title">Vé Của Tôi</h1>
-      <p class="page-desc">Xuất trình mã QR tại rạp để in vé cứng hoặc quét trực tiếp tại cửa soát vé vào phòng chiếu</p>
-    </div>
+  <div class="figma-split-layout">
+    <!-- Left Figma Grey Sidebar (#F5F5F5, 300px) -->
+    <aside class="tickets-sidebar">
+      <div class="ticket-tabs">
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab === 'ACTIVE'"
+          (click)="activeTab = 'ACTIVE'"
+        >
+          <img src="/images/figma/ticket-outline.svg" alt="" class="tab-icon" width="22" height="22" />
+          <span>Vé còn hiệu lực ({{ activeOrders.length }})</span>
+        </button>
 
-    <!-- Quick Search By Booking Code -->
-    <div class="search-ticket-box">
-      <div class="search-input-group">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input
-          type="text"
-          [(ngModel)]="searchCode"
-          placeholder="Nhập mã đặt vé hoặc mã đơn hàng (VD: TFM-842-990)..."
-        />
-        <button class="btn-search" (click)="searchTicket()">Tra cứu vé</button>
+        <div class="tab-divider"></div>
+
+        <button
+          type="button"
+          class="tab-btn"
+          [class.active]="activeTab === 'HISTORY'"
+          (click)="activeTab = 'HISTORY'"
+        >
+          <img src="/images/figma/transaction-icon.svg" alt="" class="tab-icon" width="22" height="22" />
+          <span>Lịch sử giao dịch ({{ historyOrders.length }})</span>
+        </button>
       </div>
-    </div>
+    </aside>
 
-    <!-- Filter Tabs (Sắp xem vs Đã xem/Hủy) -->
-    <div class="ticket-tabs">
-      <button class="tab-btn" [class.active]="activeTab === 'ACTIVE'" (click)="activeTab = 'ACTIVE'">
-        VÉ SẮP CHIẾU ({{ activeOrders.length }})
-      </button>
-      <button class="tab-btn" [class.active]="activeTab === 'HISTORY'" (click)="activeTab = 'HISTORY'">
-        LỊCH SỬ ĐÃ XEM / ĐÃ HỦY ({{ historyOrders.length }})
-      </button>
-    </div>
+    <!-- Right White Content Pane -->
+    <section class="tickets-content">
+      <div class="page-header">
+        <h1 class="page-title">Vé Của Tôi</h1>
+        <p class="page-desc">
+          {{
+            activeTab === 'ACTIVE'
+              ? 'Danh sách vé xem phim sẵn sàng sử dụng tại rạp'
+              : 'Lịch sử toàn bộ giao dịch và các vé đã sử dụng'
+          }}
+        </p>
+      </div>
 
-    <!-- Tickets List -->
-    <div class="ticket-list" *ngIf="displayedOrders.length > 0">
-      <div class="ticket-card" *ngFor="let order of displayedOrders">
-        <!-- Card Left: QR Code & Booking Code -->
-        <div class="card-qr">
-          <img [src]="order.qrCodeUrl" [alt]="order.bookingCode" class="qr-code-img" />
-          <div class="code-box">
-            <span class="label">MÃ ĐẶT VÉ</span>
-            <span class="code">{{ order.bookingCode }}</span>
-          </div>
+      <!-- Figma Category Filter Chips + Search Bar -->
+      <div class="toolbar-row">
+        <div class="category-chips">
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="categoryFilter === 'ALL'"
+            (click)="categoryFilter = 'ALL'"
+          >
+            Tất cả
+          </button>
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="categoryFilter === 'MOVIE'"
+            (click)="categoryFilter = 'MOVIE'"
+          >
+            Phim
+          </button>
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="categoryFilter === 'COMBO'"
+            (click)="categoryFilter = 'COMBO'"
+          >
+            Có Bắp &amp; Nước
+          </button>
         </div>
 
-        <!-- Card Right: Information Details -->
-        <div class="card-content">
-          <div class="card-status-row">
-            <div class="movie-header">
-              <thefilm-badge [type]="order.movieRating" variant="solid">{{ order.movieRating }}</thefilm-badge>
+        <div class="search-ticket-box">
+          <div class="search-input-group">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchCode"
+              placeholder="Tìm mã đặt vé hoặc tên phim..."
+            />
+            <button type="button" class="btn-search" (click)="searchTicket()">Tra cứu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clean Figma Hairline Ticket Feed -->
+      <div class="ticket-list" *ngIf="displayedOrders.length > 0">
+        <article class="ticket-card" *ngFor="let order of displayedOrders">
+          <!-- Left Visuals: Movie Poster + Crisp QR Thumbnail -->
+          <div class="card-media">
+            <div class="poster-box" *ngIf="getPosterUrl(order); else posterFallback">
+              <img [src]="getPosterUrl(order)" [alt]="order.movieTitle" class="ticket-poster" />
+            </div>
+            <ng-template #posterFallback>
+              <div class="poster-placeholder">
+                <span>THEFILM</span>
+                <strong>{{ order.format }}</strong>
+              </div>
+            </ng-template>
+
+            <div class="qr-mini-frame">
+              <img [src]="getQrCodeUrl(order)" [alt]="order.bookingCode" class="qr-code-img" />
+              <span class="mini-code">{{ order.bookingCode }}</span>
+            </div>
+          </div>
+
+          <!-- Center Info (Figma Style) -->
+          <div class="card-info">
+            <div class="title-line">
               <h3>{{ order.movieTitle }}</h3>
+              <thefilm-badge [type]="order.movieRating" variant="solid">{{ order.movieRating }}</thefilm-badge>
             </div>
-            <span class="status-badge" [class.confirmed]="order.status === 'CONFIRMED'">
-              {{ order.status === 'CONFIRMED' ? 'ĐÃ XÁC NHẬN / SẴN SÀNG' : 'ĐÃ SỬ DỤNG' }}
+
+            <p class="datetime-line">{{ order.showTime }} · {{ order.showDate }}</p>
+
+            <div class="location-line">
+              <img src="/images/figma/location-pin.svg" alt="" width="18" height="18" />
+              <span class="cinema-name">{{ order.cinemaName }}</span>
+              <span class="room-tag">({{ order.roomName }} · {{ order.format }})</span>
+            </div>
+
+            <div class="meta-pills">
+              <span>Ghế: <strong>{{ getSeatCodes(order.seats) }}</strong></span>
+              <span *ngIf="order.combos.length > 0">Bắp nước: <strong>{{ getCombosText(order.combos) }}</strong></span>
+              <span>Tổng tiền: <strong class="price">{{ formatMoney(order.finalTotal) }}</strong></span>
+            </div>
+          </div>
+
+          <!-- Right Status Badge + Detail Modal Button -->
+          <div class="card-actions">
+            <span class="status-badge" [class.confirmed]="isActiveOrder(order)">
+              {{ getStatusLabel(order) }}
             </span>
+            <button type="button" class="btn-qr-modal" (click)="openQrModal(order)">Xem vé &amp; QR</button>
           </div>
-
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="label">Rạp chiếu:</span>
-              <span class="val">{{ order.cinemaName }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Phòng & Định dạng:</span>
-              <span class="val">{{ order.roomName }} ({{ order.format }})</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Thời gian:</span>
-              <span class="val highlight">{{ order.showTime }} · {{ order.showDate }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Số ghế:</span>
-              <span class="val seats">{{ getSeatCodes(order.seats) }}</span>
-            </div>
-            <div class="detail-item" *ngIf="order.combos.length > 0">
-              <span class="label">Bắp nước:</span>
-              <span class="val">{{ getCombosText(order.combos) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Tổng tiền:</span>
-              <span class="val price">{{ formatMoney(order.finalTotal) }}</span>
-            </div>
-          </div>
-
-          <div class="card-footer-actions">
-            <span class="created-at">Thời gian đặt: {{ order.createdAt }}</span>
-            <div class="actions">
-              <button class="btn-qr-modal" (click)="openQrModal(order)">Phóng to mã QR</button>
-            </div>
-          </div>
-        </div>
+        </article>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="displayedOrders.length === 0">
-      <div class="empty-icon">🎟️</div>
-      <h3>Chưa có vé xem phim nào</h3>
-      <p>Bạn chưa có vé sắp xem hoặc không tìm thấy vé khớp với mã tra cứu.</p>
-      <a routerLink="/movies" class="btn-book-movie">Khám phá phim & Đặt vé ngay</a>
-    </div>
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="displayedOrders.length === 0">
+        <h3>Chưa có vé nào phù hợp</h3>
+        <p>Bạn chưa có vé trong mục này hoặc không tìm thấy mã đặt vé khớp với tìm kiếm.</p>
+        <a routerLink="/movies" class="btn-book-movie">Khám phá phim &amp; Đặt vé ngay</a>
+      </div>
+    </section>
   </div>
 
-  <!-- Big QR Modal -->
+  <!-- ==================== FIGMA MODAL: CHI TIẾT GIAO DỊCH ==================== -->
   <div class="qr-modal-backdrop" *ngIf="modalOrder" (click)="modalOrder = null">
-    <div class="modal-box" (click)="$event.stopPropagation()">
-      <button class="close-modal" (click)="modalOrder = null">✕</button>
-      <h3>MÃ VÀO CỬA PHÒNG CHIẾU</h3>
-      <p class="subtitle">{{ modalOrder.movieTitle }} · {{ modalOrder.showTime }}</p>
-      <img [src]="modalOrder.qrCodeUrl" [alt]="modalOrder.bookingCode" class="big-qr-img" />
-      <div class="modal-code">
-        <span>MÃ ĐẶT VÉ:</span>
-        <strong>{{ modalOrder.bookingCode }}</strong>
+    <div class="figma-ticket-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="close-modal" (click)="modalOrder = null" aria-label="Đóng">✕</button>
+
+      <!-- Navy Top Block (#1A2C50) -->
+      <div class="modal-navy-top">
+        <span class="modal-eyebrow">CHI TIẾT GIAO DỊCH</span>
+        <h2 class="modal-movie-title">{{ modalOrder.movieTitle }}</h2>
+
+        <div class="modal-split-grid">
+          <div class="col">
+            <div class="spec-entry">
+              <span class="lbl">Địa điểm</span>
+              <strong>{{ modalOrder.cinemaName }}</strong>
+            </div>
+            <div class="spec-entry">
+              <span class="lbl">Ngày &amp; Giờ chiếu</span>
+              <strong>{{ modalOrder.showDate }} · {{ modalOrder.showTime }}</strong>
+            </div>
+            <div class="spec-entry">
+              <span class="lbl">Phòng &amp; Định dạng</span>
+              <strong>{{ modalOrder.roomName }} ({{ modalOrder.format }})</strong>
+            </div>
+          </div>
+
+          <div class="vertical-rule"></div>
+
+          <div class="col">
+            <div class="spec-entry modal-code">
+              <span class="lbl">MÃ ĐẶT VÉ</span>
+              <strong class="code-gold">{{ modalOrder.bookingCode }}</strong>
+            </div>
+            <div class="spec-entry">
+              <span class="lbl">Ghế đã đặt</span>
+              <strong>{{ getSeatCodes(modalOrder.seats) }}</strong>
+            </div>
+            <div class="spec-entry" *ngIf="modalOrder.combos.length > 0">
+              <span class="lbl">Bắp &amp; Nước</span>
+              <strong>{{ getCombosText(modalOrder.combos) }}</strong>
+            </div>
+          </div>
+        </div>
       </div>
-      <p class="modal-tip">Vui lòng điều chỉnh độ sáng màn hình lên mức cao nhất để máy quét dễ nhận diện.</p>
+
+      <!-- Scalloped Pastel Yellow Bottom Stub (Figma bottom-ticket.svg) -->
+      <div class="modal-stub-bottom">
+        <img src="/images/figma/bottom-ticket.svg" alt="" aria-hidden="true" class="stub-bg-svg" />
+
+        <div class="stub-content">
+          <div class="stub-specs">
+            <div class="stub-row">
+              <span>Mã đơn hàng</span>
+              <strong>{{ modalOrder.orderCode }}</strong>
+            </div>
+            <div class="stub-row">
+              <span>Tổng thanh toán</span>
+              <strong>{{ formatMoney(modalOrder.finalTotal) }}</strong>
+            </div>
+            <p class="modal-tip">Điều chỉnh độ sáng màn hình cao nhất để máy quét tại rạp nhận diện chính xác.</p>
+          </div>
+
+          <div class="big-qr-frame">
+            <img [src]="getQrCodeUrl(modalOrder)" [alt]="modalOrder.bookingCode" class="big-qr-img" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

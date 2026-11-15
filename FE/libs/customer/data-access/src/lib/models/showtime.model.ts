@@ -5,7 +5,7 @@ export interface Showtime {
   movieId: string;
   cinemaId: string;
   roomName: string;
-  roomType: 'STANDARD' | 'IMAX' | 'GOLD_CLASS' | '4DX';
+  roomType: 'STANDARD' | 'VIP' | 'IMAX' | 'GOLD_CLASS' | '4DX';
   format: '2D' | '3D' | 'IMAX';
   language: string; // 'Phụ đề VI' | 'Lồng tiếng'
   date: string; // '2026-11-01'

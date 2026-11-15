@@ -1,202 +1,292 @@
 <div class="booking-page" *ngIf="showtime && movie">
-  <!-- Top Progress Bar & Hold Countdown Header -->
-  <header class="booking-header">
-    <div class="header-container">
-      <div class="movie-brief">
-        <a routerLink="/movies/{{ movie.slug }}" class="back-link">
-          ← Quay lại
-        </a>
-        <div class="movie-meta-summary">
-          <h2 class="title">{{ movie.title }}</h2>
-          <p class="meta">
-            {{ cinema?.name }} · {{ showtime.roomName }} ({{ showtime.format }}) · {{ showtime.startTime }} ({{ showtime.date }})
-          </p>
+  <!-- Minimalist Figma Page Header -->
+  <header class="figma-page-header" *ngIf="step < 4">
+    <div class="container header-inner-row">
+      <div class="title-block">
+        <div class="step-breadcrumb">
+          <span class="crumb-step" [class.active]="step === 1" [class.done]="step > 1">1. Chọn ghế</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-step" [class.active]="step === 2" [class.done]="step > 2">2. Bắp nước &amp; Ưu đãi</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-step" [class.active]="step === 3">3. Xác nhận thanh toán</span>
         </div>
+
+        <h1 class="figma-title">
+          {{ step === 1 ? 'CHỌN GHẾ' : step === 2 ? 'CHỌN BẮP NƯỚC' : 'XÁC NHẬN THANH TOÁN' }}
+        </h1>
+        <p class="figma-subtitle">
+          {{
+            step === 1
+              ? 'Chọn ghế bạn muốn ngồi trong suốt buổi chiếu · ' + movie.title
+              : step === 2
+              ? 'Thưởng thức bắp rang bơ và nước uống mát lạnh tại ' + (cinema?.name || '')
+              : 'Xác nhận thông tin chi tiết đơn vé bạn đã chọn'
+          }}
+        </p>
       </div>
 
-      <!-- Hold Timer (CUS-F07: 10 min countdown) -->
-      <div class="hold-timer-box" [class.urgent]="holdSeconds <= 120" *ngIf="step < 4 && selectedSeats.length > 0">
-        <span class="timer-label">Thời gian giữ vé:</span>
-        <span class="timer-countdown">⏳ {{ formattedCountdown }}</span>
-      </div>
-    </div>
-
-    <!-- Stepper Navigation -->
-    <div class="stepper-bar">
-      <div class="step-item" [class.active]="step === 1" [class.completed]="step > 1">
-        <span class="step-num">1</span>
-        <span class="step-title">Chọn ghế</span>
-      </div>
-      <div class="step-line" [class.completed]="step > 1"></div>
-      <div class="step-item" [class.active]="step === 2" [class.completed]="step > 2">
-        <span class="step-num">2</span>
-        <span class="step-title">Bắp nước & Ưu đãi</span>
-      </div>
-      <div class="step-line" [class.completed]="step > 2"></div>
-      <div class="step-item" [class.active]="step === 3" [class.completed]="step > 3">
-        <span class="step-num">3</span>
-        <span class="step-title">Thanh toán</span>
-      </div>
-      <div class="step-line" [class.completed]="step > 3"></div>
-      <div class="step-item" [class.active]="step === 4">
-        <span class="step-num">4</span>
-        <span class="step-title">Vé điện tử</span>
+      <!-- Compact Hold Countdown Pill -->
+      <div class="hold-timer-box" [class.urgent]="holdSeconds <= 120" *ngIf="selectedSeats.length > 0">
+        <span class="timer-dot"></span>
+        <span class="timer-label">Giữ ghế</span>
+        <span class="timer-countdown">{{ formattedCountdown }}</span>
       </div>
     </div>
   </header>
 
-  <!-- Step Content Area -->
+  <!-- Main Workspace -->
   <main class="booking-main">
-    <div class="main-container">
-      <!-- STEP 1: SEAT SELECTION (CUS-F07) -->
-      <div class="step-content" *ngIf="step === 1">
-        <div class="seat-selection-wrapper">
-          <!-- Screen Arc Visual -->
-          <div class="cinema-screen-box">
-            <div class="screen-curve"></div>
-            <span class="screen-text">MÀN HÌNH CHIẾU</span>
-          </div>
+    <div class="container">
+      <!-- ==================== STEP 1: CHỌN GHẾ (Figma 1:1 Centered Canvas) ==================== -->
+      <div class="step-seat-canvas" *ngIf="step === 1">
+        <!-- Toolbar Row: Time Picker Left | Legend Swatches Right -->
+        <div class="seat-toolbar">
+          <div class="time-picker-wrap">
+            <button type="button" class="time-picker-btn" (click)="showTimePicker = !showTimePicker">
+              <img src="/images/figma/clock.svg" alt="Giờ chiếu" class="clock-icon" width="22" height="22" />
+              <span class="time-text">{{ showtime.startTime }}</span>
+              <span class="room-pill">{{ showtime.format }} · {{ showtime.roomName }}</span>
+              <span class="caret" [class.open]="showTimePicker">▾</span>
+            </button>
 
-          <!-- Seat Grid Matrix -->
-          <div class="seats-matrix-scroll">
-            <div class="seats-matrix">
-              <div class="seat-row" *ngFor="let rowName of seatRows">
-                <span class="row-label">{{ rowName }}</span>
-                <div class="row-seats">
-                  <button
-                    *ngFor="let s of getSeatsByRow(rowName)"
-                    class="seat-btn"
-                    [ngClass]="[
-                      'seat-' + s.type.toLowerCase(),
-                      'status-' + (s.seatStatus || s.status).toLowerCase(),
-                      isSeatSelected(s) ? 'is-selected' : ''
-                    ]"
-                    [disabled]="seatBusy || !seatsOnline || s.status === 'BOOKED' || (s.seatStatus === 'HELD' && !isSeatSelected(s))"
-                    (click)="onSeatClick(s)"
-                    [title]="s.code + ' - ' + (s.seatStatus === 'SOLD' ? 'Đã bán' : s.seatStatus === 'HELD' && !isSeatSelected(s) ? 'Đang được giữ' : formatMoney(s.price))"
-                  >
-                    <span class="seat-num">{{ s.col }}</span>
-                  </button>
-                </div>
-                <span class="row-label">{{ rowName }}</span>
+            <!-- Time Picker Popover Card (Figma Frame) -->
+            <div class="time-popover" *ngIf="showTimePicker">
+              <div class="popover-head">
+                <strong>{{ cinema?.name }}</strong>
+                <span>{{ showtime.date }}</span>
+              </div>
+              <div class="popover-times">
+                <button
+                  type="button"
+                  *ngFor="let alt of (availableShowtimesForMovie.length ? availableShowtimesForMovie : [showtime])"
+                  class="popover-time-chip"
+                  [class.current]="alt.id === showtime.id"
+                  (click)="switchShowtime(alt)"
+                >
+                  <span class="chip-hour">{{ alt.startTime }}</span>
+                  <span class="chip-fmt">{{ alt.format }}</span>
+                </button>
               </div>
             </div>
           </div>
-          <p class="booking-alert" role="status" *ngIf="seatMessage">{{ seatMessage }}</p>
 
-          <!-- Seat Legend (Matching Figma) -->
           <div class="seat-legend">
             <div class="legend-item">
+              <span class="legend-box status-sold"></span>
+              <span>Đã bán</span>
+            </div>
+            <div class="legend-item">
               <span class="legend-box seat-standard"></span>
-              <span>Ghế thường ({{ formatMoney(showtime.priceStandard) }})</span>
+              <span>Trống ({{ formatMoney(showtime.priceStandard) }})</span>
             </div>
             <div class="legend-item">
               <span class="legend-box seat-vip"></span>
-              <span>Ghế VIP ({{ formatMoney(showtime.priceVip) }})</span>
+              <span>VIP ({{ formatMoney(showtime.priceVip) }})</span>
             </div>
             <div class="legend-item">
               <span class="legend-box seat-couple"></span>
-              <span>Ghế Đôi ({{ formatMoney(showtime.priceCouple) }})</span>
+              <span>Đôi ({{ formatMoney(showtime.priceCouple) }})</span>
             </div>
             <div class="legend-item">
               <span class="legend-box is-selected"></span>
               <span>Đang chọn</span>
             </div>
             <div class="legend-item">
-              <span class="legend-box status-booked"></span>
-              <span>Đã bán</span>
-            </div>
-            <div class="legend-item">
               <span class="legend-box status-held"></span>
-              <span>Đang được giữ</span>
+              <span>Đang giữ</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Seat Grid Matrix -->
+        <div class="seats-matrix-scroll">
+          <div class="seats-matrix">
+            <div class="seat-row" *ngFor="let rowName of seatRows">
+              <span class="row-label">{{ rowName }}</span>
+              <div class="row-seats">
+                <button
+                  *ngFor="let s of getSeatsByRow(rowName); let idx = index"
+                  type="button"
+                  class="seat-btn"
+                  [ngClass]="[
+                    'seat-' + s.type.toLowerCase(),
+                    'status-' + (s.seatStatus || s.status).toLowerCase(),
+                    isSeatSelected(s) ? 'is-selected' : '',
+                    isAisleGap(rowName, idx) ? 'aisle-left' : ''
+                  ]"
+                  [disabled]="seatBusy || !seatsOnline || s.status === 'BOOKED' || (s.seatStatus === 'HELD' && !isSeatSelected(s))"
+                  (click)="onSeatClick(s)"
+                  [title]="s.code + ' - ' + (s.seatStatus === 'SOLD' ? 'Đã bán' : s.seatStatus === 'HELD' && !isSeatSelected(s) ? 'Đang được giữ' : formatMoney(s.price))"
+                >
+                  <span class="seat-code">{{ s.code }}</span>
+                </button>
+              </div>
+              <span class="row-label">{{ rowName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="booking-alert" role="status" *ngIf="seatMessage">{{ seatMessage }}</p>
+
+        <!-- Full-Width Figma Sky Blue Screen Bar BELOW Seat Grid -->
+        <div class="cinema-screen-box">
+          <div class="screen-bar">
+            <span class="screen-text">Màn hình chiếu</span>
+          </div>
+        </div>
+
+        <!-- 4-Column Summary Footer Bar (Figma 1:1) -->
+        <div class="step1-summary-bar">
+          <div class="sum-col">
+            <span class="sum-label">Tổng cộng</span>
+            <strong class="sum-value grand-total">{{ formatMoney(grandTotal) }}</strong>
+          </div>
+
+          <div class="sum-col">
+            <span class="sum-label">Ghế đã chọn ({{ selectedSeats.length }})</span>
+            <strong class="sum-value summary-seats">
+              {{ selectedSeats.length > 0 ? getSeatCodes(selectedSeats) : 'Chưa chọn' }}
+            </strong>
+          </div>
+
+          <div class="sum-actions">
+            <button type="button" class="btn-outline-figma" (click)="onStep1Back()">Quay lại</button>
+            <button
+              type="button"
+              class="btn-next btn-primary-navy"
+              [disabled]="selectedSeats.length === 0"
+              (click)="nextStep()"
+            >
+              TIẾP TỤC
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- STEP 2: F&B COMBOS & VOUCHERS (CUS-F10, CUS-F09) -->
-      <div class="step-content" *ngIf="step === 2">
-        <div class="fnb-section">
-          <div class="section-title-box">
-            <h3>Combo Bắp & Nước Uống</h3>
-            <p>Thưởng thức bắp rang bơ giòn rụm và nước ngọt mát lạnh trong suốt suất chiếu</p>
-          </div>
+      <!-- ==================== STEPS 2 & 3: TWO-COLUMN CHECKOUT (Figma 1:1) ==================== -->
+      <div class="checkout-two-col" *ngIf="step === 2 || step === 3">
+        <!-- Left Column: Showtime Spec + F&B / Buyer + Back link -->
+        <div class="checkout-left">
+          <!-- Figma Schedule Details Divider Block -->
+          <section class="schedule-spec-block">
+            <h2 class="section-heading">Chi tiết suất chiếu</h2>
+            <div class="spec-row-list">
+              <div class="spec-line">
+                <span class="spec-lbl">Tên phim</span>
+                <div class="spec-val-row">
+                  <strong class="spec-val">{{ movie.title }}</strong>
+                  <thefilm-badge [type]="movie.rating" variant="solid">{{ movie.rating }}</thefilm-badge>
+                </div>
+              </div>
+              <div class="spec-line">
+                <span class="spec-lbl">Rạp &amp; Ngày chiếu</span>
+                <strong class="spec-val">{{ cinema?.name }} · {{ showtime.date }}</strong>
+              </div>
+              <div class="spec-two-col">
+                <div class="spec-line">
+                  <span class="spec-lbl">Hạng phòng &amp; Định dạng</span>
+                  <strong class="spec-val">{{ showtime.roomName }} ({{ showtime.format }})</strong>
+                </div>
+                <div class="spec-line">
+                  <span class="spec-lbl">Giờ chiếu</span>
+                  <strong class="spec-val">{{ showtime.startTime }}</strong>
+                </div>
+              </div>
+              <div class="spec-line no-border">
+                <span class="spec-lbl">Ghế ({{ selectedSeats.length }})</span>
+                <strong class="spec-val">{{ getSeatCodes(selectedSeats) }}</strong>
+              </div>
+            </div>
+          </section>
 
-          <div class="fnb-grid">
-            <div class="fnb-card" *ngFor="let item of fnbItems">
-              <img [src]="item.imageUrl" [alt]="item.name" class="fnb-img" />
-              <div class="fnb-info">
-                <h4>{{ item.name }}</h4>
-                <p class="fnb-desc">{{ item.description }}</p>
-                <div class="fnb-bottom">
-                  <span class="fnb-price">{{ formatMoney(item.price) }}</span>
-                  <div class="qty-control">
-                    <button class="qty-btn" (click)="updateFnb(item, -1)" [disabled]="getFnbQty(item) === 0">-</button>
-                    <span class="qty-val">{{ getFnbQty(item) }}</span>
-                    <button class="qty-btn" (click)="updateFnb(item, 1)">+</button>
+          <!-- STEP 2 ONLY: F&B Combos -->
+          <section class="fnb-section" *ngIf="step === 2">
+            <div class="section-title-box">
+              <div>
+                <h3>Combo Bắp &amp; Nước Uống</h3>
+                <p>Tùy chọn thêm cho suất chiếu của bạn (có thể bỏ qua)</p>
+              </div>
+            </div>
+
+            <div class="fnb-grid">
+              <div class="fnb-card" *ngFor="let item of fnbItems" [class.has-qty]="getFnbQty(item) > 0">
+                <div class="fnb-img-wrap">
+                  <img [src]="item.imageUrl" [alt]="item.name" class="fnb-img" />
+                </div>
+                <div class="fnb-info">
+                  <h4>{{ item.name }}</h4>
+                  <p class="fnb-desc">{{ item.description }}</p>
+                  <div class="fnb-bottom">
+                    <span class="fnb-price">{{ formatMoney(item.price) }}</span>
+                    <div class="qty-control">
+                      <button type="button" class="qty-btn" (click)="updateFnb(item, -1)" [disabled]="getFnbQty(item) === 0">-</button>
+                      <span class="qty-val">{{ getFnbQty(item) }}</span>
+                      <button type="button" class="qty-btn" (click)="updateFnb(item, 1)">+</button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </section>
 
-      <!-- STEP 3: CHECKOUT & PAYMENT (CUS-F08, CUS-F11, CUS-F12) -->
-      <div class="step-content" *ngIf="step === 3">
-        <div class="checkout-grid">
-          <!-- Left: Buyer Information Form -->
-          <div class="buyer-form-card">
-            <h3>Thông tin người nhận vé</h3>
-            <p class="form-desc">Mã vé và hóa đơn VAT sẽ được gửi về thông tin liên hệ dưới đây</p>
+          <!-- STEP 3 ONLY: Buyer Info & Inline Payment Radio Options -->
+          <section class="checkout-forms" *ngIf="step === 3">
+            <div class="buyer-form-block">
+              <h3>Thông tin người nhận vé</h3>
+              <p class="form-desc">Mã vé điện tử QR và hóa đơn VAT (nếu yêu cầu) sẽ được gửi về liên hệ này</p>
 
-            <form class="buyer-form" #buyerForm="ngForm">
-              <div class="form-group">
-                <label>Họ và tên người nhận <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="buyer.fullName" name="fullName" placeholder="VD: Nguyễn Văn An" required />
-              </div>
-
-              <div class="form-row">
+              <form class="buyer-form" #buyerForm="ngForm">
                 <div class="form-group">
-                  <label>Số điện thoại <span class="required">*</span></label>
-                  <input type="tel" [(ngModel)]="buyer.phone" name="phone" placeholder="VD: 0909123456" required />
+                  <label>Họ và tên người nhận <span class="required">*</span></label>
+                  <input type="text" [(ngModel)]="buyer.fullName" name="fullName" placeholder="VD: Nguyễn Văn An" required />
                 </div>
-                <div class="form-group">
-                  <label>Email nhận vé điện tử <span class="required">*</span></label>
-                  <input type="email" [(ngModel)]="buyer.email" name="email" placeholder="VD: an.nguyen@example.com" required email />
-                </div>
-              </div>
 
-              <!-- VAT Invoice Request (Tài liệu nghiệp vụ: Thuế demo) -->
-              <div class="vat-invoice-toggle">
-                <label class="checkbox-label">
-                  <input type="checkbox" [(ngModel)]="buyer.needInvoice" name="needInvoice" />
-                  <span>Yêu cầu xuất hóa đơn điện tử VAT (Thuế suất GTGT 8%)</span>
-                </label>
-              </div>
-
-              <div class="vat-fields" *ngIf="buyer.needInvoice">
-                <div class="form-group">
-                  <label>Tên công ty / Tổ chức</label>
-                  <input type="text" [(ngModel)]="buyer.companyName" name="companyName" placeholder="Tên doanh nghiệp đầy đủ" [required]="buyer.needInvoice" />
-                </div>
                 <div class="form-row">
                   <div class="form-group">
-                    <label>Mã số thuế (MST)</label>
-                    <input type="text" [(ngModel)]="buyer.taxCode" name="taxCode" placeholder="VD: 0101234567" [required]="buyer.needInvoice" />
+                    <label>Số điện thoại <span class="required">*</span></label>
+                    <input type="tel" [(ngModel)]="buyer.phone" name="phone" placeholder="VD: 0909123456" required />
                   </div>
                   <div class="form-group">
-                    <label>Địa chỉ công ty</label>
-                    <input type="text" [(ngModel)]="buyer.companyAddress" name="companyAddress" placeholder="Địa chỉ đăng ký kinh doanh" [required]="buyer.needInvoice" />
+                    <label>Email nhận vé điện tử <span class="required">*</span></label>
+                    <input type="email" [(ngModel)]="buyer.email" name="email" placeholder="VD: an.nguyen@example.com" required email />
                   </div>
                 </div>
-              </div>
-            </form>
 
-            <!-- Payment Methods Selection (CUS-F12) -->
-            <div class="payment-methods-box">
-              <h3>Thanh toán giả lập</h3>
-              <p>Đây là giao dịch thử nghiệm, không thu tiền thật.</p>
+                <div class="vat-invoice-toggle">
+                  <label class="checkbox-label">
+                    <input type="checkbox" [(ngModel)]="buyer.needInvoice" name="needInvoice" />
+                    <span>Yêu cầu xuất hóa đơn điện tử VAT (Thuế suất GTGT 8%)</span>
+                  </label>
+                </div>
+
+                <div class="vat-fields" *ngIf="buyer.needInvoice">
+                  <div class="form-group">
+                    <label>Tên công ty / Tổ chức</label>
+                    <input type="text" [(ngModel)]="buyer.companyName" name="companyName" placeholder="Tên doanh nghiệp đầy đủ" [required]="buyer.needInvoice" />
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Mã số thuế (MST)</label>
+                      <input type="text" [(ngModel)]="buyer.taxCode" name="taxCode" placeholder="VD: 0101234567" [required]="buyer.needInvoice" />
+                    </div>
+                    <div class="form-group">
+                      <label>Địa chỉ công ty</label>
+                      <input type="text" [(ngModel)]="buyer.companyAddress" name="companyAddress" placeholder="Địa chỉ đăng ký kinh doanh" [required]="buyer.needInvoice" />
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div class="payment-methods-block">
+              <div class="payment-head">
+                <div>
+                  <h3>Phương thức thanh toán</h3>
+                  <p>Thanh toán thử nghiệm · Không thu tiền thật</p>
+                </div>
+                <button type="button" class="link-see-all" (click)="showPaymentModal = true">Xem bảng chọn nhanh</button>
+              </div>
+
               <div class="methods-list">
                 <label class="method-option" [class.selected]="selectedPaymentMethod === 'VNPAY_QR'">
                   <input type="radio" name="paymentMethod" value="VNPAY_QR" [(ngModel)]="selectedPaymentMethod" />
@@ -204,6 +294,7 @@
                     <strong>VNPAY-QR (Khuyên dùng)</strong>
                     <span>Quét mã QR qua ứng dụng ngân hàng hoặc ví VNPAY</span>
                   </div>
+                  <span class="method-pill">Nhanh nhất</span>
                 </label>
 
                 <label class="method-option" [class.selected]="selectedPaymentMethod === 'E_WALLET'">
@@ -231,217 +322,301 @@
                 </label>
               </div>
             </div>
+
             <p class="booking-alert" role="alert" *ngIf="paymentMessage">{{ paymentMessage }}</p>
-          </div>
+          </section>
+
+          <!-- Figma Bottom Left Back Link -->
+          <button type="button" class="btn-prev figma-back-row" (click)="prevStep()">
+            <img src="/images/figma/arrow-left.svg" alt="" width="24" height="24" />
+            <span>Quay lại</span>
+          </button>
         </div>
-      </div>
 
-      <!-- STEP 4: SUCCESS TICKET QR (CUS-F13, CUS-F14) -->
-      <div class="step-content" *ngIf="step === 4 && confirmedOrder">
-        <div class="success-ticket-card">
-          <div class="success-banner">
-            <div class="icon-circle">✓</div>
-            <h2>ĐẶT VÉ VÀ THANH TOÁN THÀNH CÔNG!</h2>
-            <p>Mã đặt vé của bạn đã được ghi nhận. Vui lòng xuất trình mã QR này tại quầy hoặc máy in vé tại rạp.</p>
-          </div>
+        <!-- Right Column: Floating White Figma "Tóm tắt đơn hàng" Card -->
+        <aside class="order-summary-aside">
+          <div class="figma-summary-card">
+            <h2 class="summary-card-title">Tóm tắt đơn hàng</h2>
 
-          <div class="ticket-body">
-            <!-- QR Code Box -->
-            <div class="ticket-qr-section">
-              <div class="ticket-qr" *ngFor="let ticket of tickets">
-                <img [src]="ticketQrSource(ticket)" [alt]="'Mã QR vé ' + ticket.ticketNumber" class="qr-img" />
-                <strong>{{ ticket.ticketNumber }}<span *ngIf="ticket.seatLabel"> · {{ ticket.seatLabel }}</span></strong>
+            <div class="summary-movie-strip">
+              <img [src]="movie.posterUrl" [alt]="movie.title" class="mini-poster" />
+              <div class="mini-meta">
+                <strong>{{ movie.title }}</strong>
+                <span>{{ cinema?.name }}</span>
+                <span>{{ showtime.startTime }} · {{ showtime.date }}</span>
               </div>
-              <img *ngIf="tickets.length === 0 && confirmedOrder.qrCodeUrl" [src]="confirmedOrder.qrCodeUrl" [alt]="confirmedOrder.bookingCode" class="qr-img" />
-              <div class="booking-code-badge">
-                <span class="label">MÃ LẤY VÉ:</span>
-                <span class="code">{{ confirmedOrder.bookingCode }}</span>
-              </div>
-              <span class="note">Mã QR dùng để quét vào cửa phòng chiếu</span>
             </div>
 
-            <!-- Ticket Detailed Specs -->
-            <div class="ticket-details-section">
-              <div class="movie-header">
-                <thefilm-badge [type]="confirmedOrder.movieRating" variant="solid">{{ confirmedOrder.movieRating }}</thefilm-badge>
-                <h3>{{ confirmedOrder.movieTitle }}</h3>
-              </div>
+            <h3 class="summary-subhead">Chi tiết giao dịch</h3>
 
-              <div class="specs-grid">
-                <div class="spec-item">
-                  <span class="label">Mã đơn hàng:</span>
-                  <strong>{{ confirmedOrder.orderCode }}</strong>
-                </div>
-                <div class="spec-item">
-                  <span class="label">Rạp chiếu:</span>
-                  <strong>{{ confirmedOrder.cinemaName }}</strong>
-                </div>
-                <div class="spec-item">
-                  <span class="label">Phòng chiếu:</span>
-                  <strong>{{ confirmedOrder.roomName }}</strong>
-                </div>
-                <div class="spec-item">
-                  <span class="label">Suất chiếu:</span>
-                  <strong>{{ confirmedOrder.showTime }} · {{ confirmedOrder.showDate }}</strong>
-                </div>
-                <div class="spec-item">
-                  <span class="label">Ghế đã chọn:</span>
-                  <strong class="seats-highlight">{{ getSeatCodes(confirmedOrder.seats) }}</strong>
-                </div>
-                <div class="spec-item" *ngIf="confirmedOrder.combos.length > 0">
-                  <span class="label">Bắp nước:</span>
-                  <strong>{{ getCombosSummary(confirmedOrder.combos) }}</strong>
-                </div>
-                <div class="spec-item">
-                  <span class="label">Tổng thanh toán:</span>
-                  <strong class="price-highlight">{{ formatMoney(confirmedOrder.finalTotal) }}</strong>
+            <div class="summary-line-items">
+              <div class="summary-seats">
+                <div class="line-row">
+                  <span class="lbl">Vé ({{ getSeatCodes(selectedSeats) }})</span>
+                  <div class="val-group">
+                    <strong class="qty-x">X{{ selectedSeats.length }}</strong>
+                    <span class="price">{{ formatMoney(ticketTotal) }}</span>
+                  </div>
                 </div>
               </div>
 
-              <div class="action-buttons">
-                <a routerLink="/my-tickets" class="btn-primary">Xem Ví Vé Của Tôi</a>
-                <a routerLink="/" class="btn-outline">Về Trang Chủ</a>
+              <div class="summary-fnb" *ngIf="selectedCombos.length > 0">
+                <div class="line-row">
+                  <span class="lbl">Combo Bắp &amp; Nước</span>
+                  <strong class="price">{{ formatMoney(fnbTotal) }}</strong>
+                </div>
+                <div class="mini-fnb-list">
+                  <div class="mini-row" *ngFor="let c of selectedCombos">
+                    <span>{{ c.name }} (x{{ c.quantity }})</span>
+                    <span>{{ formatMoney(c.price * c.quantity) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="line-row muted-row">
+                <span class="lbl">Thuế GTGT (VAT 8%)</span>
+                <span class="price">{{ formatMoney(vatAmount) }}</span>
+              </div>
+
+              <div class="line-row discount-row" *ngIf="discountAmount > 0">
+                <span class="lbl">Giảm giá ưu đãi</span>
+                <span class="price discount">- {{ formatMoney(discountAmount) }}</span>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Right Summary Sidebar (Figma Desktop CUS-F07, CUS-F08) -->
-      <aside class="booking-sidebar" *ngIf="step < 4">
-        <div class="sidebar-card">
-          <div class="movie-summary">
-            <img [src]="movie.posterUrl" [alt]="movie.title" class="summary-poster" />
-            <div class="summary-info">
-              <h4>{{ movie.title }}</h4>
-              <p class="cinema-name">{{ cinema?.name }}</p>
-              <p class="format-tag">{{ showtime.format }} · {{ showtime.roomName }}</p>
-              <p class="time-tag">Suất: <strong>{{ showtime.startTime }}</strong> ({{ showtime.date }})</p>
-            </div>
-          </div>
+            <div class="card-divider"></div>
 
-          <div class="divider"></div>
+            <!-- Khuyến mãi & Ưu đãi -->
+            <div class="voucher-box">
+              <h3 class="summary-subhead">Khuyến mãi &amp; ưu đãi</h3>
+              <div class="voucher-input-group">
+                <input
+                  type="text"
+                  [(ngModel)]="voucherInput"
+                  placeholder="Nhập mã giảm giá (VD: TIX20)..."
+                  [disabled]="discountAmount > 0"
+                />
+                <button type="button" class="btn-apply-voucher" *ngIf="discountAmount === 0" (click)="applyVoucher()">
+                  Áp dụng
+                </button>
+                <button type="button" class="btn-remove-voucher" *ngIf="discountAmount > 0" (click)="removeVoucher()">
+                  Hủy
+                </button>
+              </div>
+              <p class="voucher-msg" [class.success]="discountAmount > 0" *ngIf="voucherMessage">
+                {{ voucherMessage }}
+              </p>
+            </div>
 
-          <!-- Selected Seats List -->
-          <div class="summary-seats">
-            <div class="summary-row">
-              <span class="label">Ghế ({{ selectedSeats.length }}):</span>
-              <span class="val font-bold">
-                {{ selectedSeats.length > 0 ? getSeatCodes(selectedSeats) : 'Chưa chọn ghế' }}
-              </span>
-            </div>
-            <div class="summary-row" *ngIf="selectedSeats.length > 0">
-              <span class="label">Tiền vé:</span>
-              <span class="val">{{ formatMoney(ticketTotal) }}</span>
-            </div>
-          </div>
+            <div class="card-divider"></div>
 
-          <!-- Selected F&B List -->
-          <div class="summary-fnb" *ngIf="selectedCombos.length > 0">
-            <div class="divider"></div>
-            <div class="summary-row">
-              <span class="label">Bắp nước:</span>
-              <span class="val">{{ formatMoney(fnbTotal) }}</span>
+            <div class="total-pay-row">
+              <span class="lbl">Tổng thanh toán</span>
+              <strong class="val grand-total">{{ formatMoney(grandTotal) }}</strong>
             </div>
-            <div class="fnb-mini-list">
-              <div class="mini-item" *ngFor="let c of selectedCombos">
-                <span>{{ c.name }} x{{ c.quantity }}</span>
-                <span>{{ formatMoney(c.price * c.quantity) }}</span>
+
+            <div class="card-divider"></div>
+
+            <!-- Phương thức thanh toán + Xem tất cả -->
+            <div class="summary-payment-row">
+              <div class="pay-head-line">
+                <span class="summary-subhead no-margin">Phương thức thanh toán</span>
+                <button type="button" class="link-see-all" (click)="showPaymentModal = true">Xem tất cả</button>
+              </div>
+              <div class="selected-method-chip">
+                <span class="method-dot"></span>
+                <strong>{{ selectedPaymentLabel }}</strong>
               </div>
             </div>
-          </div>
 
-          <!-- Voucher Code Input Box (CUS-F09) -->
-          <div class="voucher-box">
-            <div class="divider"></div>
-            <label class="voucher-label">Mã giảm giá / Ưu đãi</label>
-            <div class="voucher-input-group">
-              <input
-                type="text"
-                [(ngModel)]="voucherInput"
-                placeholder="Nhập mã ưu đãi..."
-                [disabled]="discountAmount > 0"
-              />
-              <button
-                class="btn-apply-voucher"
-                *ngIf="discountAmount === 0"
-                (click)="applyVoucher()"
-              >
-                Áp dụng
-              </button>
-              <button
-                class="btn-remove-voucher"
-                *ngIf="discountAmount > 0"
-                (click)="removeVoucher()"
-              >
-                Hủy
-              </button>
-            </div>
-            <p class="voucher-msg" [class.success]="discountAmount > 0" *ngIf="voucherMessage">
-              {{ voucherMessage }}
-            </p>
-          </div>
+            <p class="non-refundable-note">*Vé đã mua không thể hoàn hoặc hủy</p>
 
-          <div class="divider"></div>
-
-          <!-- Total Calculation -->
-          <div class="calc-section">
-            <div class="calc-row" *ngIf="discountAmount > 0">
-              <span class="label">Giảm giá:</span>
-              <span class="val discount">- {{ formatMoney(discountAmount) }}</span>
-            </div>
-            <div class="calc-row">
-              <span class="label">Thuế GTGT (VAT 8% demo):</span>
-              <span class="val">{{ formatMoney(vatAmount) }}</span>
-            </div>
-            <div class="calc-row grand-total-row">
-              <span class="label">TỔNG TIỀN:</span>
-              <span class="val grand-total">{{ formatMoney(grandTotal) }}</span>
-            </div>
-          </div>
-
-          <!-- Next / Back Step Button -->
-          <div class="step-actions">
+            <!-- Primary Step Action CTA -->
             <button
-              class="btn-next"
-              *ngIf="step === 1"
-              [disabled]="selectedSeats.length === 0"
-              (click)="nextStep()"
-            >
-              TIẾP TỤC CHỌN BẮP NƯỚC →
-            </button>
-
-            <button
-              class="btn-next"
+              type="button"
+              class="btn-next btn-primary-navy full-cta"
               *ngIf="step === 2"
               (click)="nextStep()"
             >
-              TIẾP TỤC ĐẾN THANH TOÁN →
+              TIẾP TỤC ĐẾN THANH TOÁN
             </button>
 
             <button
-              class="btn-confirm-pay"
+              type="button"
+              class="btn-confirm-pay btn-primary-navy full-cta"
               *ngIf="step === 3"
               [disabled]="isProcessingPayment || holdSeconds <= 0"
               (click)="submitPayment()"
             >
               {{ isProcessingPayment ? 'ĐANG XỬ LÝ THANH TOÁN...' : 'XÁC NHẬN & THANH TOÁN ' + formatMoney(grandTotal) }}
             </button>
+          </div>
+        </aside>
+      </div>
 
-            <button class="btn-prev" *ngIf="step > 1 && step < 4" (click)="prevStep()">
-              ← Quay lại bước trước
-            </button>
+      <!-- ==================== STEP 4: THANH TOÁN THÀNH CÔNG (Figma 1:1) ==================== -->
+      <div class="step-success-canvas" *ngIf="step === 4 && confirmedOrder">
+        <div class="success-hero-center">
+          <h1 class="success-heading">ĐẶT VÉ VÀ THANH TOÁN THÀNH CÔNG!</h1>
+
+          <div class="success-illustration" aria-hidden="true">
+            <img src="/images/figma/movie-roll.svg" alt="" class="illus-roll" width="112" height="112" />
+            <img src="/images/figma/clapperboard.svg" alt="" class="illus-clapper" width="144" height="144" />
+          </div>
+
+          <p class="success-subcopy">
+            Chi tiết giao dịch đã được gửi đến email của bạn. Bạn cũng có thể xuất trình mã QR bên dưới hoặc kiểm tra lại vé trong mục
+            <strong>Vé của tôi</strong>.
+          </p>
+        </div>
+
+        <!-- Two-Tone Figma E-Ticket Stub Card -->
+        <div class="figma-eticket-card">
+          <div class="ticket-navy-top">
+            <div class="ticket-top-head">
+              <div>
+                <span class="eticket-eyebrow">VÉ ĐIỆN TỬ THEFILM</span>
+                <h2 class="eticket-movie-title">{{ confirmedOrder.movieTitle }}</h2>
+              </div>
+              <thefilm-badge [type]="confirmedOrder.movieRating" variant="solid">{{ confirmedOrder.movieRating }}</thefilm-badge>
+            </div>
+
+            <div class="specs-grid">
+              <div class="spec-item">
+                <span class="label">Mã đơn hàng</span>
+                <strong>{{ confirmedOrder.orderCode }}</strong>
+              </div>
+              <div class="spec-item">
+                <span class="label">Rạp chiếu</span>
+                <strong>{{ confirmedOrder.cinemaName }}</strong>
+              </div>
+              <div class="spec-item">
+                <span class="label">Phòng chiếu</span>
+                <strong>{{ confirmedOrder.roomName }}</strong>
+              </div>
+              <div class="spec-item">
+                <span class="label">Suất chiếu</span>
+                <strong>{{ confirmedOrder.showTime }} · {{ confirmedOrder.showDate }}</strong>
+              </div>
+              <div class="spec-item">
+                <span class="label">Ghế đã chọn</span>
+                <strong class="seats-highlight">{{ getSeatCodes(confirmedOrder.seats) }}</strong>
+              </div>
+              <div class="spec-item" *ngIf="confirmedOrder.combos.length > 0">
+                <span class="label">Bắp nước</span>
+                <strong>{{ getCombosSummary(confirmedOrder.combos) }}</strong>
+              </div>
+              <div class="spec-item">
+                <span class="label">Tổng thanh toán</span>
+                <strong class="price-highlight">{{ formatMoney(confirmedOrder.finalTotal) }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pastel Yellow Scalloped Stub Bottom (Figma bottom-ticket.svg) -->
+          <div class="ticket-qr-section ticket-stub-bottom">
+            <img src="/images/figma/bottom-ticket.svg" alt="" aria-hidden="true" class="stub-bg-svg" />
+
+            <div class="stub-foreground">
+              <div class="stub-left">
+                <div class="booking-code-badge">
+                  <span class="label">MÃ LẤY VÉ</span>
+                  <span class="code">{{ confirmedOrder.bookingCode }}</span>
+                </div>
+                <span class="stub-note">Quét mã QR tại cửa vào phòng chiếu hoặc quầy in vé tự động</span>
+              </div>
+
+              <div class="stub-qrs">
+                <div class="ticket-qr" *ngFor="let ticket of tickets">
+                  <div class="qr-frame">
+                    <img [src]="ticketQrSource(ticket)" [alt]="'Mã QR vé ' + ticket.ticketNumber" class="qr-img" />
+                  </div>
+                  <strong class="ticket-num">{{ ticket.ticketNumber }}<span *ngIf="ticket.seatLabel"> · {{ ticket.seatLabel }}</span></strong>
+                </div>
+
+                <div class="qr-frame" *ngIf="tickets.length === 0 && confirmedOrder.qrCodeUrl">
+                  <img [src]="confirmedOrder.qrCodeUrl" [alt]="confirmedOrder.bookingCode" class="qr-img" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </aside>
+
+        <div class="success-actions">
+          <a routerLink="/my-tickets" class="btn-primary-navy action-btn">Xem Ví Vé Của Tôi</a>
+          <a routerLink="/" class="btn-outline-figma action-btn">Về Trang Chủ</a>
+        </div>
+      </div>
     </div>
   </main>
+
+  <!-- ==================== FIGMA MODAL: CHỌN PHƯƠNG THỨC THANH TOÁN ==================== -->
+  <div class="figma-modal-backdrop" *ngIf="showPaymentModal" (click)="showPaymentModal = false" role="presentation">
+    <div class="figma-payment-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+      <div class="modal-head">
+        <h3 id="payment-modal-title">Chọn phương thức thanh toán</h3>
+        <button type="button" class="close-btn" (click)="showPaymentModal = false" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="modal-group">
+        <span class="group-title">Ví điện tử &amp; Quét QR</span>
+        <button type="button" class="modal-pay-row" [class.active]="selectedPaymentMethod === 'VNPAY_QR'" (click)="selectPaymentFromModal('VNPAY_QR')">
+          <div class="row-info">
+            <strong>VNPAY-QR</strong>
+            <span>Quét QR ứng dụng ngân hàng · Nhanh nhất</span>
+          </div>
+          <span class="check-mark" *ngIf="selectedPaymentMethod === 'VNPAY_QR'">✓</span>
+        </button>
+
+        <button type="button" class="modal-pay-row" [class.active]="selectedPaymentMethod === 'E_WALLET'" (click)="selectPaymentFromModal('E_WALLET')">
+          <div class="row-info">
+            <strong>Ví điện tử (MoMo / ZaloPay / ShopeePay)</strong>
+            <span>Thanh toán nhanh 1 chạm không phí giao dịch</span>
+          </div>
+          <span class="check-mark" *ngIf="selectedPaymentMethod === 'E_WALLET'">✓</span>
+        </button>
+      </div>
+
+      <div class="modal-group">
+        <span class="group-title">Thẻ ngân hàng &amp; Thẻ quốc tế</span>
+        <button type="button" class="modal-pay-row" [class.active]="selectedPaymentMethod === 'DOMESTIC_CARD'" (click)="selectPaymentFromModal('DOMESTIC_CARD')">
+          <div class="row-info">
+            <strong>Thẻ ATM / Napas nội địa</strong>
+            <span>Hơn 40 ngân hàng Việt Nam</span>
+          </div>
+          <span class="check-mark" *ngIf="selectedPaymentMethod === 'DOMESTIC_CARD'">✓</span>
+        </button>
+
+        <button type="button" class="modal-pay-row" [class.active]="selectedPaymentMethod === 'INTERNATIONAL_CARD'" (click)="selectPaymentFromModal('INTERNATIONAL_CARD')">
+          <div class="row-info">
+            <strong>Thẻ quốc tế (Visa / MasterCard / JCB)</strong>
+            <span>Xác thực 3D Secure</span>
+          </div>
+          <span class="check-mark" *ngIf="selectedPaymentMethod === 'INTERNATIONAL_CARD'">✓</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== FIGMA MODAL: THÔNG BÁO BẬT LÊN (EXIT CONFIRM) ==================== -->
+  <div class="figma-modal-backdrop" *ngIf="showExitConfirm" (click)="showExitConfirm = false" role="presentation">
+    <div class="figma-dialog-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="exit-confirm-title">
+      <h3 id="exit-confirm-title">Bạn có chắc muốn quay lại?</h3>
+      <p>Lựa chọn ghế đang giữ hiện tại của bạn sẽ bị xóa nếu rời khỏi trang đặt vé.</p>
+      <div class="dialog-btns">
+        <button type="button" class="btn-outline-figma" (click)="showExitConfirm = false">Ở lại</button>
+        <button type="button" class="btn-primary-navy" (click)="confirmExitBooking()">Xác nhận quay lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: HOLD EXPIRED ==================== -->
   <div class="hold-expired-backdrop" *ngIf="showHoldExpired" role="presentation">
     <section class="hold-expired-modal" role="alertdialog" aria-modal="true" aria-labelledby="hold-expired-title">
       <span class="expired-icon">!</span>
       <h2 id="hold-expired-title">Thời gian giữ vé đã hết</h2>
       <p>Ghế đã được làm mới. Vui lòng chọn lại chỗ ngồi để tiếp tục đặt vé.</p>
-      <button type="button" (click)="showHoldExpired = false; step = 1">Chọn lại ghế</button>
+      <button type="button" class="btn-primary-navy" (click)="showHoldExpired = false; step = 1">Chọn lại ghế</button>
     </section>
   </div>
 </div>

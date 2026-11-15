@@ -1,5 +1,5 @@
 <div class="home-page">
-  <!-- CUS-F01: Hero Banner Section (Wine Burgundy #23080E) -->
+  <!-- 1. Hero Section + TIX ID 2-Poster Spotlight Showcase -->
   <section class="hero-section">
     <div class="hero-container">
       <div class="hero-content">
@@ -14,35 +14,70 @@
         </div>
       </div>
 
-      <!-- Hero Visual: Figma Stylized Vector Artwork & Ticket Mockups -->
+      <!-- Hero Visual: TIX ID Figma 2-Poster Carousel with Circular Arrows & Colored Badges -->
       <div class="hero-visual">
-        <div class="ticket-stack">
-          <!-- Back Ticket (Orange/Coral) -->
-          <div class="ticket-card back-ticket">
-            <div class="mini-art art-coral">
-              <div class="art-circle"></div>
-              <div class="art-strip">MÙA HÈ BẤT TẬN</div>
-            </div>
-          </div>
+        <div class="spotlight-carousel">
+          <button
+            type="button"
+            class="carousel-arrow prev"
+            (click)="prevSpotlight()"
+            aria-label="Phim trước"
+            *ngIf="nowShowingMovies.length > 2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
 
-          <!-- Front Ticket (Navy & Gold Disc with Showtime Badge) -->
-          <div class="ticket-card front-ticket">
-            <div class="mini-art art-navy">
-              <span class="cinema-top-brand">THEFILM · CINEMA</span>
-              <div class="art-circle gold-disc"></div>
-              <div class="art-strip">TẦNG MÂY CUỐI CÙNG</div>
-              <div class="ticket-pill-time">
-                <span class="pill-top-label">SUẤT TỐI NAY</span>
-                <strong class="pill-time-num">19:30</strong>
+          <div class="spotlight-pair">
+            <div
+              class="spotlight-card"
+              *ngFor="let film of spotlightMovies"
+              (click)="goToMovie(film)"
+              role="button"
+              tabindex="0"
+              (keyup.enter)="goToMovie(film)"
+            >
+              <div class="spotlight-poster">
+                <img
+                  *ngIf="!spotlightImageErrors.has(film.id) && film.posterUrl; else spotlightFallback"
+                  [src]="film.posterUrl"
+                  [alt]="film.title"
+                  (error)="onSpotlightImgError(film.id)"
+                />
+                <ng-template #spotlightFallback>
+                  <div class="spotlight-fallback">
+                    <span class="fallback-brand">THEFILM · CINEMA</span>
+                    <strong class="fallback-name">{{ film.title }}</strong>
+                  </div>
+                </ng-template>
+              </div>
+              <h3 class="spotlight-title" [title]="film.title">{{ film.title }}</h3>
+              <div class="spotlight-badges">
+                <span class="tix-mini-badge gold">{{ film.rating || 'P' }}</span>
+                <span class="tix-mini-badge red">{{ film.formats[0] || '2D' }}</span>
+                <span class="tix-mini-badge navy">{{ film.formats[1] || 'VIETSUB' }}</span>
               </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            class="carousel-arrow next"
+            (click)="nextSpotlight()"
+            aria-label="Phim tiếp theo"
+            *ngIf="nowShowingMovies.length > 2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Quick Booking Floating Widget (Figma 03 · Tìm suất) -->
+  <!-- 2. Quick Booking Floating Widget -->
   <section class="quick-booking-section">
     <thefilm-quick-booking
       [cinemas]="cinemas"
@@ -50,14 +85,14 @@
     ></thefilm-quick-booking>
   </section>
 
-  <!-- CUS-F01 Section: Phim đang chiếu (4 Columns Desktop) -->
+  <!-- 3. Section: Phim đang chiếu (TIX ID Section Header + 4-Column Cards) -->
   <section class="section-container movies-section">
     <div class="section-header-flex">
       <div>
         <h2 class="section-main-title">Phim đang chiếu</h2>
-        <p class="section-sub-desc">Chọn phim và khám phá suất chiếu tại rạp.</p>
+        <p class="section-sub-desc">Chọn phim và khám phá suất chiếu tại rạp yêu thích của bạn.</p>
       </div>
-      <a routerLink="/movies" class="section-link-more">Xem tất cả &rarr;</a>
+      <a routerLink="/movies" class="section-link-more">Xem tất cả</a>
     </div>
 
     <div class="movies-grid-4">
@@ -69,16 +104,15 @@
       ></thefilm-movie-card>
     </div>
 
-    <!-- Figma Bottom Note -->
     <div class="movies-footer-note">
       <p>Lịch chiếu và định dạng thay đổi theo rạp, ngày chiếu và tình trạng mở bán.</p>
     </div>
   </section>
 
-  <!-- 05 · Thành viên & ưu đãi (Figma Exact) -->
+  <!-- 4. Section: Thành viên & Ưu đãi (Light Cool Banner + Deep Navy Gold Member Card) -->
   <section class="section-container promos-section" id="uu-dai">
     <div class="promos-grid">
-      <!-- Left: Khám phá thành viên -->
+      <!-- Left: Khám phá thành viên (TIX ID Cool Gray Banner) -->
       <div class="promo-card-light">
         <span class="promo-badge-tag">THEFILM+ · THÀNH VIÊN</span>
         <h2 class="promo-heading">Ưu đãi điện ảnh<br />mỗi ngày.</h2>
@@ -101,10 +135,17 @@
           </li>
         </ul>
 
-        <a routerLink="/member" class="figma-btn-primary btn-member-explore">KHÁM PHÁ THÀNH VIÊN</a>
+        <div class="promo-bottom-row">
+          <a routerLink="/member" class="figma-btn-primary btn-member-explore">KHÁM PHÁ THÀNH VIÊN</a>
+          <div class="promo-dots" aria-hidden="true">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+        </div>
       </div>
 
-      <!-- Right: Thẻ thành viên demo -->
+      <!-- Right: Thẻ thành viên demo (TIX ID Deep Navy & Gold) -->
       <div class="promo-card-dark">
         <div class="member-header-box">
           <span class="member-label">THÀNH VIÊN</span>
@@ -122,42 +163,80 @@
 
         <div class="perk-note">
           <span class="gift-icon">&#127873;</span>
-          <span>Ưu đãi sinh nhật</span>
+          <span>Ưu đãi sinh nhật &amp; đổi bắp nước miễn phí</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 06 · Trải nghiệm phòng chiếu (Figma Exact) -->
-  <section class="section-container experience-section">
-    <div class="section-heading-block">
-      <h2 class="section-main-title">Chọn trải nghiệm phù hợp</h2>
-      <p class="section-sub-desc">Loại phòng, tiện ích và suất chiếu được hiển thị theo thông tin từng rạp.</p>
+  <!-- 5. Section: Sắp chiếu (Matching Bottom of TIX ID Figma) -->
+  <section class="section-container movies-section upcoming-home-section" *ngIf="upcomingMovies.length > 0">
+    <div class="section-header-flex">
+      <div>
+        <h2 class="section-main-title">Sắp chiếu</h2>
+        <p class="section-sub-desc">Sắp khởi chiếu tại rạp yêu thích của bạn!</p>
+      </div>
+      <a routerLink="/movies" class="section-link-more">Xem tất cả</a>
     </div>
 
-    <!-- 3-Step Info Cards -->
+    <div class="movies-grid-4 movies-grid-left">
+      <thefilm-movie-card
+        *ngFor="let movie of upcomingMovies"
+        [movie]="movie"
+        (selectShowtime)="goToMovie($event)"
+        (cardClick)="goToMovie($event)"
+      ></thefilm-movie-card>
+    </div>
+  </section>
+
+  <!-- 6. Section: Trải nghiệm phòng chiếu & Tìm rạp (TIX ID 3-Column Clean Editorial Cards) -->
+  <section class="section-container experience-section">
+    <div class="section-header-flex">
+      <div>
+        <h2 class="section-main-title">Chọn trải nghiệm phù hợp</h2>
+        <p class="section-sub-desc">Loại phòng, tiện ích và suất chiếu được hiển thị theo thông tin từng rạp.</p>
+      </div>
+      <a routerLink="/cinemas" class="section-link-more">Xem tất cả</a>
+    </div>
+
+    <!-- 3-Step Info Cards (Clean TIX ID 3-column Tin điện ảnh card layout) -->
     <div class="experience-steps-grid">
       <div class="step-card">
-        <div class="step-num-badge">01</div>
-        <div class="step-info">
+        <div class="step-thumb thumb-01">
+          <span class="thumb-code">01</span>
+          <span class="thumb-label">IMAX · GOLD CLASS</span>
+        </div>
+        <div class="step-body">
+          <span class="step-outline-tag">Nổi bật</span>
           <h3 class="step-title">Loại phòng công bố</h3>
           <p class="step-desc">Xem tên loại phòng và tiện ích có tại rạp bạn chọn.</p>
+          <span class="step-meta-foot">IMAX Laser · Gold Class | THEFILM</span>
         </div>
       </div>
 
       <div class="step-card">
-        <div class="step-num-badge">02</div>
-        <div class="step-info">
+        <div class="step-thumb thumb-02">
+          <span class="thumb-code">02</span>
+          <span class="thumb-label">2D · 3D · 4DX</span>
+        </div>
+        <div class="step-body">
+          <span class="step-outline-tag">Nổi bật</span>
           <h3 class="step-title">Suất tương thích</h3>
           <p class="step-desc">Chỉ hiển thị suất phù hợp với định dạng phòng được công bố.</p>
+          <span class="step-meta-foot">2D · 3D · 4DX | THEFILM</span>
         </div>
       </div>
 
       <div class="step-card">
-        <div class="step-num-badge">03</div>
-        <div class="step-info">
+        <div class="step-thumb thumb-03">
+          <span class="thumb-code">03</span>
+          <span class="thumb-label">GIỮ GHẾ 10 PHÚT</span>
+        </div>
+        <div class="step-body">
+          <span class="step-outline-tag">Tin tức</span>
           <h3 class="step-title">Ghế xác nhận</h3>
           <p class="step-desc">Trạng thái ghế được cập nhật khi bạn mở sơ đồ chọn chỗ.</p>
+          <span class="step-meta-foot">Giữ ghế 10 phút | THEFILM</span>
         </div>
       </div>
     </div>
@@ -187,10 +266,9 @@
     </div>
   </section>
 
-  <!-- 07 · Hỗ trợ khách hàng (Figma Exact) -->
+  <!-- 7. Hỗ trợ khách hàng -->
   <section class="section-container support-cta-section">
     <div class="support-cta-box">
-      <!-- Left side: Text & Links -->
       <div class="cta-left">
         <span class="cta-tag">CSKH · CHAT HỖ TRỢ</span>
         <h2 class="cta-title">Cần trợ giúp?<br />Chúng tôi luôn ở đây.</h2>
@@ -203,7 +281,6 @@
         </div>
       </div>
 
-      <!-- Right side: AI Assistant Card Mockup -->
       <div class="cta-right">
         <div class="assistant-card">
           <div class="assistant-header">

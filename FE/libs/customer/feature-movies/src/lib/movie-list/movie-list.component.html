@@ -33,11 +33,10 @@
       </div>
 
       <div class="chip-dropdown">
-        <select [(ngModel)]="selectedDateFilter" (change)="applyFilters()">
+        <select [(ngModel)]="selectedDateFilter" (change)="onScheduleFilterChange()">
           <option value="">NGÀY CHIẾU</option>
-          <option value="today">Hôm nay (01/11)</option>
-          <option value="tomorrow">Ngày mai (02/11)</option>
-          <option value="weekend">Cuối tuần</option>
+          <option value="today">Hôm nay ({{ todayLabel }})</option>
+          <option value="tomorrow">Ngày mai ({{ tomorrowLabel }})</option>
         </select>
       </div>
 
@@ -51,7 +50,7 @@
       </div>
 
       <div class="chip-dropdown">
-        <select [(ngModel)]="selectedCinemaFilter" (change)="applyFilters()">
+        <select [(ngModel)]="selectedCinemaFilter" (change)="onScheduleFilterChange()">
           <option value="">RẠP CHIẾU</option>
           <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }}</option>
         </select>
@@ -90,7 +89,7 @@
   <!-- Empty State if filtered out -->
   <div class="empty-state" *ngIf="displayedNowShowing.length === 0">
     <p>Không tìm thấy phim phù hợp với tiêu chí lọc.</p>
-    <button (click)="searchQuery = ''; selectedGenre = ''; selectedDateFilter = ''; selectedFormat = ''; selectedCinemaFilter = ''; applyFilters()" class="figma-btn-primary btn-reset">
+    <button (click)="resetFilters()" class="figma-btn-primary btn-reset">
       Xóa bộ lọc
     </button>
   </div>

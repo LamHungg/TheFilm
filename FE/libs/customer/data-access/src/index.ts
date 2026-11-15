@@ -6,7 +6,7 @@ export * from './lib/models/combo.model';
 export * from './lib/models/booking.model';
 export * from './lib/models/order.model';
 export * from './lib/models/auth.model';
-export * from './lib/data/mock-data';
+export * from './lib/data/fnb-catalog';
 export * from './lib/services/cinema.service';
 export * from './lib/services/booking.service';
 export * from './lib/services/auth.service';

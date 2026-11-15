@@ -14,10 +14,6 @@ import { AuthState, OidcConfig, TokenResponse, UserProfile } from '../models/aut
 
 const SESSION_STORAGE_KEY = 'thefilm.auth.session';
 const OIDC_TRANSACTION_KEY = 'thefilm.auth.oidc-transaction';
-const MOCK_PROFILE: UserProfile = {
-  displayName: 'Nguyen Van A',
-  email: 'an.nguyen@example.com',
-};
 
 type RuntimeAuthWindow = Window & {
   __THEFILM_AUTH_CONFIG__?: Partial<OidcConfig>;
@@ -32,8 +28,6 @@ export const AUTH_CONFIG = new InjectionToken<OidcConfig>('AUTH_CONFIG', {
     const runtimeConfig = browser
       ? (window as RuntimeAuthWindow).__THEFILM_AUTH_CONFIG__
       : undefined;
-    const mockAuthEnabled = runtimeConfig?.mockAuthEnabled ??
-      (isDevMode() && !(runtimeConfig?.issuer && runtimeConfig?.clientId));
 
     return {
       issuer: '',
@@ -41,9 +35,7 @@ export const AUTH_CONFIG = new InjectionToken<OidcConfig>('AUTH_CONFIG', {
       redirectUri,
       postLogoutRedirectUri: redirectUri,
       scope: 'openid profile email',
-      mockAuthEnabled,
-      mockAccessToken: 'mock-jwt-token',
-      mockUser: MOCK_PROFILE,
+      mockAuthEnabled: false,
       ...runtimeConfig,
     };
   },
@@ -102,10 +94,6 @@ export class AuthService {
   }
 
   login(): Promise<void> {
-    if (this.config.mockAuthEnabled) {
-      this.signInWithMockProfile();
-      return Promise.resolve();
-    }
     return this.startOidcFlow();
   }
 
@@ -132,10 +120,6 @@ export class AuthService {
   }
 
   register(): Promise<void> {
-    if (this.config.mockAuthEnabled) {
-      this.signInWithMockProfile();
-      return Promise.resolve();
-    }
     return this.startOidcFlow('register');
   }
 
@@ -238,12 +222,6 @@ export class AuthService {
         map((response) => ('data' in response ? response.data : response)),
         tap((profile) => this.updateProfile(profile)),
       );
-  }
-
-  private signInWithMockProfile(): void {
-    const user = this.config.mockUser ?? MOCK_PROFILE;
-    const token = this.config.mockAccessToken || 'mock-jwt-token';
-    this.setSession(token, user, Date.now() + 60 * 60 * 1000);
   }
 
   private async startOidcFlow(action?: 'register'): Promise<void> {

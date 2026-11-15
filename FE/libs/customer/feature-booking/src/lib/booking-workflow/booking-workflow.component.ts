@@ -4,8 +4,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BadgeComponent } from '@the-film/shared/ui';
 import { formatVND, formatCountdown } from '@the-film/shared/util';
-import { catchError, finalize, of, switchMap } from 'rxjs';
+import { catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 import {
+  AuthService,
   Movie,
   Cinema,
   Showtime,
@@ -59,6 +60,10 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   showHoldExpired = false;
   seatBusy = false;
   seatsOnline = false;
+  showPaymentModal = false;
+  showTimePicker = false;
+  showExitConfirm = false;
+  availableShowtimesForMovie: Showtime[] = [];
   private seatPollTimer: ReturnType<typeof setInterval> | null = null;
   private seatRequestVersion = 0;
   private seatLoadInFlight = false;
@@ -70,10 +75,18 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
     private router: Router,
     private changeDetector: ChangeDetectorRef,
     private cinemaService: CinemaService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    const user = this.authService.currentUser();
+    if (user) {
+      if (!this.buyer.fullName && user.displayName) this.buyer.fullName = user.displayName;
+      if (!this.buyer.email && user.email) this.buyer.email = user.email;
+      if (!this.buyer.phone && user.phone) this.buyer.phone = user.phone;
+    }
+
     this.route.paramMap.subscribe((params) => {
       const showtimeId = params.get('showtimeId') || '';
       this.initWorkflow(showtimeId);
@@ -81,6 +94,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
     this.cinemaService.getFnbs().subscribe((fnbs) => {
       this.fnbItems = fnbs;
+      this.changeDetector.markForCheck();
     });
   }
 
@@ -92,6 +106,8 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
   private initWorkflow(showtimeId: string): void {
     this.pendingOrder = null;
+    this.availableSeats = [];
+    this.seatMessage = '';
     this.seatRequestVersion++;
     this.cinemaService.getShowtimeById(showtimeId).subscribe((st) => {
       if (!st) {
@@ -99,32 +115,34 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
         return;
       }
       this.showtime = st;
+      this.showTimePicker = false;
+      this.showPaymentModal = false;
+      this.showExitConfirm = false;
 
-      this.cinemaService.getMovieById(st.movieId).subscribe((m) => {
-        this.movie = m || null;
+      this.cinemaService.getShowtimes(st.movieId, st.cinemaId, st.date).subscribe((list) => {
+        this.availableShowtimesForMovie = list;
+        this.changeDetector.markForCheck();
       });
 
-      this.cinemaService.getCinemaById(st.cinemaId).subscribe((c) => {
-        this.cinema = c || null;
-      });
-
-      if (this.movie && this.cinema) {
+      forkJoin({
+        movie: this.cinemaService.getMovieById(st.movieId),
+        cinema: this.cinemaService.getCinemaById(st.cinemaId),
+      }).subscribe(({ movie, cinema }) => {
+        this.movie = movie || null;
+        this.cinema = cinema || null;
+        if (!this.movie || !this.cinema) {
+          this.router.navigate(['/movies']);
+          return;
+        }
         this.bookingService.initShowtime(this.movie, this.cinema, st);
         this.loadSeats();
-      } else {
-        // Fallback if accessed directly by URL
-        this.cinemaService.getMovies().subscribe((movies) => {
-          this.movie = movies.find((m) => m.id === st.movieId) || movies[0];
-          this.cinemaService.getCinemas().subscribe((cinemas) => {
-            this.cinema = cinemas.find((c) => c.id === st.cinemaId) || cinemas[0];
-            this.bookingService.initShowtime(this.movie!, this.cinema!, st);
-            this.loadSeats();
-          });
-        });
-      }
-      if (this.seatPollTimer) clearInterval(this.seatPollTimer);
-      this.seatPollTimer = setInterval(() => { if (!this.seatBusy && this.step < 4) this.loadSeats(); }, 2000);
-      this.changeDetector.markForCheck();
+
+        if (this.seatPollTimer) clearInterval(this.seatPollTimer);
+        this.seatPollTimer = setInterval(() => {
+          if (!this.seatBusy && this.step < 4) this.loadSeats();
+        }, 2000);
+        this.changeDetector.markForCheck();
+      });
     });
   }
 
@@ -184,8 +202,30 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
     this.seatRequestVersion++;
     const selected = this.selectedSeats;
     const isSelected = selected.some((item) => item.id === seat.id);
+    const holdSeatLocally = (holdExpiresAt: string) => {
+      const heldSeat = {
+        ...seat,
+        seatStatus: 'HELD' as const,
+        status: 'SELECTED' as const,
+        holdExpiresAt,
+      };
+      this.bookingService.availableSeats.update((seats) => seats.map((item) => item.id === seat.id ? heldSeat : item));
+      this.bookingService.selectedSeats.set([...this.selectedSeats, heldSeat]);
+      this.availableSeats = this.bookingService.availableSeats();
+      this.holdExpiresAt = this.selectedSeats
+        .map((item) => item.holdExpiresAt)
+        .filter((value): value is string => Boolean(value))
+        .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0] || holdExpiresAt;
+      this.updateHoldCountdown();
+      this.startHoldCountdown();
+    };
+
+    if (seat.showSeatId == null) {
+      this.seatMessage = 'Dữ liệu ghế chưa đồng bộ với máy chủ.';
+      return;
+    }
+
     if (isSelected) {
-      if (seat.showSeatId == null) return;
       this.seatBusy = true;
       this.bookingService.releaseSeats([seat.showSeatId]).pipe(finalize(() => { this.seatBusy = false; this.changeDetector.markForCheck(); })).subscribe({
         next: () => {
@@ -206,30 +246,17 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       this.seatMessage = 'Quý khách chỉ có thể chọn tối đa 8 ghế cho mỗi lượt đặt.';
       return;
     }
-    const holdSeatLocally = (holdExpiresAt: string) => {
-      const heldSeat = {
-        ...seat,
-        seatStatus: 'HELD' as const,
-        status: 'SELECTED' as const,
-        holdExpiresAt,
-      };
-      this.bookingService.availableSeats.update((seats) => seats.map((item) => item.id === seat.id ? heldSeat : item));
-      this.bookingService.selectedSeats.set([...this.selectedSeats, heldSeat]);
-      this.availableSeats = this.bookingService.availableSeats();
-      this.holdExpiresAt = this.selectedSeats
-        .map((item) => item.holdExpiresAt)
-        .filter((value): value is string => Boolean(value))
-        .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0] || holdExpiresAt;
-      this.updateHoldCountdown();
-      this.startHoldCountdown();
-    };
 
-    if (seat.showSeatId == null) { this.seatMessage = 'Ghế chưa được kết nối với hệ thống đặt vé.'; return; }
     this.seatBusy = true;
     this.bookingService.holdSeats([Number(seat.showSeatId)]).pipe(finalize(() => { this.seatBusy = false; this.changeDetector.markForCheck(); })).subscribe({
       next: (hold) => holdSeatLocally(hold.expiresAt),
       error: (error) => {
-        this.seatMessage = error.status === 409 ? 'Ghế vừa được người khác giữ. Sơ đồ ghế đã được cập nhật.' : 'Không thể giữ ghế. Vui lòng kiểm tra kết nối và thử lại.';
+        this.seatMessage =
+          error.status === 409
+            ? 'Ghế vừa được người khác giữ. Sơ đồ ghế đã được cập nhật.'
+            : error?.error?.error?.message ||
+              error?.error?.message ||
+              'Không thể giữ ghế. Vui lòng kiểm tra kết nối và thử lại.';
         this.loadSeats();
       }
     });
@@ -288,7 +315,7 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       return;
     }
     this.paymentMessage = '';
-    const screeningId = this.showtime?.backendScreeningId;
+    const screeningId = this.showtime?.backendScreeningId ?? Number(this.showtime?.id);
     if (!screeningId || !Number.isSafeInteger(screeningId) || screeningId <= 0) {
       this.paymentMessage = 'Không xác định được mã suất chiếu. Vui lòng tải lại suất chiếu.';
       return;
@@ -323,8 +350,11 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
           return this.bookingService.getOrder(order.orderCode).pipe(switchMap((updated) => of(updated || order)));
         })
       )),
-      catchError(() => {
-        this.paymentMessage = 'Không thể hoàn tất thanh toán. Vui lòng kiểm tra kết nối và thử lại.';
+      catchError((err) => {
+        this.paymentMessage =
+          err?.error?.error?.message ||
+          err?.error?.message ||
+          'Không thể hoàn tất thanh toán. Vui lòng kiểm tra kết nối và thử lại.';
         return of(null);
       }),
       finalize(() => { this.isProcessingPayment = false; this.changeDetector.markForCheck(); })
@@ -349,8 +379,12 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   private loadSeats(): void {
-    const screeningId = this.showtime?.backendScreeningId;
-    if (!screeningId) { this.seatsOnline = false; this.seatMessage = 'Suất chiếu này chưa kết nối với hệ thống đặt vé.'; return; }
+    const screeningId = this.showtime?.backendScreeningId ?? Number(this.showtime?.id);
+    if (!screeningId || !Number.isSafeInteger(screeningId) || screeningId <= 0) {
+      this.seatsOnline = false;
+      this.seatMessage = 'Suất chiếu không hợp lệ.';
+      return;
+    }
     if (this.seatLoadInFlight) return;
     this.seatLoadInFlight = true;
     const version = this.seatRequestVersion;
@@ -358,6 +392,13 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       next: (seats) => {
         if (version !== this.seatRequestVersion) return;
         this.seatsOnline = true;
+        if (this.showtime && seats.length > 0) {
+          const priceStandard = seats.find((s) => s.type === 'STANDARD')?.price ?? 0;
+          const priceVip = seats.find((s) => s.type === 'VIP')?.price ?? priceStandard;
+          const priceCouple = seats.find((s) => s.type === 'COUPLE')?.price ?? priceVip;
+          this.showtime = { ...this.showtime, priceStandard, priceVip, priceCouple };
+          this.bookingService.currentShowtime.set(this.showtime);
+        }
         const selectedIds = new Set(this.selectedSeats.map((seat) => seat.id));
         const stillHeld = this.selectedSeats.filter((selected) => seats.some((seat) => seat.id === selected.id && seat.seatStatus === 'HELD'));
         if (stillHeld.length !== this.selectedSeats.length) {
@@ -424,6 +465,60 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
 
   getCombosSummary(combos: FnbCombo[]): string {
     return combos.map((c) => `${c.name} (x${c.quantity})`).join(', ');
+  }
+
+  get selectedPaymentLabel(): string {
+    switch (this.selectedPaymentMethod) {
+      case 'VNPAY_QR':
+        return 'VNPAY-QR';
+      case 'E_WALLET':
+        return 'Ví điện tử (MoMo / ZaloPay)';
+      case 'DOMESTIC_CARD':
+        return 'Thẻ ATM / Napas nội địa';
+      case 'INTERNATIONAL_CARD':
+        return 'Thẻ quốc tế (Visa / MasterCard)';
+      default:
+        return 'VNPAY-QR';
+    }
+  }
+
+  selectPaymentFromModal(method: PaymentMethod): void {
+    this.selectedPaymentMethod = method;
+    this.showPaymentModal = false;
+  }
+
+  switchShowtime(st: Showtime): void {
+    this.showTimePicker = false;
+    if (st.id !== this.showtime?.id) {
+      this.router.navigate(['/booking', st.id]);
+    }
+  }
+
+  onStep1Back(): void {
+    if (this.selectedSeats.length > 0 && this.step === 1) {
+      this.showExitConfirm = true;
+      return;
+    }
+    this.navigateBackToMovie();
+  }
+
+  confirmExitBooking(): void {
+    this.showExitConfirm = false;
+    this.navigateBackToMovie();
+  }
+
+  private navigateBackToMovie(): void {
+    const slug = this.movie?.slug;
+    if (slug) {
+      this.router.navigate(['/movies', slug]);
+    } else {
+      this.router.navigate(['/movies']);
+    }
+  }
+
+  isAisleGap(rowName: string, index: number): boolean {
+    const rowSeats = this.getSeatsByRow(rowName);
+    return rowSeats.length >= 6 && index === Math.ceil(rowSeats.length / 2);
   }
 
   formatMoney(amount: number): string {
