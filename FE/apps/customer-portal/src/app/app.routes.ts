@@ -47,6 +47,11 @@ export const appRoutes: Route[] = [
       import('@the-film/customer/feature-support').then((m) => m.SupportCenterComponent),
   },
   {
+    path: 'admin',
+    loadChildren: () =>
+      import('@the-film/admin/feature-ops').then((m) => m.ADMIN_ROUTES),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

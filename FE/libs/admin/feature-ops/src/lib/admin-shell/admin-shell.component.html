@@ -1,0 +1,93 @@
+<div class="thefilm-ops-container">
+  <!-- Fixed Left Sidebar (Width 230px) -->
+  <aside class="ops-sidebar">
+    <!-- Brand Header -->
+    <div class="sidebar-header">
+      <div class="brand-logo-mark">
+        <span class="logo-text">T</span>
+      </div>
+      <div class="brand-text-block">
+        <span class="brand-name">THEFILM</span>
+        <span class="brand-ops-label">CINEMA OPERATIONS</span>
+      </div>
+    </div>
+
+    <!-- Divider Line -->
+    <div class="sidebar-divider"></div>
+
+    <!-- Menu List -->
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          class="nav-item-link"
+        >
+          <span class="active-accent"></span>
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <!-- Profile Footer -->
+    <div class="sidebar-profile-footer">
+      <div class="profile-divider"></div>
+      <div class="profile-card">
+        <div class="user-avatar">
+          <span class="avatar-initials">LH</span>
+        </div>
+        <div class="user-info">
+          <span class="user-name">Lam Hùng · Quản lý</span>
+          <span class="user-scope">THEFILM · Rạp Nguyễn Trãi</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Side Main Shell (Topbar + Content Area) -->
+  <div class="ops-main-wrapper">
+    <!-- Topbar (Height 64px) -->
+    <header class="ops-topbar">
+      <div class="topbar-left">
+        <!-- Branch Selector -->
+        <div class="branch-selector">
+          <span class="branch-icon">⌖</span>
+          <span class="branch-name">Rạp Nguyễn Trãi</span>
+          <span class="branch-arrow">⌄</span>
+        </div>
+
+        <!-- Global Search -->
+        <div class="global-search-box">
+          <span class="search-icon">⌕</span>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Tìm nhanh phim, đơn, nhân viên..."
+          />
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Help & Alert Icons -->
+        <div class="help-and-alert">
+          <span class="icon-help" title="Trợ giúp">?</span>
+          <span class="icon-clover" title="Thông báo">♧</span>
+        </div>
+
+        <!-- Top User Dropdown -->
+        <div class="top-user-pill">
+          <div class="top-avatar">
+            <span>LH</span>
+          </div>
+          <span class="top-name">Lam Hùng  ⌄</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Outlet Area -->
+    <main class="ops-content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

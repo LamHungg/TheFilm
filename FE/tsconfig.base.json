@@ -31,6 +31,9 @@
       ],
       "@the-film/customer/feature-support": [
         "./libs/customer/feature-support/src/index.ts"
+      ],
+      "@the-film/admin/feature-ops": [
+        "./libs/admin/feature-ops/src/index.ts"
       ]
     }
   },

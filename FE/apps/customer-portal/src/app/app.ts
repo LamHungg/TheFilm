@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs/operators';
 import { NavbarComponent, FooterComponent } from '@the-film/shared/ui';
 
 @Component({
@@ -11,4 +13,18 @@ import { NavbarComponent, FooterComponent } from '@the-film/shared/ui';
 })
 export class App {
   title = 'customer-portal';
+  private router = inject(Router);
+
+  isAdminRoute = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects.startsWith('/admin'))
+    ),
+    {
+      initialValue:
+        typeof window !== 'undefined'
+          ? window.location.pathname.startsWith('/admin')
+          : false,
+    }
+  );
 }

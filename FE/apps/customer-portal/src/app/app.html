@@ -1,12 +1,16 @@
-<div class="thefilm-app-shell">
-  <!-- Exact Figma Header / Navigation Bar Component -->
-  <thefilm-navbar></thefilm-navbar>
+@if (isAdminRoute()) {
+  <router-outlet></router-outlet>
+} @else {
+  <div class="thefilm-app-shell">
+    <!-- Exact Figma Header / Navigation Bar Component -->
+    <thefilm-navbar></thefilm-navbar>
 
-  <!-- Main Application Content -->
-  <main class="app-main-content">
-    <router-outlet></router-outlet>
-  </main>
+    <!-- Main Application Content -->
+    <main class="app-main-content">
+      <router-outlet></router-outlet>
+    </main>
 
-  <!-- Global Footer Component -->
-  <thefilm-footer></thefilm-footer>
-</div>
+    <!-- Global Footer Component -->
+    <thefilm-footer></thefilm-footer>
+  </div>
+}
