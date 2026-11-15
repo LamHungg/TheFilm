@@ -1,3 +1,9 @@
+INSERT INTO org_chain (chain_id, chain_code, chain_name, status)
+VALUES (1, 'THEFILM-VN', 'Chuỗi Rạp THEFILM Toàn Quốc', 'ACTIVE');
+
+INSERT INTO legal_entity (legal_entity_id, chain_id, entity_code, legal_name, tax_identifier, status)
+VALUES (1, 1, 'THEFILM-HOLDING', 'Công ty Cổ phần Điện ảnh THEFILM Việt Nam', '0109998888', 'ACTIVE');
+
 INSERT INTO age_classification VALUES (1, 'T13', 'T13 - Phim dành cho khán giả từ đủ 13 tuổi', 13, 'Nội dung phù hợp với khán giả từ đủ 13 tuổi.', 'ACTIVE');
 INSERT INTO age_classification VALUES (2, 'T16', 'T16 - Phim dành cho khán giả từ đủ 16 tuổi', 16, 'Nội dung phù hợp với khán giả từ đủ 16 tuổi.', 'ACTIVE');
 INSERT INTO age_classification VALUES (3, 'P', 'P - Phim phổ biến', 0, 'Phim được phổ biến đến mọi độ tuổi.', 'ACTIVE');
@@ -7,21 +13,41 @@ INSERT INTO film_genre VALUES (2, 'ADVENTURE', 'Phiêu lưu', 'ACTIVE');
 INSERT INTO film_genre VALUES (3, 'MYSTERY', 'Bí ẩn', 'ACTIVE');
 INSERT INTO film_genre VALUES (4, 'FAMILY', 'Gia đình', 'ACTIVE');
 
-INSERT INTO cinema VALUES (1, 'HCM-01', 'THEFILM Nguyễn Trãi', '123 Nguyễn Trãi', 'TP. Hồ Chí Minh', 'Quận 1', 'Phường Bến Thành', '02800000001', 'nguyentrai@thefilm.vn', 'Asia/Ho_Chi_Minh', 'ACTIVE');
-INSERT INTO cinema VALUES (2, 'HN-01', 'THEFILM Hồ Đền', '45 Hồ Đền', 'Hà Nội', 'Đống Đa', 'Phường Trung Liệt', '02400000002', 'hoden@thefilm.vn', 'Asia/Ho_Chi_Minh', 'ACTIVE');
+INSERT INTO cinema (cinema_id, chain_id, legal_entity_id, cinema_code, cinema_name, address_line, province_name, district_name, ward_name, phone, email, time_zone, status)
+VALUES (1, 1, 1, 'HCM-01', 'THEFILM Nguyễn Trãi', '123 Nguyễn Trãi', 'TP. Hồ Chí Minh', 'Quận 1', 'Phường Bến Thành', '02800000001', 'nguyentrai@thefilm.vn', 'Asia/Ho_Chi_Minh', 'ACTIVE');
+INSERT INTO cinema (cinema_id, chain_id, legal_entity_id, cinema_code, cinema_name, address_line, province_name, district_name, ward_name, phone, email, time_zone, status)
+VALUES (2, 1, 1, 'HN-01', 'THEFILM Hồ Đền', '45 Hồ Đền', 'Hà Nội', 'Đống Đa', 'Phường Trung Liệt', '02400000002', 'hoden@thefilm.vn', 'Asia/Ho_Chi_Minh', 'ACTIVE');
 
-INSERT INTO room_type VALUES (1, 'STANDARD', 'Standard', 'ACTIVE');
-INSERT INTO room_type VALUES (2, 'VIP', 'VIP', 'ACTIVE');
-INSERT INTO room_type VALUES (3, 'GOLD_CLASS', 'Gold Class', 'ACTIVE');
-INSERT INTO cinema_room VALUES (1, 1, 1, 'P01', 'Phòng 01', 'ACTIVE');
-INSERT INTO cinema_room VALUES (2, 1, 2, 'VIP01', 'Phòng VIP 01', 'ACTIVE');
-INSERT INTO cinema_room VALUES (3, 2, 1, 'P01', 'Phòng 01', 'ACTIVE');
-INSERT INTO cinema_room VALUES (4, 1, 3, 'GOLD03', 'Phòng 03 (Gold Class)', 'ACTIVE');
+INSERT INTO room_type (room_type_id, type_code, type_name, status) VALUES (1, 'STANDARD', 'Standard', 'ACTIVE');
+INSERT INTO room_type (room_type_id, type_code, type_name, status) VALUES (2, 'VIP', 'VIP', 'ACTIVE');
+INSERT INTO room_type (room_type_id, type_code, type_name, status) VALUES (3, 'GOLD_CLASS', 'Gold Class', 'ACTIVE');
 
-INSERT INTO film VALUES (1, 'THEFILM-001', 'Tầng Mây Cuối Cùng', 'The Last Cloud', 'Một chuyến phiêu lưu đưa hai người xa lạ đến gần nhau hơn.', 126, 1, 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
-INSERT INTO film VALUES (2, 'THEFILM-002', 'Mùa Hè Bất Tận', 'Endless Summer', 'Câu chuyện về tình bạn, gia đình và những lựa chọn trưởng thành.', 108, 2, 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
-INSERT INTO film VALUES (3, 'THEFILM-003', 'Hồ Sơ Đêm Mưa', 'Rainy Night Files', 'Một bí ẩn bắt đầu sau chuyến tàu cuối cùng trong đêm mưa.', 115, 2, 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
-INSERT INTO film VALUES (4, 'THEFILM-004', 'Khu Rừng Kỳ Diệu', 'The Wonder Woods', 'Một gia đình khám phá khu rừng ẩn giấu nhiều điều kỳ diệu.', 98, 3, 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
+INSERT INTO cinema_room (room_id, cinema_id, room_type_id, room_code, room_name, status)
+VALUES (1, 1, 1, 'P01', 'Phòng 01', 'ACTIVE');
+INSERT INTO cinema_room (room_id, cinema_id, room_type_id, room_code, room_name, status)
+VALUES (2, 1, 2, 'VIP01', 'Phòng VIP 01', 'ACTIVE');
+INSERT INTO cinema_room (room_id, cinema_id, room_type_id, room_code, room_name, status)
+VALUES (3, 2, 1, 'P01', 'Phòng 01', 'ACTIVE');
+INSERT INTO cinema_room (room_id, cinema_id, room_type_id, room_code, room_name, status)
+VALUES (4, 1, 3, 'GOLD03', 'Phòng 03 (Gold Class)', 'ACTIVE');
+
+INSERT INTO room_layout (layout_id, room_id, version_no, layout_name, status)
+VALUES (1, 1, 1, 'Standard 10x10', 'ACTIVE');
+INSERT INTO room_layout (layout_id, room_id, version_no, layout_name, status)
+VALUES (2, 2, 1, 'VIP Layout 6x8', 'ACTIVE');
+INSERT INTO room_layout (layout_id, room_id, version_no, layout_name, status)
+VALUES (3, 3, 1, 'Standard 10x10', 'ACTIVE');
+INSERT INTO room_layout (layout_id, room_id, version_no, layout_name, status)
+VALUES (4, 4, 1, 'Gold Class 6x8', 'ACTIVE');
+
+INSERT INTO film (film_id, film_code, title_local, title_original, synopsis, runtime_minutes, age_classification_id, poster_uri, trailer_uri, approval_status)
+VALUES (1, 'THEFILM-001', 'Tầng Mây Cuối Cùng', 'The Last Cloud', 'Một chuyến phiêu lưu đưa hai người xa lạ đến gần nhau hơn.', 126, 1, 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
+INSERT INTO film (film_id, film_code, title_local, title_original, synopsis, runtime_minutes, age_classification_id, poster_uri, trailer_uri, approval_status)
+VALUES (2, 'THEFILM-002', 'Mùa Hè Bất Tận', 'Endless Summer', 'Câu chuyện về tình bạn, gia đình và những lựa chọn trưởng thành.', 108, 2, 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
+INSERT INTO film (film_id, film_code, title_local, title_original, synopsis, runtime_minutes, age_classification_id, poster_uri, trailer_uri, approval_status)
+VALUES (3, 'THEFILM-003', 'Hồ Sơ Đêm Mưa', 'Rainy Night Files', 'Một bí ẩn bắt đầu sau chuyến tàu cuối cùng trong đêm mưa.', 115, 2, 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
+INSERT INTO film (film_id, film_code, title_local, title_original, synopsis, runtime_minutes, age_classification_id, poster_uri, trailer_uri, approval_status)
+VALUES (4, 'THEFILM-004', 'Khu Rừng Kỳ Diệu', 'The Wonder Woods', 'Một gia đình khám phá khu rừng ẩn giấu nhiều điều kỳ diệu.', 98, 3, 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=900&q=80', NULL, 'APPROVED');
 
 INSERT INTO film_genre_map VALUES (1, 1);
 INSERT INTO film_genre_map VALUES (1, 2);
@@ -31,16 +57,32 @@ INSERT INTO film_genre_map VALUES (3, 3);
 INSERT INTO film_genre_map VALUES (4, 2);
 INSERT INTO film_genre_map VALUES (4, 4);
 
-INSERT INTO film_version VALUES (1, 1, 'VIETSUB-2D', '2D', 126, 'ACTIVE');
-INSERT INTO film_version VALUES (2, 2, 'VIETSUB-2D', '2D', 108, 'ACTIVE');
-INSERT INTO film_version VALUES (3, 3, 'VIETSUB-2D', '2D', 115, 'ACTIVE');
-INSERT INTO film_version VALUES (4, 4, 'VIETSUB-2D', '2D', 98, 'ACTIVE');
+INSERT INTO film_version (film_version_id, film_id, version_code, format_code, runtime_minutes, status)
+VALUES (1, 1, 'VIETSUB-2D', '2D', 126, 'ACTIVE');
+INSERT INTO film_version (film_version_id, film_id, version_code, format_code, runtime_minutes, status)
+VALUES (2, 2, 'VIETSUB-2D', '2D', 108, 'ACTIVE');
+INSERT INTO film_version (film_version_id, film_id, version_code, format_code, runtime_minutes, status)
+VALUES (3, 3, 'VIETSUB-2D', '2D', 115, 'ACTIVE');
+INSERT INTO film_version (film_version_id, film_id, version_code, format_code, runtime_minutes, status)
+VALUES (4, 4, 'VIETSUB-2D', '2D', 98, 'ACTIVE');
 
-INSERT INTO screening VALUES (1, 1, 1, 1, 1, 1, 'STANDARD', 'Standard', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '3' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '5' HOUR AS TIMESTAMP WITH TIME ZONE), 'ON_SALE');
-INSERT INTO screening VALUES (2, 1, 2, 1, 2, 2, 'VIP', 'VIP', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '6' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '8' HOUR AS TIMESTAMP WITH TIME ZONE), 'ON_SALE');
-INSERT INTO screening VALUES (3, 2, 3, 1, 3, 3, 'STANDARD', 'Standard', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '30' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '32' HOUR AS TIMESTAMP WITH TIME ZONE), 'SCHEDULED');
--- Suất demo st-05 có ID riêng, không ánh xạ sang suất của phòng hoặc phim khác.
-INSERT INTO screening VALUES (5, 1, 4, 1, 1, 1, 'GOLD_CLASS', 'Gold Class', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '3' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '5' HOUR AS TIMESTAMP WITH TIME ZONE), 'ON_SALE');
+INSERT INTO film_release_right (release_right_id, film_id, valid_from, valid_to, distributor_name, reference_code, status)
+VALUES (1, 1, CURRENT_TIMESTAMP - INTERVAL '30' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'CJ CGV VN', 'RR-2026-001', 'ACTIVE');
+INSERT INTO film_release_right (release_right_id, film_id, valid_from, valid_to, distributor_name, reference_code, status)
+VALUES (2, 2, CURRENT_TIMESTAMP - INTERVAL '30' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'Galaxy Studio', 'RR-2026-002', 'ACTIVE');
+INSERT INTO film_release_right (release_right_id, film_id, valid_from, valid_to, distributor_name, reference_code, status)
+VALUES (3, 3, CURRENT_TIMESTAMP - INTERVAL '30' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'BHD Star', 'RR-2026-003', 'ACTIVE');
+INSERT INTO film_release_right (release_right_id, film_id, valid_from, valid_to, distributor_name, reference_code, status)
+VALUES (4, 4, CURRENT_TIMESTAMP - INTERVAL '30' DAY, CURRENT_TIMESTAMP + INTERVAL '90' DAY, 'Lotte Cinema', 'RR-2026-004', 'ACTIVE');
+
+INSERT INTO screening (screening_id, cinema_id, room_id, layout_id, film_id, film_version_id, room_type_code_snapshot, room_type_name_snapshot, format_code, screening_type_code, starts_at, ends_at, status)
+VALUES (1, 1, 1, 1, 1, 1, 'STANDARD', 'Standard', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '3' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '5' HOUR AS TIMESTAMP WITH TIME ZONE), 'ON_SALE');
+INSERT INTO screening (screening_id, cinema_id, room_id, layout_id, film_id, film_version_id, room_type_code_snapshot, room_type_name_snapshot, format_code, screening_type_code, starts_at, ends_at, status)
+VALUES (2, 1, 2, 1, 2, 2, 'VIP', 'VIP', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '6' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '8' HOUR AS TIMESTAMP WITH TIME ZONE), 'ON_SALE');
+INSERT INTO screening (screening_id, cinema_id, room_id, layout_id, film_id, film_version_id, room_type_code_snapshot, room_type_name_snapshot, format_code, screening_type_code, starts_at, ends_at, status)
+VALUES (3, 2, 3, 1, 3, 3, 'STANDARD', 'Standard', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '30' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '32' HOUR AS TIMESTAMP WITH TIME ZONE), 'SCHEDULED');
+INSERT INTO screening (screening_id, cinema_id, room_id, layout_id, film_id, film_version_id, room_type_code_snapshot, room_type_name_snapshot, format_code, screening_type_code, starts_at, ends_at, status)
+VALUES (5, 1, 4, 1, 1, 1, 'GOLD_CLASS', 'Gold Class', '2D', 'REGULAR', CAST(CURRENT_TIMESTAMP + INTERVAL '3' HOUR AS TIMESTAMP WITH TIME ZONE), CAST(CURRENT_TIMESTAMP + INTERVAL '5' HOUR AS TIMESTAMP WITH TIME ZONE), 'ON_SALE');
 
 INSERT INTO show_seat (show_seat_id, screening_id, room_seat_id, seat_status, seat_code_snapshot, row_label_snapshot, seat_label_snapshot, seat_type_code_snapshot)
 VALUES (1, 1, 1, 'AVAILABLE', 'A1', 'A', 'A1', 'STANDARD');
@@ -54,25 +96,30 @@ INSERT INTO show_seat (show_seat_id, screening_id, room_seat_id, seat_status, ho
                       seat_code_snapshot, row_label_snapshot, seat_label_snapshot, seat_type_code_snapshot)
 VALUES (5, 2, 5, 'HELD', CURRENT_TIMESTAMP - INTERVAL '1' MINUTE, 'A5', 'A', 'A5', 'STANDARD');
 
-INSERT INTO seat_type VALUES (1, 'STANDARD', 'Ghế tiêu chuẩn', 'ACTIVE');
-INSERT INTO seat_type VALUES (2, 'VIP', 'Ghế VIP', 'ACTIVE');
-INSERT INTO seat_type VALUES (3, 'COUPLE', 'Ghế đôi', 'ACTIVE');
+INSERT INTO seat_type (seat_type_id, type_code, type_name, status) VALUES (1, 'STANDARD', 'Ghế tiêu chuẩn', 'ACTIVE');
+INSERT INTO seat_type (seat_type_id, type_code, type_name, status) VALUES (2, 'VIP', 'Ghế VIP', 'ACTIVE');
+INSERT INTO seat_type (seat_type_id, type_code, type_name, status) VALUES (3, 'COUPLE', 'Ghế đôi', 'ACTIVE');
 
-INSERT INTO room_seat (room_seat_id, room_id, seat_type_id, seat_code, row_label, seat_label, status)
+INSERT INTO room_seat (room_seat_id, layout_id, seat_type_id, seat_code, row_label, column_no, seat_label, sellable, status)
 SELECT X,
        1,
        CASE WHEN X > 90 THEN 3 WHEN X > 80 THEN 2 ELSE 1 END,
        SUBSTRING('ABCDEFGHIJ', CAST(FLOOR((X - 1) / 10) + 1 AS INTEGER), 1) || CAST(MOD(X - 1, 10) + 1 AS VARCHAR),
        SUBSTRING('ABCDEFGHIJ', CAST(FLOOR((X - 1) / 10) + 1 AS INTEGER), 1),
+       CAST(MOD(X - 1, 10) + 1 AS INTEGER),
        SUBSTRING('ABCDEFGHIJ', CAST(FLOOR((X - 1) / 10) + 1 AS INTEGER), 1) || CAST(MOD(X - 1, 10) + 1 AS VARCHAR),
+       'Y',
        'ACTIVE'
 FROM SYSTEM_RANGE(1, 100);
 
-INSERT INTO room_seat (room_seat_id, room_id, seat_type_id, seat_code, row_label, seat_label, status)
+INSERT INTO room_seat (room_seat_id, layout_id, seat_type_id, seat_code, row_label, column_no, seat_label, sellable, status)
 SELECT 100 + X, 4, CASE WHEN X > 40 THEN 3 WHEN X > 32 THEN 2 ELSE 1 END,
        SUBSTRING('ABCDEF', CAST(FLOOR((X - 1) / 8) + 1 AS INTEGER), 1) || CAST(MOD(X - 1, 8) + 1 AS VARCHAR),
        SUBSTRING('ABCDEF', CAST(FLOOR((X - 1) / 8) + 1 AS INTEGER), 1),
-       SUBSTRING('ABCDEF', CAST(FLOOR((X - 1) / 8) + 1 AS INTEGER), 1) || CAST(MOD(X - 1, 8) + 1 AS VARCHAR), 'ACTIVE'
+       CAST(MOD(X - 1, 8) + 1 AS INTEGER),
+       SUBSTRING('ABCDEF', CAST(FLOOR((X - 1) / 8) + 1 AS INTEGER), 1) || CAST(MOD(X - 1, 8) + 1 AS VARCHAR),
+       'Y',
+       'ACTIVE'
 FROM SYSTEM_RANGE(1, 48);
 INSERT INTO show_seat (show_seat_id, screening_id, room_seat_id, seat_status, seat_code_snapshot, row_label_snapshot, seat_label_snapshot, seat_type_code_snapshot)
 SELECT 200 + X, 5, 100 + X, 'AVAILABLE', rs.seat_code, rs.row_label, rs.seat_label,
@@ -151,6 +198,16 @@ VALUES (2, 1, 'PRIVACY', '2026-01', 'GRANTED', 'WEB');
 INSERT INTO user_cinema_scope (user_cinema_scope_id, app_user_id, cinema_id, created_by)
 VALUES (1, 2, 1, 2);
 
+INSERT INTO department (department_id, chain_id, department_code, department_name, status)
+VALUES (1, 1, 'OPS', 'Vận hành rạp', 'ACTIVE');
+INSERT INTO department (department_id, chain_id, department_code, department_name, status)
+VALUES (2, 1, 'FNB', 'Ẩm thực & Bán hàng', 'ACTIVE');
+
+INSERT INTO job_position (job_position_id, chain_id, position_code, position_name, status)
+VALUES (1, 1, 'CINEMA_MANAGER', 'Quản lý rạp', 'ACTIVE');
+INSERT INTO job_position (job_position_id, chain_id, position_code, position_name, status)
+VALUES (2, 1, 'STAFF_TICKETING', 'Nhân viên bán vé', 'ACTIVE');
+
 INSERT INTO employee (employee_id, chain_id, app_user_id, employee_code, full_name, phone, email, status, hired_on)
 VALUES (1, 1, 2, 'TF-HCM-0001', 'Trần Quốc Bảo', '09000000002', 'quocbao@example.test', 'ACTIVE', DATE '2025-06-01');
 INSERT INTO employee_assignment (employee_assignment_id, employee_id, cinema_id, job_position_id, valid_from, assignment_status, changed_by)
@@ -172,3 +229,19 @@ ALTER TABLE user_cinema_scope ALTER COLUMN user_cinema_scope_id BIGINT GENERATED
 ALTER TABLE employee ALTER COLUMN employee_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
 ALTER TABLE employee_assignment ALTER COLUMN employee_assignment_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
 ALTER TABLE audit_event ALTER COLUMN audit_event_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE org_chain ALTER COLUMN chain_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE legal_entity ALTER COLUMN legal_entity_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE cinema ALTER COLUMN cinema_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE room_type ALTER COLUMN room_type_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE seat_type ALTER COLUMN seat_type_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE cinema_room ALTER COLUMN room_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE room_layout ALTER COLUMN layout_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE room_seat ALTER COLUMN room_seat_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE film ALTER COLUMN film_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE film_version ALTER COLUMN film_version_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE screening ALTER COLUMN screening_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE film_release_right ALTER COLUMN release_right_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE department ALTER COLUMN department_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE job_position ALTER COLUMN job_position_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE ticket_scan_event ALTER COLUMN ticket_scan_event_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
+ALTER TABLE seat_maintenance ALTER COLUMN seat_maintenance_id BIGINT GENERATED BY DEFAULT AS IDENTITY (START WITH 1000);
