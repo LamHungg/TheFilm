@@ -1,0 +1,105 @@
+<div class="crm-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; CSKH</div>
+      <h1 class="page-title">CSKH, chatbot AI và quản lý yêu cầu</h1>
+      <p class="page-desc">
+        Hỗ trợ đa kênh · Tích hợp AI tự động phản hồi và phân luồng nghiệp vụ.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button">Tạo case</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- KPI Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Chat / Inbox Middle Layout -->
+  <div class="ops-middle-layout">
+    <!-- Conversation List -->
+    <div class="convo-list-card">
+      <h2 class="card-title-red">HỘP THƯ HỖ TRỢ</h2>
+      <div class="convo-items">
+        @for (c of conversations; track c.id; let i = $index) {
+          <div
+            class="convo-item"
+            [class.active]="c.active"
+            (click)="selectConvo(i)"
+          >
+            <div class="convo-header">
+              <span class="convo-id-name">{{ c.id }} · {{ c.customer }}</span>
+              <span class="convo-time">{{ c.time }}</span>
+            </div>
+            <p class="convo-preview">{{ c.preview }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Active Chat Panel -->
+    <div class="chat-panel-card">
+      <div class="chat-header">
+        <div class="chat-user-info">
+          <span class="user-title">TF-0382 · Minh Anh (0918 222 333)</span>
+          <span class="user-sub">Suất 18:10 · Mùa Hè Bất Tận · Ghế VIP 01</span>
+        </div>
+        <div class="chat-actions">
+          <button class="btn-sm-outline" type="button">Duyệt hoàn tiền</button>
+          <button class="btn-sm-danger" type="button">Đóng ticket</button>
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div class="messages-stream">
+        <div class="msg-bubble customer">
+          <div class="bubble-sender">Khách hàng · 16:42</div>
+          <p class="bubble-text">
+            Chào bạn, mình muốn hỗ trợ hoàn tiền vé suất 18:10 hôm nay do bận đột xuất. Mã vé của mình là TF-20261115-0982.
+          </p>
+        </div>
+
+        <div class="msg-bubble agent">
+          <div class="bubble-sender">TheFilm AI Bot · 16:42</div>
+          <p class="bubble-text">
+            Chào Minh Anh! Mình đang kiểm tra điều kiện của vé theo chính sách hủy vé trước 60 phút và sẽ cập nhật tiến độ ngay nhé.
+          </p>
+        </div>
+      </div>
+
+      <!-- Reply Box -->
+      <div class="reply-input-box">
+        <input
+          type="text"
+          class="reply-input"
+          [(ngModel)]="replyText"
+          placeholder="Nhập phản hồi cho khách hàng..."
+        />
+        <button class="btn-send" type="button">Gửi</button>
+      </div>
+    </div>
+  </div>
+</div>

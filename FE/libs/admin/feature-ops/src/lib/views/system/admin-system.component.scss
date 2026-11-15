@@ -1,0 +1,350 @@
+:host {
+  display: block;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.system-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.ops-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+
+  .breadcrumb-text {
+    font-size: 8px;
+    font-weight: 500;
+    color: #666b78;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1b21;
+    line-height: 1.25;
+    margin: 0 0 6px 0;
+  }
+
+  .page-desc {
+    font-size: 10px;
+    font-weight: 400;
+    color: #666b78;
+    margin: 0;
+  }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+
+  .btn-primary-action {
+    height: 38px;
+    width: 174px;
+    background-color: #c90e29;
+    border-radius: 99px;
+    border: none;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: #b00b23;
+    }
+  }
+}
+
+/* Filter Pills Bar */
+.filter-pills-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-pill {
+  height: 26px;
+  padding: 0 16px;
+  border-radius: 99px;
+  background-color: #ffffff;
+  border: 1px solid #e2e4e9;
+  font-size: 9px;
+  font-weight: 600;
+  color: #666b78;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #c90e29;
+    color: #c90e29;
+  }
+
+  &.active {
+    background-color: #ffedf0;
+    border-color: transparent;
+    color: #c90e29;
+  }
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  height: 82px;
+  background-color: #ffffff;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+
+  .kpi-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: #666b78;
+  }
+
+  .kpi-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1b21;
+    line-height: 1.2;
+  }
+
+  .kpi-delta {
+    font-size: 8px;
+    font-weight: 500;
+    color: #19875a;
+  }
+}
+
+/* Middle Layout */
+.ops-middle-layout {
+  display: grid;
+  grid-template-columns: 680fr 370fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.table-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  padding: 18px;
+  box-sizing: border-box;
+
+  .card-inner-table {
+    border: 1px solid #e2e4e9;
+    border-radius: 12px;
+    overflow: hidden;
+
+    .table-header-row {
+      height: 34px;
+      background-color: #f7f8fb;
+      display: grid;
+      grid-template-columns: 1.5fr 1.5fr 1.2fr 1fr;
+      align-items: center;
+      padding: 0 14px;
+
+      .col-head {
+        font-size: 9px;
+        font-weight: 600;
+        color: #666b78;
+        text-transform: uppercase;
+      }
+    }
+
+    .table-data-row {
+      height: 48px;
+      border-top: 1px solid #e2e4e9;
+      display: grid;
+      grid-template-columns: 1.5fr 1.5fr 1.2fr 1fr;
+      align-items: center;
+      padding: 0 14px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #fafbfc;
+      }
+
+      &.selected {
+        background-color: #fff9fa;
+      }
+
+      .col-cell {
+        font-size: 9px;
+        color: #1a1b21;
+
+        &.col-name {
+          font-weight: 500;
+        }
+
+        &.text-green {
+          color: #19875a;
+        }
+      }
+    }
+  }
+}
+
+.detail-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .detail-user-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1b21;
+      margin: 0;
+    }
+
+    .status-badge-active {
+      height: 24px;
+      padding: 0 12px;
+      background-color: #ffedf0;
+      border-radius: 99px;
+      font-size: 9px;
+      font-weight: 600;
+      color: #c90e29;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .detail-role-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: #666b78;
+    margin-bottom: 14px;
+  }
+
+  .permissions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+
+    .perm-item {
+      font-size: 9px;
+      font-weight: 400;
+      color: #1a1b21;
+      background-color: #f7f8fb;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+  }
+
+  .detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+
+    .btn-outline {
+      height: 34px;
+      flex: 1;
+      background-color: #ffffff;
+      border: 1px solid #e2e4e9;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #1a1b21;
+      cursor: pointer;
+
+      &:hover {
+        border-color: #c90e29;
+      }
+    }
+
+    .btn-outline-danger {
+      height: 34px;
+      flex: 1;
+      background-color: #ffffff;
+      border: 1px solid #c90e29;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #c90e29;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #ffedf0;
+      }
+    }
+  }
+}
+
+/* Security Config Card */
+.security-config-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-sizing: border-box;
+
+  .sec-heading {
+    font-size: 10px;
+    font-weight: 600;
+    color: #c90e29;
+    letter-spacing: 0.5px;
+    margin: 0 0 16px 0;
+  }
+
+  .sec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 24px;
+  }
+
+  .sec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .sec-label {
+      font-size: 9px;
+      font-weight: 500;
+      color: #666b78;
+    }
+
+    .sec-val {
+      font-size: 10px;
+      font-weight: 500;
+      color: #1a1b21;
+    }
+  }
+}

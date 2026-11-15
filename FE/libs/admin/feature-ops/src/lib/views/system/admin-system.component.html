@@ -1,0 +1,111 @@
+<div class="system-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; HỆ THỐNG</div>
+      <h1 class="page-title">Tài khoản và phân quyền</h1>
+      <p class="page-desc">
+        Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button">Mời nhân viên</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- KPI Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Middle Layout -->
+  <div class="ops-middle-layout">
+    <!-- Account Table -->
+    <div class="table-card">
+      <div class="card-inner-table">
+        <div class="table-header-row">
+          <div class="col-head col-name">HỌ TÊN</div>
+          <div class="col-head col-email">EMAIL</div>
+          <div class="col-head col-role">VAI TRÒ</div>
+          <div class="col-head col-status">TRẠNG THÁI</div>
+        </div>
+
+        <div class="table-body">
+          @for (acc of accounts; track acc.email) {
+            <div class="table-data-row" [class.selected]="acc.active">
+              <div class="col-cell col-name">{{ acc.name }}</div>
+              <div class="col-cell col-email">{{ acc.email }}</div>
+              <div class="col-cell col-role">{{ acc.role }}</div>
+              <div class="col-cell col-status text-green">{{ acc.status }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Role Detail Card -->
+    <div class="detail-card">
+      <div class="detail-header">
+        <h2 class="detail-user-name">Trần Quốc Bảo</h2>
+        <div class="status-badge-active">HOẠT ĐỘNG</div>
+      </div>
+
+      <div class="detail-role-title">Vai trò: Quản lý chi nhánh</div>
+
+      <div class="permissions-list">
+        <div class="perm-item">✓ Quản lý suất chiếu & mở bán vé</div>
+        <div class="perm-item">✓ Duyệt yêu cầu hoàn tiền tại rạp</div>
+        <div class="perm-item">✓ Phân công ca làm việc nhân sự</div>
+        <div class="perm-item">✓ Xem báo cáo doanh thu chi nhánh</div>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn-outline" type="button">Sửa phạm vi rạp</button>
+        <button class="btn-outline-danger" type="button">Khóa / thu hồi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Config Card (OIDC) -->
+  <section class="security-config-card">
+    <h2 class="sec-heading">CẤU HÌNH ĐỊNH DANH & KIỂM TRA TOKEN</h2>
+    <div class="sec-grid">
+      <div class="sec-item">
+        <span class="sec-label">Identity Provider</span>
+        <span class="sec-val">Keycloak Realm / OIDC 2.0 (Active)</span>
+      </div>
+      <div class="sec-item">
+        <span class="sec-label">Token Algorithm</span>
+        <span class="sec-val">RS256 with JWKS Rotation</span>
+      </div>
+      <div class="sec-item">
+        <span class="sec-label">Access Token Lifetime</span>
+        <span class="sec-val">15 phút (Refresh: 7 ngày)</span>
+      </div>
+      <div class="sec-item">
+        <span class="sec-label">MFA Enforcement</span>
+        <span class="sec-val">Bắt buộc cho Quản lý & Kế toán</span>
+      </div>
+    </div>
+  </section>
+</div>

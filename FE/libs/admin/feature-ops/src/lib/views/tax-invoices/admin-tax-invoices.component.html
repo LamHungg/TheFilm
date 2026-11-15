@@ -1,0 +1,69 @@
+<div class="tax-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; THUẾ & HÓA ĐƠN</div>
+      <h1 class="page-title">Hóa đơn và mô phỏng thuế Việt Nam</h1>
+      <p class="page-desc">
+        Hóa đơn điện tử khởi tạo từ máy tính tiền · Tích hợp truyền nhận dữ liệu CQT theo NĐ 123/2020/NĐ-CP.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button">Tạo hóa đơn demo</button>
+    </div>
+  </header>
+
+  <!-- Filter Pills Bar -->
+  <div class="filter-pills-bar">
+    @for (tab of tabs; track tab.label; let i = $index) {
+      <button
+        class="filter-pill"
+        [class.active]="tab.active"
+        (click)="selectTab(i)"
+        type="button"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- KPI Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Invoices Table Card -->
+  <div class="table-card">
+    <div class="card-inner-table">
+      <div class="table-header-row">
+        <div class="col-head col-code">MÃ HĐ</div>
+        <div class="col-head col-cust">KHÁCH HÀNG</div>
+        <div class="col-head col-total">TỔNG TIỀN</div>
+        <div class="col-head col-rate">THUẾ SUẤT</div>
+        <div class="col-head col-vat">TIỀN THUẾ GTGT</div>
+        <div class="col-head col-status">TRẠNG THÁI CQT</div>
+      </div>
+
+      <div class="table-body">
+        @for (inv of invoices; track inv.code) {
+          <div class="table-data-row">
+            <div class="col-cell col-code font-medium">{{ inv.code }}</div>
+            <div class="col-cell col-cust">{{ inv.customer }}</div>
+            <div class="col-cell col-total font-bold">{{ inv.total }}</div>
+            <div class="col-cell col-rate">{{ inv.vatRate }}</div>
+            <div class="col-cell col-vat">{{ inv.vatAmount }}</div>
+            <div class="col-cell col-status" [class.text-green]="inv.isGreen" [class.text-warning]="!inv.isGreen">
+              {{ inv.status }}
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

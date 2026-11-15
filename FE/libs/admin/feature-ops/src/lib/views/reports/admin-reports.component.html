@@ -1,0 +1,70 @@
+<div class="reports-view">
+  <!-- Header -->
+  <header class="ops-page-header">
+    <div class="header-left">
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; BÁO CÁO</div>
+      <h1 class="page-title">Báo cáo, đối soát và kiểm soát</h1>
+      <p class="page-desc">
+        Hệ thống dữ liệu BI vận hành tập trung · Tự động đối soát cổng thanh toán, thuế và F&B.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary-action" type="button">Xuất báo cáo</button>
+    </div>
+  </header>
+
+  <!-- Filter Bar -->
+  <div class="report-filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Kỳ</span>
+      <div class="filter-input-box">01/11/2026 – 15/11/2026  ⌄</div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Rạp</span>
+      <div class="filter-input-box">Theo quyền được cấp (Toàn chuỗi)  ⌄</div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Báo cáo</span>
+      <div class="filter-input-box">Báo cáo doanh thu & lấp đầy tổng hợp  ⌄</div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-apply-filter" type="button">Áp dụng lọc</button>
+    </div>
+  </div>
+
+  <!-- KPI Grid -->
+  <section class="kpi-grid">
+    @for (kpi of kpis; track kpi.label) {
+      <div class="kpi-card">
+        <span class="kpi-label">{{ kpi.label }}</span>
+        <span class="kpi-value">{{ kpi.value }}</span>
+        <span class="kpi-delta">{{ kpi.delta }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Reports Table Card -->
+  <div class="table-card">
+    <div class="card-inner-table">
+      <div class="table-header-row">
+        <div class="col-head col-cinema">PHÂN LOẠI / RẠP</div>
+        <div class="col-head col-ticket">DOANH THU VÉ</div>
+        <div class="col-head col-fnb">DOANH THU F&B</div>
+        <div class="col-head col-occupancy">LẤP ĐẦY</div>
+        <div class="col-head col-profit">LỢI NHUẬN GỘP</div>
+      </div>
+
+      <div class="table-body">
+        @for (row of reportsData; track row.cinema) {
+          <div class="table-data-row">
+            <div class="col-cell col-cinema font-medium">{{ row.cinema }}</div>
+            <div class="col-cell col-ticket font-bold">{{ row.ticketRev }}</div>
+            <div class="col-cell col-fnb">{{ row.fnbRev }}</div>
+            <div class="col-cell col-occupancy text-green">{{ row.occupancy }}</div>
+            <div class="col-cell col-profit font-bold text-red">{{ row.grossProfit }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
