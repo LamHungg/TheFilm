@@ -2,7 +2,7 @@
 
 This folder contains the first Oracle schema baseline for the cinema chain system. The migration files are numbered and Flyway-compatible. They are designed for Oracle Database 19c or newer and use Oracle identity columns.
 
-For a single-file setup on a clean development schema, use `THEFILM_ORACLE_FULL_SCHEMA.sql`. It contains the same DDL and comments as the four migrations below, concatenated in dependency order. Do not apply the full script and the migration files to the same schema; choose one approach. For the future Spring Boot application, use the versioned migrations so Flyway can track upgrades.
+For a single-file setup on a clean development schema, use `THEFILM_ORACLE_FULL_SCHEMA.sql`. It contains the schema DDL and four MoMo-based demo films with their required age and genre lookups. Do not apply the full script and the migration files to the same schema; choose one approach. `V006__film_metadata_and_momo_samples.sql` is the upgrade path for an existing schema created before the film metadata fields; it adds four separate `DEMO-MOMO-*` sample films without overwriting existing film records. The application's Oracle profile currently leaves Flyway disabled, so run V006 manually in SQL Developer against an existing development schema.
 
 ## Migrations
 

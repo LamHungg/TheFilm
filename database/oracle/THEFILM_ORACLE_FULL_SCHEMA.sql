@@ -307,6 +307,14 @@ CREATE TABLE film (
     age_classification_id NUMBER(19),
     poster_uri           VARCHAR2(1000 CHAR),
     trailer_uri          VARCHAR2(1000 CHAR),
+    release_date         DATE,
+    director             VARCHAR2(300 CHAR),
+    cast_names           VARCHAR2(2000 CHAR),
+    external_rating_score NUMBER(3,1),
+    external_rating_count NUMBER(10),
+    external_rating_source VARCHAR2(80 CHAR),
+    external_rating_uri  VARCHAR2(1000 CHAR),
+    external_rating_updated_at TIMESTAMP WITH TIME ZONE,
     approval_status      VARCHAR2(20 CHAR) DEFAULT 'DRAFT' NOT NULL,
     created_at           TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
     updated_at           TIMESTAMP WITH TIME ZONE DEFAULT SYSTIMESTAMP NOT NULL,
@@ -314,6 +322,8 @@ CREATE TABLE film (
     CONSTRAINT uq_film_code UNIQUE (film_code),
     CONSTRAINT fk_film_age FOREIGN KEY (age_classification_id) REFERENCES age_classification (age_classification_id),
     CONSTRAINT ck_film_runtime CHECK (runtime_minutes > 0),
+    CONSTRAINT ck_film_ext_rating CHECK (external_rating_score IS NULL OR external_rating_score BETWEEN 0 AND 10),
+    CONSTRAINT ck_film_ext_rating_count CHECK (external_rating_count IS NULL OR external_rating_count >= 0),
     CONSTRAINT ck_film_approval CHECK (approval_status IN ('DRAFT', 'PENDING', 'APPROVED', 'ARCHIVED'))
 );
 
@@ -2471,3 +2481,109 @@ COMMENT ON COLUMN sales_order_line.inventory_location_id IS 'Kho/quầy xuất s
 COMMENT ON COLUMN room_capability.valid_from_utc IS 'Thời điểm bắt đầu hiệu lực quy đổi UTC, tự sinh từ valid_from để tạo khóa và chống trùng cùng thời điểm giữa các múi giờ.';
 COMMENT ON COLUMN fnb_recipe_component.valid_from_utc IS 'Thời điểm bắt đầu hiệu lực quy đổi UTC, tự sinh từ valid_from để tạo khóa và chống trùng cùng thời điểm giữa các múi giờ.';
 COMMENT ON COLUMN app_setting.valid_from_utc IS 'Thời điểm bắt đầu hiệu lực quy đổi UTC, tự sinh từ valid_from để tạo khóa và chống trùng cùng thời điểm giữa các múi giờ.';
+
+-- Dữ liệu mẫu phim MoMo Cinema (snapshot 2026-11-16; điểm/lượt đánh giá không đồng bộ trực tiếp).
+-- Poster ngoài có thể thay đổi hoặc chặn hotlink; chuyển poster sang kho media THEFILM khi dùng lâu dài.
+MERGE INTO age_classification target
+USING (
+    SELECT 'T13' classification_code, 'T13 - Từ đủ 13 tuổi' display_name, 13 minimum_age,
+           'Phim phổ biến đến khán giả từ đủ 13 tuổi trở lên.' description FROM dual UNION ALL
+    SELECT 'T16', 'T16 - Từ đủ 16 tuổi', 16,
+           'Phim phổ biến đến khán giả từ đủ 16 tuổi trở lên.' FROM dual UNION ALL
+    SELECT 'T18', 'T18 - Từ đủ 18 tuổi', 18,
+           'Phim phổ biến đến khán giả từ đủ 18 tuổi trở lên.' FROM dual
+) src
+ON (target.classification_code = src.classification_code)
+WHEN MATCHED THEN UPDATE SET target.display_name = src.display_name,
+    target.minimum_age = src.minimum_age, target.description = src.description, target.status = 'ACTIVE'
+WHEN NOT MATCHED THEN INSERT (classification_code, display_name, minimum_age, description, status)
+    VALUES (src.classification_code, src.display_name, src.minimum_age, src.description, 'ACTIVE');
+
+MERGE INTO film_genre target
+USING (
+    SELECT 'ACTION' genre_code, 'Hành động' genre_name FROM dual UNION ALL
+    SELECT 'COMEDY', 'Hài' FROM dual UNION ALL
+    SELECT 'DRAMA', 'Chính kịch' FROM dual UNION ALL
+    SELECT 'FAMILY', 'Gia đình' FROM dual UNION ALL
+    SELECT 'SCIFI', 'Khoa học viễn tưởng' FROM dual
+) src
+ON (target.genre_code = src.genre_code)
+WHEN MATCHED THEN UPDATE SET target.genre_name = src.genre_name, target.status = 'ACTIVE'
+WHEN NOT MATCHED THEN INSERT (genre_code, genre_name, status)
+    VALUES (src.genre_code, src.genre_name, 'ACTIVE');
+
+DECLARE
+    PROCEDURE merge_demo_film(
+        p_code VARCHAR2, p_title VARCHAR2, p_original VARCHAR2, p_synopsis VARCHAR2,
+        p_runtime NUMBER, p_age_code VARCHAR2, p_release_date DATE, p_director VARCHAR2,
+        p_cast VARCHAR2, p_poster VARCHAR2, p_trailer VARCHAR2, p_score NUMBER,
+        p_rating_count NUMBER, p_rating_uri VARCHAR2, p_genres VARCHAR2
+    ) IS
+        v_film_id film.film_id%TYPE;
+        v_age_id age_classification.age_classification_id%TYPE;
+    BEGIN
+        SELECT age_classification_id INTO v_age_id
+        FROM age_classification WHERE classification_code = p_age_code;
+        MERGE INTO film f
+        USING (SELECT p_code film_code FROM dual) src
+        ON (f.film_code = src.film_code)
+        WHEN MATCHED THEN UPDATE SET
+            f.title_local = p_title, f.title_original = p_original, f.synopsis = p_synopsis,
+            f.runtime_minutes = p_runtime, f.age_classification_id = v_age_id, f.poster_uri = p_poster,
+            f.trailer_uri = p_trailer, f.release_date = p_release_date, f.director = p_director,
+            f.cast_names = p_cast, f.external_rating_score = p_score, f.external_rating_count = p_rating_count,
+            f.external_rating_source = 'MoMo Cinema', f.external_rating_uri = p_rating_uri,
+            f.external_rating_updated_at = TO_TIMESTAMP_TZ(
+                '2026-11-16 00:00:00 +07:00', 'YYYY-MM-DD HH24:MI:SS TZH:TZM')
+        WHEN NOT MATCHED THEN INSERT (
+            film_code, title_local, title_original, synopsis, runtime_minutes, age_classification_id,
+            poster_uri, trailer_uri, release_date, director, cast_names, external_rating_score,
+            external_rating_count, external_rating_source, external_rating_uri,
+            external_rating_updated_at, approval_status
+        ) VALUES (
+            p_code, p_title, p_original, p_synopsis, p_runtime, v_age_id, p_poster, p_trailer,
+            p_release_date, p_director, p_cast, p_score, p_rating_count, 'MoMo Cinema', p_rating_uri,
+            TO_TIMESTAMP_TZ('2026-11-16 00:00:00 +07:00', 'YYYY-MM-DD HH24:MI:SS TZH:TZM'), 'APPROVED'
+        );
+        SELECT film_id INTO v_film_id FROM film WHERE film_code = p_code;
+        DELETE FROM film_genre_map WHERE film_id = v_film_id;
+        FOR g IN (
+            SELECT TRIM(REGEXP_SUBSTR(p_genres, '[^,]+', 1, LEVEL)) code
+            FROM dual CONNECT BY REGEXP_SUBSTR(p_genres, '[^,]+', 1, LEVEL) IS NOT NULL
+        ) LOOP
+            INSERT INTO film_genre_map (film_id, genre_id)
+            SELECT v_film_id, genre_id FROM film_genre WHERE genre_code = g.code;
+        END LOOP;
+    END;
+BEGIN
+    merge_demo_film('DEMO-MOMO-001', 'Ngày Con Còn Mẹ', 'Ngày Con Còn Mẹ',
+        'Một gia đình đối diện những tổn thương cũ và tìm cách hàn gắn khi biến cố sức khỏe làm thay đổi vai trò của mỗi người.',
+        113, 'T16', DATE '2026-11-11', 'Vũ Ngọc Đãng',
+        'Hồng Đào, Phương Anh Đào, Trần Huy Anh, Nguyên Thảo, Ma Ran Đô, Quỳnh Lương',
+        'https://cinema.momocdn.net/convert-webp/img/4986547019998252-1200wx1600h.jpg?size=S',
+        'https://www.youtube.com/watch?v=c4zgZ2s5N_Y', 9, 1142,
+        'https://www.momo.vn/cinema/ngay-con-con-me-25093', 'FAMILY,DRAMA');
+    merge_demo_film('DEMO-MOMO-002', 'Bò Sữa Bay', 'Flying Cows',
+        'Một nhóm anh em lên kế hoạch đánh cắp công thức sữa bí mật, rồi bị cuốn vào những lựa chọn giữa gia đình và tình cảm.',
+        108, 'T18', DATE '2026-11-06', 'Nguyễn Phạm Thành Đạt',
+        'Nguyễn Hùng, Ngọc Xuân, Võ Điền Gia Huy, Trần Tiểu Vy, Trần Gia Huy, Lãnh Thanh',
+        'https://cinema.momocdn.net/convert-webp/img/4904564921820363-bsb_1200x1600.png?size=S',
+        'https://www.youtube.com/watch?v=2Y8yw8bAG1o', 10, 1744,
+        'https://www.momo.vn/cinema/bo-sua-bay-25058', 'DRAMA');
+    merge_demo_film('DEMO-MOMO-003', 'Godzilla Trừ Không', 'Godzilla Minus Zero',
+        'Trong một xã hội hậu chiến đang tái thiết, sự trở lại của Godzilla đẩy con người vào một cuộc chiến sinh tồn mới.',
+        135, 'T13', DATE '2026-11-06', 'Takashi Yamazaki',
+        'Ryunosuke Kamiki, Minami Hamabe',
+        'https://cinema.momocdn.net/convert-webp/img/2404819473541948-godzzzzz.jpg?size=S',
+        'https://www.youtube.com/watch?v=Xmy-Z3dHMd8', 10, 1996,
+        'https://www.momo.vn/cinema/godzilla-tru-khong-25137', 'SCIFI,ACTION,DRAMA');
+    merge_demo_film('DEMO-MOMO-004', 'Trại Giam Hạnh Phúc', 'The Happiest Cell',
+        'Một người thầy phải thích nghi với cuộc sống trong buồng giam và tìm cách giữ lòng nhân hậu giữa những xung đột.',
+        123, 'T16', DATE '2026-11-20', 'Nguyễn Nhất Trung',
+        'Tuấn Trần, Lương Thế Thành, Ma Ran Đô, Tiến Luật, La Thành, Lê Quốc Thuận, Hoàng Phi, Võ Văn Điền, Khuyến Dương, Gi-A Nguyễn',
+        'https://cinema.momocdn.net/convert-webp/img/3867294930842850-tghp.jpg?size=S',
+        'https://www.youtube.com/watch?v=rG3MuGSBY5k', 10, 26,
+        'https://www.momo.vn/cinema/trai-giam-hanh-phuc-25162', 'DRAMA,FAMILY,COMEDY');
+END;
+/
+COMMIT;
