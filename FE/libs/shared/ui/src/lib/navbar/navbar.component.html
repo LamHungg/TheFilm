@@ -13,7 +13,6 @@
         <a routerLink="/member" routerLinkActive="active" class="nav-item">THÀNH VIÊN</a>
         <a routerLink="/movies" [fragment]="'uu-dai'" routerLinkActive="active" class="nav-item">ƯU ĐÃI</a>
         <a routerLink="/support" routerLinkActive="active" class="nav-item">TRỢ GIÚP</a>
-        <a routerLink="/admin" class="nav-item nav-admin-badge" title="Chuyển sang Cổng Quản Trị">QUẢN TRỊ ⚙</a>
       </nav>
     </div>
 
@@ -103,7 +102,6 @@
         <a routerLink="/my-tickets" (click)="closeMobileMenu()" routerLinkActive="active">Vé của tôi</a>
         <a routerLink="/member" (click)="closeMobileMenu()" routerLinkActive="active">Thành viên & Điểm thưởng</a>
         <a routerLink="/support" (click)="closeMobileMenu()" routerLinkActive="active">Trợ giúp & Chatbot AI</a>
-        <a routerLink="/admin" (click)="closeMobileMenu()" class="drawer-admin-link">⚙ Cổng Quản trị (Admin Operations)</a>
         <ng-container *ngIf="authService.isAuthenticated(); else drawerLogin">
           <a routerLink="/member" (click)="closeMobileMenu()" routerLinkActive="active">
             {{ authService.currentUser()?.displayName || authService.currentUser()?.email || 'Tài khoản' }}

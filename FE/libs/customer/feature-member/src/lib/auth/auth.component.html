@@ -55,9 +55,28 @@
         <span>{{ loadingMessage }}</span>
       </div>
 
-      <!-- FORM: ĐĂNG NHẬP (LOGIN) -->
+      <div *ngIf="usesOidc" class="tix-form">
+        <p class="tix-switch-hint">
+          {{ isLoginMode
+            ? 'Đăng nhập an toàn bằng tài khoản THEFILM.'
+            : 'Tạo tài khoản thành viên qua dịch vụ đăng nhập THEFILM.' }}
+        </p>
+        <div class="tix-actions">
+          <button type="button" class="tix-btn-primary" [disabled]="isLoading" (click)="startOidcFlow()">
+            {{ isLoginMode ? 'Tiếp tục đăng nhập' : 'Tạo tài khoản' }}
+          </button>
+          <p class="tix-switch-hint">
+            {{ isLoginMode ? 'Chưa có tài khoản?' : 'Đã có tài khoản?' }}
+          </p>
+          <button type="button" class="tix-btn-secondary" [disabled]="isLoading" (click)="setMode(!isLoginMode)">
+            {{ isLoginMode ? 'Đăng ký ngay' : 'Đăng nhập ngay' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- FORM: ĐĂNG NHẬP CỤC BỘ (chỉ dùng khi không cấu hình OIDC) -->
       <form
-        *ngIf="isLoginMode"
+        *ngIf="isLoginMode && !usesOidc"
         class="tix-form"
         (ngSubmit)="submitLogin()"
         autocomplete="on"
@@ -135,9 +154,9 @@
         </div>
       </form>
 
-      <!-- FORM: ĐĂNG KÝ (REGISTER) -->
+      <!-- FORM: ĐĂNG KÝ CỤC BỘ (chỉ dùng khi không cấu hình OIDC) -->
       <form
-        *ngIf="!isLoginMode"
+        *ngIf="!isLoginMode && !usesOidc"
         class="tix-form"
         (ngSubmit)="submitRegister()"
         autocomplete="on"

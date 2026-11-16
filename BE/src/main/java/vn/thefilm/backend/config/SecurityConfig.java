@@ -32,7 +32,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
@@ -45,7 +44,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import vn.thefilm.backend.dto.ApiResponse;
 import vn.thefilm.backend.security.JwtService;
-import vn.thefilm.backend.security.KeycloakJwtAuthenticationConverter;
+import vn.thefilm.backend.security.DatabaseJwtAuthenticationFilter;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.security.UserAccountStatusFilter;
 
@@ -147,10 +146,11 @@ public class SecurityConfig {
     @Profile("oracle & !devauth")
     SecurityFilterChain oracleSecurityFilterChain(
             HttpSecurity http,
-            KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter,
+            JwtService jwtService,
             UserAccountStatusFilter userAccountStatusFilter,
             ObjectMapper objectMapper) throws Exception {
         AuthenticationEntryPoint authenticationEntryPoint = apiAuthenticationEntryPoint(objectMapper);
+        DatabaseJwtAuthenticationFilter jwtAuthenticationFilter = new DatabaseJwtAuthenticationFilter(jwtService);
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -163,10 +163,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/public/**", "/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/customer/**").hasRole("CUSTOMER")
                         .anyRequest().authenticated())
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtAuthenticationConverter)))
-                .addFilterAfter(userAccountStatusFilter, BearerTokenAuthenticationFilter.class)
+                .addFilterBefore(new DevAdminAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(userAccountStatusFilter, DatabaseJwtAuthenticationFilter.class)
                 .build();
     }
 

@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "prestart": "node scripts/ensure-ngrok.js",
     "start": "nx serve customer-portal",
+    "tunnel": "node scripts/ensure-ngrok.js",
     "build": "nx build customer-portal",
     "build:prod": "nx build customer-portal --configuration=production",
     "lint": "nx run-many -t lint"

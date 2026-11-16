@@ -43,6 +43,10 @@ export class AuthComponent implements OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private redirectTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  get usesOidc(): boolean {
+    return this.authService.isOidcConfigured();
+  }
+
   constructor() {
     if (this.authService.isAuthenticated()) {
       queueMicrotask(() => void this.navigateToMember());
@@ -57,6 +61,25 @@ export class AuthComponent implements OnDestroy {
     if (this.isLoading) return;
     this.isLoginMode = isLoginMode;
     this.errorMessage = '';
+  }
+
+  startOidcFlow(): void {
+    if (this.isLoading) return;
+    this.errorMessage = '';
+    this.isLoading = true;
+    this.loadingMessage = this.isLoginMode
+      ? 'Đang chuyển đến đăng nhập an toàn…'
+      : 'Đang chuyển đến đăng ký tài khoản…';
+
+    const flow = this.isLoginMode ? this.authService.login() : this.authService.register();
+    void flow.catch((error: unknown) => {
+      this.isLoading = false;
+      this.loadingMessage = '';
+      this.errorMessage = error instanceof Error
+        ? error.message
+        : 'Không thể kết nối dịch vụ đăng nhập. Vui lòng thử lại.';
+      this.cdr.markForCheck();
+    });
   }
 
   togglePasswordVisibility(): void {

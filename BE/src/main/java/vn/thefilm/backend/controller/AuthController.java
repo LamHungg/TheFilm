@@ -12,8 +12,7 @@ import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.CustomerAccountService;
 
 /**
- * Endpoint dùng chung mọi profile. Đăng ký/đăng nhập thử nghiệm nằm ở LocalAuthController (chỉ profile local);
- * profile oracle xác thực qua Keycloak.
+ * Endpoint hồ sơ dùng chung mọi profile; đăng ký và đăng nhập được xử lý bởi LocalAuthController.
  */
 @RestController
 @RequestMapping("/api/v1/auth")

@@ -123,6 +123,10 @@ export class AuthService {
     return this.startOidcFlow('register');
   }
 
+  isOidcConfigured(): boolean {
+    return Boolean(this.config.issuer?.trim() && this.config.clientId?.trim());
+  }
+
   registerWithCredentials(payload: {
     email: string;
     password: string;

@@ -7,12 +7,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/**
- * Lưu mật khẩu đăng nhập thử nghiệm, chỉ tồn tại ở profile local (H2).
- * Ở profile oracle, danh tính và mật khẩu do Keycloak quản lý nên bean này không được tạo.
- */
+/** Stores only BCrypt password hashes for database-backed customer authentication. */
 @Repository
-@Profile("local")
+@Profile({"local", "oracle"})
 public class LocalCredentialRepository {
 
     private final JdbcTemplate jdbcTemplate;

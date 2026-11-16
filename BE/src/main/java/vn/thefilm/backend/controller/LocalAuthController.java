@@ -7,6 +7,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,11 +30,10 @@ import vn.thefilm.backend.security.JwtService;
 import vn.thefilm.backend.service.CustomerAccountService;
 
 /**
- * Đăng ký/đăng nhập thử nghiệm, chỉ bật ở profile local.
- * Profile oracle dùng Keycloak (OpenID Connect) nên không có các endpoint này.
+ * Đăng ký/đăng nhập bằng tài khoản lưu trong cơ sở dữ liệu.
  */
 @RestController
-@Profile("local")
+@Profile({"local", "oracle"})
 @RequestMapping("/api/v1/auth")
 public class LocalAuthController {
 
@@ -43,6 +43,7 @@ public class LocalAuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CustomerAccountService customerAccountService;
+    private final String authIssuer;
 
     public LocalAuthController(
             AppUserRepository appUserRepository,
@@ -50,13 +51,15 @@ public class LocalAuthController {
             EntityManager entityManager,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            CustomerAccountService customerAccountService) {
+            CustomerAccountService customerAccountService,
+            @Value("${app.security.jwt.issuer:http://localhost:8080/auth}") String authIssuer) {
         this.appUserRepository = appUserRepository;
         this.credentialRepository = credentialRepository;
         this.entityManager = entityManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.customerAccountService = customerAccountService;
+        this.authIssuer = authIssuer;
     }
 
     @PostMapping("/register")
@@ -72,7 +75,7 @@ public class LocalAuthController {
         String phone = request.phone() == null || request.phone().isBlank() ? null : request.phone().trim();
 
         AppUserEntity user = new AppUserEntity(
-                "http://localhost:8080/auth",
+                authIssuer,
                 email,
                 displayName,
                 email,
