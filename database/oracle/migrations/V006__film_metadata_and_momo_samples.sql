@@ -19,6 +19,34 @@ ALTER TABLE film ADD CONSTRAINT ck_film_ext_rating
 ALTER TABLE film ADD CONSTRAINT ck_film_ext_rating_count
     CHECK (external_rating_count IS NULL OR external_rating_count >= 0);
 
+MERGE INTO age_classification target
+USING (
+    SELECT 'T13' classification_code, 'T13 - Từ đủ 13 tuổi' display_name, 13 minimum_age,
+           'Phim phổ biến đến khán giả từ đủ 13 tuổi trở lên.' description FROM dual UNION ALL
+    SELECT 'T16', 'T16 - Từ đủ 16 tuổi', 16,
+           'Phim phổ biến đến khán giả từ đủ 16 tuổi trở lên.' FROM dual UNION ALL
+    SELECT 'T18', 'T18 - Từ đủ 18 tuổi', 18,
+           'Phim phổ biến đến khán giả từ đủ 18 tuổi trở lên.' FROM dual
+) src
+ON (target.classification_code = src.classification_code)
+WHEN MATCHED THEN UPDATE SET target.display_name = src.display_name,
+    target.minimum_age = src.minimum_age, target.description = src.description, target.status = 'ACTIVE'
+WHEN NOT MATCHED THEN INSERT (classification_code, display_name, minimum_age, description, status)
+    VALUES (src.classification_code, src.display_name, src.minimum_age, src.description, 'ACTIVE');
+
+MERGE INTO film_genre target
+USING (
+    SELECT 'ACTION' genre_code, 'Hành động' genre_name FROM dual UNION ALL
+    SELECT 'COMEDY', 'Hài' FROM dual UNION ALL
+    SELECT 'DRAMA', 'Chính kịch' FROM dual UNION ALL
+    SELECT 'FAMILY', 'Gia đình' FROM dual UNION ALL
+    SELECT 'SCIFI', 'Khoa học viễn tưởng' FROM dual
+) src
+ON (target.genre_code = src.genre_code)
+WHEN MATCHED THEN UPDATE SET target.genre_name = src.genre_name, target.status = 'ACTIVE'
+WHEN NOT MATCHED THEN INSERT (genre_code, genre_name, status)
+    VALUES (src.genre_code, src.genre_name, 'ACTIVE');
+
 DECLARE
     PROCEDURE update_demo_film(
         p_code VARCHAR2, p_title VARCHAR2, p_original VARCHAR2, p_synopsis VARCHAR2,
