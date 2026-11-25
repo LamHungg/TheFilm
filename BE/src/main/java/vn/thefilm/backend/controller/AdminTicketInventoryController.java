@@ -15,7 +15,7 @@ import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.*;
 
 @RestController @Validated @RequestMapping("/api/v1/admin/ticket-inventory")
-@PreAuthorize("hasAnyRole('CHAIN_ADMIN','CINEMA_MANAGER','CASHIER')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'TICKETING')")
 public class AdminTicketInventoryController {
     private final TicketInventoryService service;
     public AdminTicketInventoryController(TicketInventoryService service) { this.service=service; }
@@ -27,12 +27,12 @@ public class AdminTicketInventoryController {
     }
     @GetMapping("/screenings/{id}")
     public ApiResponse<InventoryDetail> detail(Authentication auth,@PathVariable @Positive Long id) { return ApiResponse.success(service.detail(auth,id)); }
-    @PostMapping("/screenings/{id}/block") @PreAuthorize("hasAnyRole('CHAIN_ADMIN','CINEMA_MANAGER')")
+    @PostMapping("/screenings/{id}/block") @PreAuthorize("@adminModuleAccess.canAccess(authentication, 'TICKETING')")
     public ApiResponse<InventoryDetail> block(Authentication auth,@PathVariable @Positive Long id,@Valid @RequestBody SeatChangeRequest r,
             @AuthenticationPrincipal TheFilmUserPrincipal p,@RequestHeader(value="X-Request-Id",required=false) String trace,HttpServletRequest http) {
         return ApiResponse.success(service.change(auth,id,r,true,AdminActionContext.of(p,trace,http.getRemoteAddr())));
     }
-    @PostMapping("/screenings/{id}/unblock") @PreAuthorize("hasAnyRole('CHAIN_ADMIN','CINEMA_MANAGER')")
+    @PostMapping("/screenings/{id}/unblock") @PreAuthorize("@adminModuleAccess.canAccess(authentication, 'TICKETING')")
     public ApiResponse<InventoryDetail> unblock(Authentication auth,@PathVariable @Positive Long id,@Valid @RequestBody SeatChangeRequest r,
             @AuthenticationPrincipal TheFilmUserPrincipal p,@RequestHeader(value="X-Request-Id",required=false) String trace,HttpServletRequest http) {
         return ApiResponse.success(service.change(auth,id,r,false,AdminActionContext.of(p,trace,http.getRemoteAddr())));
