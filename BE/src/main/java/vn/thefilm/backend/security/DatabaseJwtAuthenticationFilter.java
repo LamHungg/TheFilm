@@ -46,12 +46,19 @@ public final class DatabaseJwtAuthenticationFilter extends OncePerRequestFilter 
                         .issuedAt(now)
                         .expiresAt(Date.from(now.plusSeconds(jwtService.getExpirationSeconds())).toInstant())
                         .claim("app_user_id", principal.appUserId())
+                        .claim("account_type", principal.accountType())
+                        .claim("staff_account_id", principal.staffAccountId())
                         .claim("email", principal.email())
                         .claim("name", principal.displayName())
                         .build();
+                List<SimpleGrantedAuthority> authorities = principal.roles().stream()
+                        .filter(role -> role != null && role.matches("ROLE_[A-Z0-9_]+"))
+                        .distinct()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList();
                 JwtAuthenticationToken authentication = new JwtAuthenticationToken(
                         jwt,
-                        List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER")),
+                        authorities,
                         principal.oidcSubject()) {
                     @Override
                     public Object getPrincipal() {

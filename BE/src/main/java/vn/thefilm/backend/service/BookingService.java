@@ -16,9 +16,13 @@ public interface BookingService {
 
     HoldSeatsResponse holdSeats(Long screeningId, HoldSeatsRequest request);
 
+    HoldSeatsResponse holdCounterSeats(Long screeningId, HoldSeatsRequest request, Long createdBy);
+
     void releaseSeats(Long salesOrderId, String holdToken, List<Long> showSeatIds);
 
     OrderResponse createOrder(CreateOrderRequest request);
+    default OrderResponse createOrder(CreateOrderRequest request, Long appUserId) { return createOrder(request); }
+    OrderResponse createCounterOrder(CreateOrderRequest request, Long createdBy);
     PaymentResponse processPayment(String orderCode, PaymentRequest request);
     OrderResponse getOrderDetails(String orderCode);
     List<TicketResponse> getTickets(String orderCode);

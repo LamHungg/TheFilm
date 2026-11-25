@@ -47,6 +47,7 @@ import vn.thefilm.backend.repository.SeatBasePriceProjection;
 import vn.thefilm.backend.repository.SeatHoldRepository;
 import vn.thefilm.backend.repository.ShowSeatRepository;
 import vn.thefilm.backend.service.BookingService;
+import vn.thefilm.backend.service.PromoVoucherService;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -58,25 +59,45 @@ public class BookingServiceImpl implements BookingService {
     private final PriceRuleRepository priceRuleRepository;
     private final PaymentTxnRepository paymentTxnRepository;
     private final TicketRepository ticketRepository;
+    private final CounterFnbInventoryService counterFnbInventory;
+    private final PromoVoucherService promoVouchers;
 
     public BookingServiceImpl(
             ShowSeatRepository showSeatRepository,
             SeatHoldRepository seatHoldRepository,
             SalesOrderRepository salesOrderRepository,
             PriceRuleRepository priceRuleRepository) {
-        this(showSeatRepository, seatHoldRepository, salesOrderRepository, priceRuleRepository, null, null);
+        this(showSeatRepository, seatHoldRepository, salesOrderRepository, priceRuleRepository, null, null, null, null);
+    }
+
+    public BookingServiceImpl(ShowSeatRepository showSeatRepository, SeatHoldRepository seatHoldRepository,
+            SalesOrderRepository salesOrderRepository, PriceRuleRepository priceRuleRepository,
+            PaymentTxnRepository paymentTxnRepository, TicketRepository ticketRepository) {
+        this(showSeatRepository, seatHoldRepository, salesOrderRepository, priceRuleRepository,
+                paymentTxnRepository, ticketRepository, null, null);
+    }
+
+    public BookingServiceImpl(ShowSeatRepository showSeatRepository, SeatHoldRepository seatHoldRepository,
+            SalesOrderRepository salesOrderRepository, PriceRuleRepository priceRuleRepository,
+            PaymentTxnRepository paymentTxnRepository, TicketRepository ticketRepository,
+            CounterFnbInventoryService counterFnbInventory) {
+        this(showSeatRepository, seatHoldRepository, salesOrderRepository, priceRuleRepository,
+                paymentTxnRepository, ticketRepository, counterFnbInventory, null);
     }
 
     @Autowired
     public BookingServiceImpl(ShowSeatRepository showSeatRepository, SeatHoldRepository seatHoldRepository,
             SalesOrderRepository salesOrderRepository, PriceRuleRepository priceRuleRepository,
-            PaymentTxnRepository paymentTxnRepository, TicketRepository ticketRepository) {
+            PaymentTxnRepository paymentTxnRepository, TicketRepository ticketRepository,
+            CounterFnbInventoryService counterFnbInventory, PromoVoucherService promoVouchers) {
         this.showSeatRepository = showSeatRepository;
         this.seatHoldRepository = seatHoldRepository;
         this.salesOrderRepository = salesOrderRepository;
         this.priceRuleRepository = priceRuleRepository;
         this.paymentTxnRepository = paymentTxnRepository;
         this.ticketRepository = ticketRepository;
+        this.counterFnbInventory = counterFnbInventory;
+        this.promoVouchers = promoVouchers;
     }
 
     @Override
@@ -98,6 +119,17 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public HoldSeatsResponse holdSeats(Long screeningId, HoldSeatsRequest request) {
+        return holdSeats(screeningId, request, SalesChannel.ONLINE, null);
+    }
+
+    @Override
+    @Transactional
+    public HoldSeatsResponse holdCounterSeats(Long screeningId, HoldSeatsRequest request, Long createdBy) {
+        return holdSeats(screeningId, request, SalesChannel.BOX, createdBy);
+    }
+
+    private HoldSeatsResponse holdSeats(Long screeningId, HoldSeatsRequest request, SalesChannel salesChannel,
+            Long createdBy) {
         if (request == null || request.showSeatIds() == null || request.showSeatIds().isEmpty()) {
             throw new IllegalArgumentException("Cần cung cấp ít nhất một ghế.");
         }
@@ -111,6 +143,9 @@ public class BookingServiceImpl implements BookingService {
                         .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng."));
         if (order != null && !validHoldToken(order, request.holdToken())) {
             throw new SeatUnavailableException("Phiên giữ ghế không hợp lệ.");
+        }
+        if (order != null && order.getSalesChannel() != salesChannel) {
+            throw new SeatUnavailableException("Kênh bán không khớp với phiên giữ ghế.");
         }
         if (order != null && order.getOrderStatus() != OrderStatus.DRAFT) {
             throw new SeatUnavailableException("Không thể giữ ghế cho đơn hàng ở trạng thái hiện tại.");
@@ -140,8 +175,9 @@ public class BookingServiceImpl implements BookingService {
             String draftNumber = "HOLD" + now.toLocalDate().toString().replace("-", "")
                     + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
             holdToken = UUID.randomUUID().toString();
-            order = salesOrderRepository.save(SalesOrderEntity.createHoldDraft(draftNumber, holdToken,
-                    cinemaId, cinemaId, expiresAt));
+            order = SalesOrderEntity.createHoldDraft(draftNumber, holdToken, cinemaId, cinemaId, expiresAt,
+                    salesChannel, createdBy);
+            order = salesOrderRepository.save(order);
         }
         for (ShowSeatEntity seat : seats) {
             seat.hold(order, expiresAt);
@@ -180,15 +216,34 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
+        return createOrder(request, SalesChannel.ONLINE, null, null);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse createOrder(CreateOrderRequest request, Long appUserId) {
+        return createOrder(request, SalesChannel.ONLINE, null, appUserId);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse createCounterOrder(CreateOrderRequest request, Long createdBy) {
+        return createOrder(request, SalesChannel.BOX, createdBy, null);
+    }
+
+    private OrderResponse createOrder(CreateOrderRequest request, SalesChannel salesChannel, Long createdBy,
+            Long appUserId) {
         if (request == null || request.screeningId() == null || request.salesOrderId() == null || request.showSeatIds() == null
                 || request.showSeatIds().isEmpty() || request.idempotencyKey() == null
                 || request.idempotencyKey().isBlank()) throw new IllegalArgumentException("Thông tin đặt vé không hợp lệ.");
         var existing = salesOrderRepository.findBySalesChannelAndIdempotencyKey(
-                SalesChannel.ONLINE, request.idempotencyKey());
+                salesChannel, request.idempotencyKey());
         SalesOrderEntity holdOrder = salesOrderRepository.findById(request.salesOrderId())
                 .orElseThrow(() -> new SeatUnavailableException("Phiên giữ ghế không còn tồn tại."));
         if (!validHoldToken(holdOrder, request.holdToken()) || holdOrder.getOrderStatus() != OrderStatus.DRAFT)
             throw new SeatUnavailableException("Phiên giữ ghế không hợp lệ.");
+        if (holdOrder.getSalesChannel() != salesChannel)
+            throw new SeatUnavailableException("Kênh bán không khớp với phiên giữ ghế.");
         if (existing.isPresent()) return toOrderResponse(existing.get());
         if (new LinkedHashSet<>(request.showSeatIds()).size() != request.showSeatIds().size())
             throw new IllegalArgumentException("Danh sách ghế bị trùng.");
@@ -222,9 +277,11 @@ public class BookingServiceImpl implements BookingService {
                 throw new IllegalArgumentException("Thông tin F&B không hợp lệ.");
             subtotal = subtotal.add(item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())));
         }
-        BigDecimal discount = request.voucherCode() == null || request.voucherCode().isBlank()
-                ? BigDecimal.ZERO : subtotal.multiply(new BigDecimal("0.10")).setScale(2, RoundingMode.HALF_UP);
-        discount = discount.min(subtotal);
+        BigDecimal discount = BigDecimal.ZERO;
+        if (request.voucherCode() != null && !request.voucherCode().isBlank()) {
+            if (promoVouchers == null) throw new IllegalStateException("Dịch vụ voucher chưa được cấu hình.");
+            discount = promoVouchers.preview(request.voucherCode(), subtotal, appUserId).discountAmount();
+        }
         List<BigDecimal> lineAmounts = new java.util.ArrayList<>();
         seats.forEach(seat -> lineAmounts.add(prices.get(seat.getShowSeatId())));
         fnbItems.forEach(item -> lineAmounts.add(item.unitPrice().multiply(BigDecimal.valueOf(item.quantity()))));
@@ -234,7 +291,7 @@ public class BookingServiceImpl implements BookingService {
         Long cinemaId = screening.getCinema().getCinemaId();
         SalesOrderEntity order = new SalesOrderEntity(code, request.idempotencyKey(), cinemaId,
                 cinemaId, request.guestName(), request.guestEmail(), request.guestPhone(), subtotal,
-                discount, vat, subtotal.subtract(discount).add(vat), expires);
+                discount, vat, subtotal.subtract(discount).add(vat), expires, salesChannel, createdBy);
         BigDecimal remainingDiscount = discount;
         BigDecimal remainingBase = subtotal;
         int line = 1;
@@ -259,7 +316,15 @@ public class BookingServiceImpl implements BookingService {
                     item.productCode(), item.quantity(), item.unitPrice(), lineDiscount, new BigDecimal("0.0800"),
                     lineVat, amount.subtract(lineDiscount).add(lineVat)));
         }
-        salesOrderRepository.save(order);
+        salesOrderRepository.saveAndFlush(order);
+        if (request.voucherCode() != null && !request.voucherCode().isBlank()) {
+            PromoVoucherService.Application applied = promoVouchers.reserve(request.voucherCode(), subtotal,
+                    appUserId, order.getSalesOrderId());
+            if (applied.discountAmount().compareTo(discount) != 0) {
+                throw new IllegalStateException("Giá trị voucher thay đổi trong lúc tạo đơn; vui lòng thử lại.");
+            }
+        }
+        if (counterFnbInventory != null && salesChannel == SalesChannel.BOX) counterFnbInventory.reserveOrder(order);
         for (ShowSeatEntity seat : seats) {
             seat.hold(order, expires);
             seatHoldRepository.findByShowSeat_ShowSeatIdAndHoldStatus(seat.getShowSeatId(), SeatHoldStatus.HELD)
@@ -333,7 +398,9 @@ public class BookingServiceImpl implements BookingService {
                 seatHoldRepository.save(new SeatHoldEntity(seat, order, recoveryHoldExpiresAt));
             }
         }
+        if (promoVouchers != null) promoVouchers.confirmRedemption(order.getSalesOrderId());
         order.markPaid(now);
+        if (counterFnbInventory != null) counterFnbInventory.completeOrder(order);
         for (SalesOrderLineEntity line : order.getLines()) {
             if (line.getItemType() != OrderLineType.TICKET) continue;
             ShowSeatEntity seat = line.getShowSeat() == null ? null

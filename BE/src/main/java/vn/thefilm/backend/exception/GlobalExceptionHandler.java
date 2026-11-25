@@ -8,6 +8,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mail.MailException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -84,6 +85,14 @@ public class GlobalExceptionHandler {
                 : exception.getReason();
         return ResponseEntity.status(status)
                 .body(ApiResponse.failure(status.toString(), message));
+    }
+
+    @ExceptionHandler(MailException.class)
+    ResponseEntity<ApiResponse<Void>> handleMailDeliveryFailure(MailException exception) {
+        log.error("Email delivery failed", exception);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.failure("EMAIL_DELIVERY_UNAVAILABLE",
+                        "Chưa gửi được email xác minh. Máy chủ email chưa được cấu hình hoặc đang lỗi; vui lòng thử lại sau."));
     }
 
     @ExceptionHandler(Exception.class)

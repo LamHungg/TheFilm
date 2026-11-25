@@ -143,7 +143,7 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
         if (appUserId == null) throw new IllegalArgumentException("Không xác định được tài khoản khách hàng.");
         List<?> rows = entityManager.createNativeQuery("SELECT u.app_user_id, u.email, u.display_name, "
                         + "p.preferred_cinema_id, p.preferred_locale, p.date_of_birth, "
-                        + "COALESCE(p.loyalty_points, 0), COALESCE(p.member_tier, 'STANDARD') "
+                        + "COALESCE(p.loyalty_points, 0), COALESCE(p.member_tier, 'STANDARD'), u.email_verified "
                         + "FROM app_user u JOIN customer_profile p ON p.app_user_id = u.app_user_id "
                         + "WHERE u.app_user_id = :id")
                 .setParameter("id", appUserId).getResultList();
@@ -180,7 +180,7 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
 
         return new CustomerProfileDto(((Number) row[0]).longValue(), (String) row[1], (String) row[2],
                 row[3] == null ? null : ((Number) row[3]).longValue(), (String) row[4], toLocalDate(row[5]),
-                effectivePoints, tier);
+                effectivePoints, tier, "Y".equalsIgnoreCase(row[8] == null ? "N" : row[8].toString()));
     }
 
     @Override
@@ -189,11 +189,14 @@ public class CustomerAccountServiceImpl implements CustomerAccountService {
         List<?> rows = entityManager.createNativeQuery(
                 "SELECT v.voucher_id, v.voucher_code, c.campaign_code, c.campaign_name, "
                 + "c.discount_type, c.discount_value, c.max_discount, "
-                + "COALESCE(v.valid_from, c.valid_from) AS valid_from, "
-                + "COALESCE(v.valid_to, c.valid_to) AS valid_to, "
+                + "TO_CHAR(COALESCE(v.valid_from, c.valid_from), 'YYYY-MM-DD\"T\"HH24:MI:SS.FF3TZH:TZM') AS valid_from, "
+                + "TO_CHAR(COALESCE(v.valid_to, c.valid_to), 'YYYY-MM-DD\"T\"HH24:MI:SS.FF3TZH:TZM') AS valid_to, "
                 + "v.status "
                 + "FROM promo_voucher v JOIN promo_campaign c ON v.promo_campaign_id = c.promo_campaign_id "
-                + "WHERE v.status = 'ACTIVE' AND c.status = 'ACTIVE' "
+                + "WHERE v.status = 'ACTIVE' AND c.status = 'ACTIVE' AND v.assigned_user_id IS NULL "
+                + "AND COALESCE(v.valid_from, c.valid_from) <= SYSTIMESTAMP "
+                + "AND COALESCE(v.valid_to, c.valid_to) > SYSTIMESTAMP "
+                + "AND c.valid_from <= SYSTIMESTAMP AND c.valid_to > SYSTIMESTAMP "
                 + "ORDER BY v.voucher_id ASC")
                 .getResultList();
 

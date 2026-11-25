@@ -2,6 +2,8 @@ package vn.thefilm.backend.controller;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 import jakarta.persistence.EntityManager;
 import jakarta.validation.Valid;
@@ -22,12 +24,14 @@ import vn.thefilm.backend.dto.AuthResponse;
 import vn.thefilm.backend.dto.CustomerProfileDto;
 import vn.thefilm.backend.dto.LoginRequest;
 import vn.thefilm.backend.dto.RegisterRequest;
+import vn.thefilm.backend.dto.EmailVerificationDtos;
 import vn.thefilm.backend.entity.AppUserEntity;
 import vn.thefilm.backend.enums.AppUserStatus;
 import vn.thefilm.backend.repository.AppUserRepository;
 import vn.thefilm.backend.repository.LocalCredentialRepository;
 import vn.thefilm.backend.security.JwtService;
 import vn.thefilm.backend.service.CustomerAccountService;
+import vn.thefilm.backend.service.EmailVerificationService;
 
 /**
  * Đăng ký/đăng nhập bằng tài khoản lưu trong cơ sở dữ liệu.
@@ -37,12 +41,21 @@ import vn.thefilm.backend.service.CustomerAccountService;
 @RequestMapping("/api/v1/auth")
 public class LocalAuthController {
 
+    private static final Map<String, String> AUTHORITY_BY_ROLE = Map.of(
+            "CUSTOMER", "ROLE_CUSTOMER",
+            "CHAIN_ADMIN", "ROLE_CHAIN_ADMIN",
+            "CINEMA_MANAGER", "ROLE_CINEMA_MANAGER",
+            "HR", "ROLE_HR",
+            "CASHIER", "ROLE_CASHIER",
+            "USHER", "ROLE_USHER");
+
     private final AppUserRepository appUserRepository;
     private final LocalCredentialRepository credentialRepository;
     private final EntityManager entityManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final CustomerAccountService customerAccountService;
+    private final EmailVerificationService emailVerificationService;
     private final String authIssuer;
 
     public LocalAuthController(
@@ -52,6 +65,7 @@ public class LocalAuthController {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             CustomerAccountService customerAccountService,
+            EmailVerificationService emailVerificationService,
             @Value("${app.security.jwt.issuer:http://localhost:8080/auth}") String authIssuer) {
         this.appUserRepository = appUserRepository;
         this.credentialRepository = credentialRepository;
@@ -59,6 +73,7 @@ public class LocalAuthController {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.customerAccountService = customerAccountService;
+        this.emailVerificationService = emailVerificationService;
         this.authIssuer = authIssuer;
     }
 
@@ -90,9 +105,40 @@ public class LocalAuthController {
                 .setParameter("id", user.getAppUserId())
                 .executeUpdate();
 
-        String token = jwtService.generateToken(user.getAppUserId(), email, displayName, List.of("ROLE_CUSTOMER"));
+        String token = jwtService.generateToken(user.getAppUserId(), email, displayName,
+                rolesFor(user.getAppUserId()), "CUSTOMER", null, false);
         CustomerProfileDto profileDto = customerAccountService.getProfile(user.getAppUserId());
+        return ApiResponse.success(new AuthResponse(token, "Bearer", jwtService.getExpirationSeconds(), profileDto));
+    }
 
+    @PostMapping("/email-verification/resend")
+    public ApiResponse<String> resendVerification(@Valid @RequestBody EmailVerificationDtos.EmailRequest request) {
+        String email = request.email().trim().toLowerCase(Locale.ROOT);
+        appUserRepository.findFirstByEmailIgnoreCase(email).ifPresent(user -> {
+            if (!user.isEmailVerified()
+                    && credentialRepository.findPasswordHash(user.getAppUserId()).isPresent()) {
+                emailVerificationService.issueCode(user.getAppUserId(), email, user.getDisplayName());
+            }
+        });
+        return ApiResponse.success("Nếu tài khoản cần xác minh, mã mới đã được gửi.");
+    }
+
+    @PostMapping("/email-verification/confirm")
+    public ApiResponse<AuthResponse> verifyEmail(@Valid @RequestBody EmailVerificationDtos.VerifyRequest request) {
+        String email = request.email().trim().toLowerCase(Locale.ROOT);
+        AppUserEntity user = appUserRepository.findFirstByEmailIgnoreCase(email)
+                .orElseThrow(() -> new BadCredentialsException("Mã xác minh không hợp lệ hoặc đã hết hạn."));
+        if (user.isEmailVerified()) {
+            throw new IllegalArgumentException("Email này đã được xác minh. Vui lòng đăng nhập.");
+        }
+        if (!emailVerificationService.verifyCode(user.getAppUserId(), request.code())) {
+            throw new BadCredentialsException("Mã xác minh không hợp lệ, đã hết hạn hoặc vượt quá số lần thử.");
+        }
+        user.markEmailVerified();
+        appUserRepository.save(user);
+        String token = jwtService.generateToken(user.getAppUserId(), email, user.getDisplayName(),
+                rolesFor(user.getAppUserId()), "CUSTOMER", null, true);
+        CustomerProfileDto profileDto = customerAccountService.getProfile(user.getAppUserId());
         return ApiResponse.success(new AuthResponse(token, "Bearer", jwtService.getExpirationSeconds(), profileDto));
     }
 
@@ -111,10 +157,20 @@ public class LocalAuthController {
         if (user.getStatus() != AppUserStatus.ACTIVE) {
             throw new AccessDeniedException("Tài khoản của bạn đã bị khóa hoặc ngừng hoạt động.");
         }
-
-        String token = jwtService.generateToken(user.getAppUserId(), user.getEmail(), user.getDisplayName(), List.of("ROLE_CUSTOMER"));
+        String token = jwtService.generateToken(user.getAppUserId(), user.getEmail(), user.getDisplayName(),
+                rolesFor(user.getAppUserId()), "CUSTOMER", null, user.isEmailVerified());
         CustomerProfileDto profileDto = customerAccountService.getProfile(user.getAppUserId());
 
         return ApiResponse.success(new AuthResponse(token, "Bearer", jwtService.getExpirationSeconds(), profileDto));
+    }
+
+    private List<String> rolesFor(Long appUserId) {
+        LinkedHashSet<String> roles = new LinkedHashSet<>();
+        roles.add("ROLE_CUSTOMER");
+        appUserRepository.findRoleCodes(appUserId).stream()
+                .map(AUTHORITY_BY_ROLE::get)
+                .filter(role -> role != null)
+                .forEach(roles::add);
+        return List.copyOf(roles);
     }
 }

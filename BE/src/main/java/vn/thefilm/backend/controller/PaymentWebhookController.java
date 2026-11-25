@@ -29,7 +29,8 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/v1/public/payments/webhook")
 public class PaymentWebhookController {
     private static final Logger log = LoggerFactory.getLogger(PaymentWebhookController.class);
-    private static final Pattern ORDER_CODE_PATTERN = Pattern.compile("TF\\d{8}[A-Za-z0-9]{8}|TF[A-Za-z0-9_-]{8,30}", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ORDER_CODE_PATTERN = Pattern.compile(
+            "TF\\d{8}[A-Za-z0-9]{8}\\b|TF[A-Za-z0-9_-]{8,30}\\b", Pattern.CASE_INSENSITIVE);
 
     private final BookingService bookingService;
     private final SalesOrderRepository salesOrderRepository;

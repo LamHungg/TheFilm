@@ -78,18 +78,30 @@ public class SalesOrderEntity {
     public SalesOrderEntity(String orderNumber, String idempotencyKey, Long cinemaId, Long legalEntityId,
             String guestName, String guestEmail, String guestPhone, BigDecimal subtotalAmount,
             BigDecimal discountAmount, BigDecimal taxAmount, BigDecimal totalAmount, OffsetDateTime expiresAt) {
+        this(orderNumber, idempotencyKey, cinemaId, legalEntityId, guestName, guestEmail, guestPhone,
+                subtotalAmount, discountAmount, taxAmount, totalAmount, expiresAt, SalesChannel.ONLINE, null);
+    }
+    public SalesOrderEntity(String orderNumber, String idempotencyKey, Long cinemaId, Long legalEntityId,
+            String guestName, String guestEmail, String guestPhone, BigDecimal subtotalAmount,
+            BigDecimal discountAmount, BigDecimal taxAmount, BigDecimal totalAmount, OffsetDateTime expiresAt,
+            SalesChannel salesChannel, Long createdBy) {
         this.orderNumber = orderNumber; this.idempotencyKey = idempotencyKey;
-        this.orderType = OrderType.COMBINED; this.salesChannel = SalesChannel.ONLINE;
+        this.orderType = OrderType.COMBINED; this.salesChannel = salesChannel;
         this.cinemaId = cinemaId; this.legalEntityId = legalEntityId;
         this.guestName = guestName; this.guestEmail = guestEmail; this.guestPhone = guestPhone;
         this.subtotalAmount = subtotalAmount; this.discountAmount = discountAmount;
-        this.taxAmount = taxAmount; this.totalAmount = totalAmount;
+        this.taxAmount = taxAmount; this.totalAmount = totalAmount; this.createdBy = createdBy;
         this.orderStatus = OrderStatus.PENDING_PAYMENT; this.expiresAt = expiresAt;
     }
     public static SalesOrderEntity createHoldDraft(String orderNumber, String holdToken, Long cinemaId, Long legalEntityId,
             OffsetDateTime expiresAt) {
+        return createHoldDraft(orderNumber, holdToken, cinemaId, legalEntityId, expiresAt, SalesChannel.ONLINE, null);
+    }
+    public static SalesOrderEntity createHoldDraft(String orderNumber, String holdToken, Long cinemaId, Long legalEntityId,
+            OffsetDateTime expiresAt, SalesChannel salesChannel, Long createdBy) {
         SalesOrderEntity order = new SalesOrderEntity(orderNumber, holdToken, cinemaId, legalEntityId,
-                null, null, null, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, expiresAt);
+                null, null, null, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, expiresAt,
+                salesChannel, createdBy);
         order.orderStatus = OrderStatus.DRAFT;
         return order;
     }
@@ -111,6 +123,7 @@ public class SalesOrderEntity {
     public Long getCinemaId() { return cinemaId; }
     public Long getLegalEntityId() { return legalEntityId; }
     public Long getAppUserId() { return appUserId; }
+    public Long getCreatedBy() { return createdBy; }
     public Long getMemberAccountId() { return memberAccountId; }
     public String getGuestName() { return guestName; }
     public String getGuestEmail() { return guestEmail; }

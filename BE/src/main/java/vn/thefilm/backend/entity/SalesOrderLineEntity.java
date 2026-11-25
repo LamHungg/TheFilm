@@ -30,6 +30,7 @@ public class SalesOrderLineEntity {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "screening_id") private ScreeningEntity screening;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "show_seat_id") private ShowSeatEntity showSeat;
     @Column(name = "fnb_product_id") private Long fnbProductId;
+    @Column(name = "inventory_location_id") private Long inventoryLocationId;
     @Column(name = "product_name_snapshot", nullable = false, length = 300) private String productNameSnapshot;
     @Column(name = "product_code_snapshot", length = 80) private String productCodeSnapshot;
     @Column(name = "screening_type_snapshot", length = 40) private String screeningTypeSnapshot;
@@ -91,6 +92,8 @@ public class SalesOrderLineEntity {
     public ScreeningEntity getScreening() { return screening; }
     public ShowSeatEntity getShowSeat() { return showSeat; }
     public Long getFnbProductId() { return fnbProductId; }
+    public Long getInventoryLocationId() { return inventoryLocationId; }
+    public void setInventoryLocationId(Long inventoryLocationId) { this.inventoryLocationId = inventoryLocationId; }
     public String getProductNameSnapshot() { return productNameSnapshot; }
     public String getProductCodeSnapshot() { return productCodeSnapshot; }
     public String getScreeningTypeSnapshot() { return screeningTypeSnapshot; }

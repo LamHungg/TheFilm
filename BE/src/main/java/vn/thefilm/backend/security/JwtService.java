@@ -41,6 +41,16 @@ public class JwtService {
     }
 
     public String generateToken(Long appUserId, String email, String displayName, List<String> roles) {
+        return generateToken(appUserId, email, displayName, roles, "CUSTOMER", null);
+    }
+
+    public String generateToken(Long appUserId, String email, String displayName, List<String> roles,
+            String accountType, Long staffAccountId) {
+        return generateToken(appUserId, email, displayName, roles, accountType, staffAccountId, false);
+    }
+
+    public String generateToken(Long appUserId, String email, String displayName, List<String> roles,
+            String accountType, Long staffAccountId, boolean emailVerified) {
         try {
             JWSSigner signer = new MACSigner(secretKeyBytes);
             Date now = new Date();
@@ -56,6 +66,9 @@ public class JwtService {
                     .claim("name", displayName)
                     .claim("preferred_username", email)
                     .claim("roles", roles)
+                    .claim("account_type", accountType)
+                    .claim("staff_account_id", staffAccountId)
+                    .claim("email_verified", emailVerified)
                     .build();
 
             SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims);
@@ -87,8 +100,16 @@ public class JwtService {
             String preferredUsername = claims.getStringClaim("preferred_username");
             String subject = claims.getSubject();
             String tokenIssuer = claims.getIssuer();
+            List<String> roles = claims.getStringListClaim("roles");
+            String accountType = claims.getStringClaim("account_type");
+            Long staffAccountId = claims.getLongClaim("staff_account_id");
+            boolean emailVerified = Boolean.TRUE.equals(claims.getBooleanClaim("email_verified"));
 
-            return new TheFilmUserPrincipal(subject, tokenIssuer, email, preferredUsername, name, appUserId);
+            return new TheFilmUserPrincipal(subject, tokenIssuer, email, preferredUsername, name, appUserId,
+                    roles == null ? List.of("ROLE_CUSTOMER") : roles,
+                    accountType == null ? "CUSTOMER" : accountType,
+                    staffAccountId,
+                    emailVerified);
         } catch (Exception ex) {
             return null;
         }

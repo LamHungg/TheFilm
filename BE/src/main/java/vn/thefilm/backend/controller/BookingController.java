@@ -26,10 +26,12 @@ import vn.thefilm.backend.dto.SeatLayoutResponse;
 import vn.thefilm.backend.dto.TicketResponse;
 import vn.thefilm.backend.dto.CustomerProfileDto;
 import vn.thefilm.backend.dto.CustomerVoucherDto;
+import vn.thefilm.backend.dto.VoucherValidationDtos;
 import vn.thefilm.backend.exception.ResourceNotFoundException;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.BookingService;
 import vn.thefilm.backend.service.CustomerAccountService;
+import vn.thefilm.backend.service.PromoVoucherService;
 
 import java.util.List;
 
@@ -39,18 +41,25 @@ import java.util.List;
 public class BookingController {
     private final BookingService bookingService;
     private final CustomerAccountService customerAccountService;
+    private final PromoVoucherService promoVoucherService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     public BookingController(BookingService bookingService) {
-        this(bookingService, null);
+        this(bookingService, null, null);
+    }
+
+    public BookingController(BookingService bookingService, CustomerAccountService customerAccountService) {
+        this(bookingService, customerAccountService, null);
     }
 
     @Autowired
-    public BookingController(BookingService bookingService, CustomerAccountService customerAccountService) {
+    public BookingController(BookingService bookingService, CustomerAccountService customerAccountService,
+            PromoVoucherService promoVoucherService) {
         this.bookingService = bookingService;
         this.customerAccountService = customerAccountService;
+        this.promoVoucherService = promoVoucherService;
     }
 
     @GetMapping("/screenings/{id}/seats")
@@ -62,8 +71,8 @@ public class BookingController {
     @Transactional
     public ApiResponse<HoldSeatsResponse> hold(@RequestParam @Min(1) long screeningId,
             @Valid @RequestBody HoldSeatsRequest request, Authentication authentication) {
+        Long appUserId = requireCustomerId(authentication);
         HoldSeatsResponse held = bookingService.holdSeats(screeningId, request);
-        Long appUserId = authenticatedCustomerId(authentication);
         if (appUserId != null && held.salesOrderId() != null) linkOrder(held.salesOrderId(), appUserId);
         return ApiResponse.success(held);
     }
@@ -71,7 +80,7 @@ public class BookingController {
     @PostMapping("/release")
     @Transactional
     public ApiResponse<String> release(@RequestBody HoldSeatsRequest request, Authentication authentication) {
-        Long appUserId = authenticatedCustomerId(authentication);
+        Long appUserId = requireCustomerId(authentication);
         if (appUserId != null && request.salesOrderId() != null) {
             requireOrderOwner(request.salesOrderId(), appUserId);
         }
@@ -83,11 +92,11 @@ public class BookingController {
     @Transactional
     public ApiResponse<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request,
             Authentication authentication) {
-        Long appUserId = authenticatedCustomerId(authentication);
+        Long appUserId = requireCustomerId(authentication);
         if (appUserId != null && request.salesOrderId() != null) {
             requireOrderAvailableToClaim(request.salesOrderId(), appUserId);
         }
-        OrderResponse order = bookingService.createOrder(request);
+        OrderResponse order = bookingService.createOrder(request, appUserId);
         if (appUserId != null) {
             if (request.salesOrderId() != null) linkOrder(request.salesOrderId(), appUserId);
             linkOrderByCode(order.orderCode(), appUserId);
@@ -99,8 +108,8 @@ public class BookingController {
     @Transactional
     public ApiResponse<PaymentResponse> pay(@PathVariable String code, @Valid @RequestBody PaymentRequest request,
             Authentication authentication) {
-        Long appUserId = authenticatedCustomerId(authentication);
-        if (appUserId != null) requireOrderOwnerByCode(code, appUserId);
+        Long appUserId = requireCustomerId(authentication);
+        requireOrderOwnerByCode(code, appUserId);
         return ApiResponse.success(bookingService.processPayment(code, request));
     }
 
@@ -117,6 +126,14 @@ public class BookingController {
     public ApiResponse<List<CustomerVoucherDto>> getPublicVouchers() {
         if (customerAccountService == null) return ApiResponse.success(List.of());
         return ApiResponse.success(customerAccountService.getActiveVouchers());
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/vouchers/validate")
+    public ApiResponse<VoucherValidationDtos.Result> validateVoucher(
+            @Valid @RequestBody VoucherValidationDtos.Request request, Authentication authentication) {
+        if (promoVoucherService == null) throw new IllegalStateException("Dịch vụ voucher chưa được cấu hình.");
+        Long appUserId = authenticatedCustomerId(authentication);
+        return ApiResponse.success(promoVoucherService.preview(request.voucherCode(), request.subtotal(), appUserId));
     }
 
     @GetMapping("/orders/{code}")
@@ -137,11 +154,22 @@ public class BookingController {
 
     private Long authenticatedCustomerId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()
-                || !(authentication.getPrincipal() instanceof TheFilmUserPrincipal principal)
-                || customerAccountService == null) return null;
+                || authentication instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) return null;
+        if (!(authentication.getPrincipal() instanceof TheFilmUserPrincipal principal)) {
+            throw new org.springframework.security.access.AccessDeniedException("Yêu cầu đăng nhập tài khoản khách hàng.");
+        }
+        if (customerAccountService == null) return null;
         CustomerProfileDto customer = customerAccountService.syncOrGetCustomer(principal.oidcIssuer(),
                 principal.oidcSubject(), principal.email(), principal.displayName());
         return customer.appUserId();
+    }
+
+    private Long requireCustomerId(Authentication authentication) {
+        Long appUserId = authenticatedCustomerId(authentication);
+        if (appUserId == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Vui lòng đăng nhập để đặt vé.");
+        }
+        return appUserId;
     }
 
     private void linkOrder(Long salesOrderId, Long appUserId) {
@@ -160,13 +188,16 @@ public class BookingController {
 
     private void requireOrderOwner(Long salesOrderId, Long appUserId) {
         if (entityManager == null) throw notFound();
-        List<?> owners = entityManager.createNativeQuery("SELECT app_user_id FROM sales_order "
-                        + "WHERE sales_order_id = :orderId")
-                .setParameter("orderId", salesOrderId).getResultList();
+        List<?> owners = entityManager.createNativeQuery("SELECT so.app_user_id, LOWER(so.guest_email), LOWER(u.email) "
+                        + "FROM sales_order so LEFT JOIN app_user u ON u.app_user_id = :userId "
+                        + "WHERE so.sales_order_id = :orderId")
+                .setParameter("orderId", salesOrderId).setParameter("userId", appUserId).getResultList();
         if (owners.isEmpty()) throw notFound();
-        Object owner = owners.get(0);
+        Object[] row = (Object[]) owners.get(0);
+        Object owner = row[0];
         if (owner == null) {
-            if (appUserId != null) linkOrder(salesOrderId, appUserId);
+            if (appUserId != null && sameEmail(row[1], row[2])) linkOrder(salesOrderId, appUserId);
+            else if (appUserId != null) throw notFound();
             return;
         }
         if (appUserId == null || !appUserId.equals(((Number) owner).longValue())) {
@@ -176,12 +207,15 @@ public class BookingController {
 
     private void requireOrderAvailableToClaim(Long salesOrderId, Long appUserId) {
         if (entityManager == null) throw notFound();
-        List<?> owners = entityManager.createNativeQuery("SELECT app_user_id FROM sales_order "
-                        + "WHERE sales_order_id = :orderId")
-                .setParameter("orderId", salesOrderId).getResultList();
+        List<?> owners = entityManager.createNativeQuery("SELECT so.app_user_id, LOWER(so.guest_email), LOWER(u.email) "
+                        + "FROM sales_order so LEFT JOIN app_user u ON u.app_user_id = :userId "
+                        + "WHERE so.sales_order_id = :orderId")
+                .setParameter("orderId", salesOrderId).setParameter("userId", appUserId).getResultList();
         if (owners.isEmpty()) throw notFound();
-        Object owner = owners.get(0);
+        Object[] row = (Object[]) owners.get(0);
+        Object owner = row[0];
         if (owner != null && !appUserId.equals(((Number) owner).longValue())) throw notFound();
+        if (owner == null && !sameEmail(row[1], row[2])) throw notFound();
     }
 
     private void requireOrderOwnerByCode(String orderCode, Long appUserId) {
@@ -190,13 +224,16 @@ public class BookingController {
             if (appUserId == null) return;
             throw notFound();
         }
-        List<?> owners = entityManager.createNativeQuery("SELECT app_user_id FROM sales_order "
-                        + "WHERE order_number = :code")
-                .setParameter("code", orderCode).getResultList();
+        List<?> owners = entityManager.createNativeQuery("SELECT so.app_user_id, LOWER(so.guest_email), LOWER(u.email) "
+                        + "FROM sales_order so LEFT JOIN app_user u ON u.app_user_id = :userId "
+                        + "WHERE so.order_number = :code")
+                .setParameter("code", orderCode).setParameter("userId", appUserId).getResultList();
         if (owners.isEmpty()) throw notFound();
-        Object owner = owners.get(0);
+        Object[] row = (Object[]) owners.get(0);
+        Object owner = row[0];
         if (owner == null) {
-            if (appUserId != null) linkOrderByCode(orderCode, appUserId);
+            if (appUserId != null && sameEmail(row[1], row[2])) linkOrderByCode(orderCode, appUserId);
+            else if (appUserId != null) throw notFound();
             return;
         }
         if (appUserId == null || !appUserId.equals(((Number) owner).longValue())) {
@@ -206,5 +243,9 @@ public class BookingController {
 
     private ResourceNotFoundException notFound() {
         return new ResourceNotFoundException("Không tìm thấy đơn hàng.");
+    }
+
+    private boolean sameEmail(Object first, Object second) {
+        return first != null && second != null && first.toString().trim().equalsIgnoreCase(second.toString().trim());
     }
 }

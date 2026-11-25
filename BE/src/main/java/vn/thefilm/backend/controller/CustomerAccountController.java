@@ -44,7 +44,11 @@ public class CustomerAccountController {
 
     @GetMapping("/profile")
     public ApiResponse<CustomerProfileDto> getProfile(Authentication authentication) {
-        return ApiResponse.success(customer(authentication));
+        TheFilmUserPrincipal principal = customerPrincipal(authentication);
+        CustomerProfileDto profile = customer(authentication);
+        return ApiResponse.success(new CustomerProfileDto(profile.appUserId(), profile.email(), profile.displayName(),
+                profile.preferredCinemaId(), profile.preferredLocale(), profile.dateOfBirth(), profile.loyaltyPoints(),
+                profile.memberTier(), principal.emailVerified()));
     }
 
     @GetMapping("/orders")
@@ -127,7 +131,8 @@ public class CustomerAccountController {
                     firstNonBlank(principal.email(), jwt.getClaimAsString("email")),
                     firstNonBlank(principal.preferredUsername(), jwt.getClaimAsString("preferred_username")),
                     firstNonBlank(principal.displayName(), jwt.getClaimAsString("name")),
-                    principal.appUserId());
+                    principal.appUserId(), List.of("ROLE_CUSTOMER"), "CUSTOMER", null,
+                    Boolean.TRUE.equals(jwt.getClaim("email_verified")));
         }
         if (jwt == null) return null;
 
@@ -137,7 +142,8 @@ public class CustomerAccountController {
         String displayName = firstNonBlank(jwt.getClaimAsString("name"), username, email, subject);
         return new TheFilmUserPrincipal(subject,
                 jwt.getIssuer() == null ? null : jwt.getIssuer().toString(),
-                email, username, displayName, null);
+                email, username, displayName, null, List.of("ROLE_CUSTOMER"), "CUSTOMER", null,
+                Boolean.TRUE.equals(jwt.getClaim("email_verified")));
     }
 
     private ResponseStatusException unauthorized() {

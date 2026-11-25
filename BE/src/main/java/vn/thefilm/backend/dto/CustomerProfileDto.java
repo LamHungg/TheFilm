@@ -10,5 +10,6 @@ public record CustomerProfileDto(
         String preferredLocale,
         LocalDate dateOfBirth,
         Long loyaltyPoints,
-        String memberTier) {
+        String memberTier,
+        boolean emailVerified) {
 }

@@ -30,6 +30,9 @@ public class AuthController {
                 || principal.appUserId() == null) {
             throw new AccessDeniedException("Yêu cầu xác thực.");
         }
-        return ApiResponse.success(customerAccountService.getProfile(principal.appUserId()));
+        CustomerProfileDto profile = customerAccountService.getProfile(principal.appUserId());
+        return ApiResponse.success(new CustomerProfileDto(profile.appUserId(), profile.email(), profile.displayName(),
+                profile.preferredCinemaId(), profile.preferredLocale(), profile.dateOfBirth(), profile.loyaltyPoints(),
+                profile.memberTier(), principal.emailVerified()));
     }
 }

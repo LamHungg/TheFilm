@@ -2,6 +2,7 @@ package vn.thefilm.backend.security;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +58,11 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
                 email,
                 username,
                 displayName,
-                appUser == null ? null : appUser.getAppUserId());
+                appUser == null ? null : appUser.getAppUserId(),
+                List.of("ROLE_CUSTOMER"),
+                "CUSTOMER",
+                null,
+                Boolean.TRUE.equals(jwt.getClaim("email_verified")));
         return new JwtAuthenticationToken(jwt, authorities, subject) {
             @Override
             public Object getPrincipal() {

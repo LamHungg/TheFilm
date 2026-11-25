@@ -11,6 +11,8 @@ import jakarta.persistence.OneToMany;
 import java.util.List;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import vn.thefilm.backend.enums.AppUserStatus;
 
 @Entity
@@ -37,6 +39,10 @@ public class AppUserEntity {
     @Column(name = "phone")
     private String phone;
 
+    @Column(name = "email_verified", nullable = false, length = 1)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private String emailVerificationStatus = "N";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AppUserStatus status;
@@ -60,6 +66,7 @@ public class AppUserEntity {
         this.displayName = displayName;
         this.email = email;
         this.phone = phone;
+        this.emailVerificationStatus = "N";
         this.status = status;
         this.createdAt = OffsetDateTime.now();
         this.updatedAt = OffsetDateTime.now();
@@ -87,6 +94,14 @@ public class AppUserEntity {
 
     public String getPhone() {
         return phone;
+    }
+
+    public boolean isEmailVerified() {
+        return "Y".equalsIgnoreCase(emailVerificationStatus);
+    }
+
+    public void markEmailVerified() {
+        this.emailVerificationStatus = "Y";
     }
 
     public AppUserStatus getStatus() {
