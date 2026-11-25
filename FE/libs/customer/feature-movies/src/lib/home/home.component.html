@@ -53,6 +53,10 @@
                 </ng-template>
               </div>
               <h3 class="spotlight-title" [title]="film.title">{{ film.title }}</h3>
+              <div class="spotlight-score" *ngIf="film.score > 0">
+                ★ {{ film.score | number:'1.1-1' }}/10
+                <span *ngIf="film.ratingCount">· {{ film.ratingCount | number }} lượt · {{ film.ratingSource }}</span>
+              </div>
               <div class="spotlight-badges">
                 <span class="tix-mini-badge gold">{{ film.rating || 'P' }}</span>
                 <span class="tix-mini-badge red">{{ film.formats[0] || '2D' }}</span>

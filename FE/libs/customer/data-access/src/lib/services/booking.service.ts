@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, signal, computed, effect } from '@angular/core';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { Movie } from '../models/movie.model';
@@ -23,6 +23,15 @@ export interface ApiVoucher {
   status: string;
 }
 
+export interface VoucherValidationResult {
+  voucherCode: string;
+  campaignName: string;
+  discountType: string;
+  discountValue: number;
+  discountAmount: number;
+  message: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -35,6 +44,8 @@ export class BookingService {
   private readonly bookingApi = '/api/v1/public/bookings';
   private holdSalesOrderId = 0;
   private holdToken = '';
+  private voucherValidationKey = '';
+  private voucherValidationSequence = 0;
   get holdSession(): { salesOrderId: number; holdToken: string } {
     return { salesOrderId: this.holdSalesOrderId, holdToken: this.holdToken };
   }
@@ -92,6 +103,14 @@ export class BookingService {
         this.stopHoldTimer();
       }
     });
+    effect(() => {
+      const code = this.voucherCode();
+      const subtotal = this.subtotal();
+      const key = `${code}:${subtotal}`;
+      if (code && subtotal > 0 && key !== this.voucherValidationKey) {
+        this.validateVoucher(code, subtotal).subscribe({ error: () => undefined });
+      }
+    });
   }
 
   initShowtime(movie: Movie, cinema: Cinema, showtime: Showtime): void {
@@ -125,34 +144,46 @@ export class BookingService {
     }
 
     this.selectedCombos.set(combos);
-    if (this.voucherCode()) {
-      this.applyVoucher(this.voucherCode());
-    }
   }
 
-  applyVoucher(code: string): { success: boolean; message: string } {
+  validateVoucher(code: string, subtotal = this.subtotal()): Observable<VoucherValidationResult> {
     const clean = code.trim().toUpperCase();
     if (!clean) {
-      this.voucherCode.set('');
-      this.discountAmount.set(0);
-      this.voucherMessage.set('');
-      return { success: false, message: 'Vui lòng nhập mã giảm giá' };
+      this.clearVoucher();
+      return throwError(() => new Error('Vui lòng nhập mã giảm giá.'));
     }
+    const validationKey = `${clean}:${subtotal}`;
+    this.voucherValidationKey = validationKey;
+    const sequence = ++this.voucherValidationSequence;
+    return this.http.post<ApiResponse<VoucherValidationResult>>(`${this.bookingApi}/vouchers/validate`, {
+      voucherCode: clean,
+      subtotal,
+    }).pipe(
+      map(({ data }) => {
+        if (sequence === this.voucherValidationSequence) {
+          this.voucherCode.set(data.voucherCode);
+          this.discountAmount.set(Number(data.discountAmount) || 0);
+          this.voucherMessage.set(`Áp dụng ${data.voucherCode}: giảm ${this.discountAmount().toLocaleString('vi-VN')} ₫`);
+        }
+        return data;
+      }),
+      catchError((error) => {
+        if (sequence === this.voucherValidationSequence) {
+          this.clearVoucher();
+          const response = error as { error?: { message?: string; error?: { message?: string } } };
+          this.voucherMessage.set(response?.error?.error?.message || response?.error?.message || 'Mã voucher không hợp lệ.');
+        }
+        return throwError(() => error);
+      })
+    );
+  }
 
-    const subtotal = this.ticketTotal() + this.fnbTotal();
-    if (clean === 'THEFILM-WELCOME10' || clean === 'WELCOME10' || clean === 'THEFILM-50000') {
-      // Backend BookingServiceImpl applies 10% of order subtotal for voucherCode requests.
-      const discount = Math.round(subtotal * 0.1);
-      this.voucherCode.set(clean);
-      this.discountAmount.set(discount);
-      this.voucherMessage.set(`Áp dụng mã ${clean}: giảm ${discount.toLocaleString('vi-VN')} ₫ (10%)`);
-      return { success: true, message: this.voucherMessage() };
-    }
-
+  clearVoucher(): void {
+    this.voucherValidationSequence++;
+    this.voucherValidationKey = '';
     this.voucherCode.set('');
     this.discountAmount.set(0);
-    this.voucherMessage.set('Mã ưu đãi không hợp lệ hoặc đã hết hạn.');
-    return { success: false, message: this.voucherMessage() };
+    this.voucherMessage.set('');
   }
 
   updateBuyerInfo(info: BuyerInfo): void {
@@ -287,13 +318,11 @@ export class BookingService {
       .get<ApiResponse<ApiVoucher[]>>('/api/v1/customer/vouchers')
       .pipe(
         map(({ data }) => data || []),
-        catchError(() => {
+        catchError((error: HttpErrorResponse) => {
+          if (error.status !== 401 && error.status !== 403) return throwError(() => error);
           return this.http
             .get<ApiResponse<ApiVoucher[]>>(`${this.bookingApi}/vouchers`)
-            .pipe(
-              map(({ data }) => data || []),
-              catchError(() => of([]))
-            );
+            .pipe(map(({ data }) => data || []));
         })
       );
   }

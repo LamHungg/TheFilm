@@ -1115,8 +1115,10 @@
       display: flex;
       gap: 8px;
 
-      input {
+      input,
+      select {
         flex: 1;
+        min-width: 0;
         height: 38px;
         padding: 0 12px;
         border: 1px solid #bdc5d4;
@@ -1158,6 +1160,25 @@
       &.success {
         color: #10b981;
       }
+    }
+
+    .voucher-list-hint {
+      margin: 6px 0 0;
+      color: #65758f;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .btn-voucher-reload {
+      margin-left: 6px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #21447f;
+      font: inherit;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
     }
   }
 

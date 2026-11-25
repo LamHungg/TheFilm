@@ -19,6 +19,7 @@ import {
   BookingService,
   CreateOrderPayload,
   Ticket,
+  ApiVoucher,
 } from '@the-film/customer/data-access';
 
 @Component({
@@ -51,6 +52,10 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   };
 
   voucherInput = '';
+  availableVouchers: ApiVoucher[] = [];
+  vouchersLoading = false;
+  voucherLoadError = false;
+  isApplyingVoucher = false;
   selectedPaymentMethod: PaymentMethod = 'VNPAY_QR';
   isProcessingPayment = false;
   confirmedOrder: Order | null = null;
@@ -101,6 +106,8 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
       const showtimeId = params.get('showtimeId') || '';
       this.initWorkflow(showtimeId);
     });
+
+    this.loadAvailableVouchers();
 
     this.cinemaService.getFnbs().subscribe((fnbs) => {
       this.fnbItems = fnbs;
@@ -199,7 +206,8 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   getSeatsByRow(row: string): Seat[] {
-    return this.availableSeats.filter((s) => s.row === row);
+    return this.availableSeats.filter((s) => s.row === row)
+      .sort((a, b) => a.col - b.col);
   }
 
   isSeatSelected(seat: Seat): boolean {
@@ -283,12 +291,49 @@ export class BookingWorkflowComponent implements OnInit, OnDestroy {
   }
 
   applyVoucher(): void {
-    this.bookingService.applyVoucher(this.voucherInput);
+    if (!this.voucherInput) return;
+    this.isApplyingVoucher = true;
+    this.bookingService.validateVoucher(this.voucherInput).pipe(finalize(() => {
+      this.isApplyingVoucher = false;
+      this.changeDetector.markForCheck();
+    })).subscribe({
+      error: () => this.changeDetector.markForCheck(),
+    });
   }
 
   removeVoucher(): void {
     this.voucherInput = '';
-    this.bookingService.applyVoucher('');
+    this.bookingService.clearVoucher();
+  }
+
+  private loadAvailableVouchers(): void {
+    this.vouchersLoading = true;
+    this.voucherLoadError = false;
+    this.bookingService.getVouchers().pipe(finalize(() => {
+      this.vouchersLoading = false;
+      this.changeDetector.markForCheck();
+    })).subscribe((vouchers) => {
+      this.availableVouchers = vouchers;
+      this.changeDetector.markForCheck();
+    }, () => {
+      this.availableVouchers = [];
+      this.voucherLoadError = true;
+      this.changeDetector.markForCheck();
+    });
+  }
+
+  reloadAvailableVouchers(): void {
+    if (!this.vouchersLoading) this.loadAvailableVouchers();
+  }
+
+  voucherOptionLabel(voucher: ApiVoucher): string {
+    const amount = voucher.discountType === 'PERCENT'
+      ? `${voucher.discountValue}%`
+      : `${new Intl.NumberFormat('vi-VN').format(voucher.discountValue)} ₫`;
+    const cap = voucher.discountType === 'PERCENT' && voucher.maxDiscount != null
+      ? `, tối đa ${new Intl.NumberFormat('vi-VN').format(voucher.maxDiscount)} ₫`
+      : '';
+    return `${voucher.voucherCode} · ${voucher.campaignName} · giảm ${amount}${cap}`;
   }
 
   nextStep(): void {

@@ -390,18 +390,26 @@
             <div class="voucher-box">
               <h3 class="summary-subhead">Khuyến mãi &amp; ưu đãi</h3>
               <div class="voucher-input-group">
-                <input
-                  type="text"
+                <select
                   [(ngModel)]="voucherInput"
-                  placeholder="Nhập mã giảm giá (VD: TIX20)..."
-                  [disabled]="discountAmount > 0"
-                />
-                <button type="button" class="btn-apply-voucher" *ngIf="discountAmount === 0" (click)="applyVoucher()">
-                  Áp dụng
+                  aria-label="Chọn voucher"
+                  [disabled]="discountAmount > 0 || isApplyingVoucher"
+                >
+                  <option value="" disabled>{{ vouchersLoading ? 'Đang tải voucher...' : voucherLoadError ? 'Không tải được voucher' : availableVouchers.length ? 'Chọn voucher hiện có' : 'Không có voucher khả dụng' }}</option>
+                  @for (voucher of availableVouchers; track voucher.voucherId) {
+                    <option [value]="voucher.voucherCode">{{ voucherOptionLabel(voucher) }}</option>
+                  }
+                </select>
+                <button type="button" class="btn-apply-voucher" *ngIf="discountAmount === 0" (click)="applyVoucher()" [disabled]="isApplyingVoucher || !voucherInput">
+                  {{ isApplyingVoucher ? 'Đang kiểm tra...' : 'Áp dụng' }}
                 </button>
                 <button type="button" class="btn-remove-voucher" *ngIf="discountAmount > 0" (click)="removeVoucher()">
                   Hủy
                 </button>
+              </div>
+              <div class="voucher-list-hint" *ngIf="!vouchersLoading && availableVouchers.length === 0">
+                <span>{{ voucherLoadError ? 'Không tải được danh sách voucher. Vui lòng thử lại.' : 'Chưa có voucher đang hiệu lực. Nếu chiến dịch vừa được kích hoạt, hãy tải lại danh sách.' }}</span>
+                <button type="button" class="btn-voucher-reload" (click)="reloadAvailableVouchers()">Tải lại</button>
               </div>
               <p class="voucher-msg" [class.success]="discountAmount > 0" *ngIf="voucherMessage">
                 {{ voucherMessage }}

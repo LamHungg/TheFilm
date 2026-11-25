@@ -30,7 +30,12 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const router = inject(Router, { optional: true });
   const config = inject(AUTH_CONFIG);
   const browser = isPlatformBrowser(inject(PLATFORM_ID));
-  const token = isBackendRequest(request.url, config.apiBaseUrl, browser)
+  const requestPath = (() => {
+    try { return new URL(request.url, browser ? window.location.origin : 'http://localhost').pathname; }
+    catch { return request.url; }
+  })();
+  const isAdminApiRequest = requestPath === '/api/v1/admin' || requestPath.startsWith('/api/v1/admin/');
+  const token = !isAdminApiRequest && isBackendRequest(request.url, config.apiBaseUrl, browser)
     ? authService.getAccessToken()
     : null;
   const authenticatedRequest = token

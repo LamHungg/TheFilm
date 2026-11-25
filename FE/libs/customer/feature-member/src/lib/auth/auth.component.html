@@ -31,7 +31,7 @@
     <div class="tix-card" data-node-id="475:4932">
       <!-- Title -->
       <h1 class="tix-card-title">
-        {{ isLoginMode ? 'Đăng nhập TIX ID' : 'Đăng ký TIX ID' }}
+        {{ isVerificationMode ? 'Xác minh email' : isLoginMode ? 'Đăng nhập TIX ID' : 'Đăng ký TIX ID' }}
       </h1>
 
       <!-- Feedback / Error messages -->
@@ -43,6 +43,10 @@
       >
         <span class="tix-alert-dot"></span>
         <span>{{ errorMessage }}</span>
+      </div>
+
+      <div class="tix-alert tix-alert-loading" *ngIf="infoMessage" role="status" aria-live="polite">
+        <span>{{ infoMessage }}</span>
       </div>
 
       <div
@@ -74,9 +78,50 @@
         </div>
       </div>
 
+      <form
+        *ngIf="isVerificationMode && !usesOidc"
+        class="tix-form"
+        (ngSubmit)="submitEmailVerification()"
+        autocomplete="on"
+      >
+        <p class="tix-switch-hint">Nhập mã 6 chữ số đã gửi tới <strong>{{ verificationEmail }}</strong>.</p>
+        <div class="tix-field-group">
+          <label for="verification-code" class="tix-label">MÃ XÁC MINH</label>
+          <div class="tix-input-box">
+            <input
+              id="verification-code"
+              type="text"
+              name="verificationCode"
+              class="tix-input"
+              [(ngModel)]="verificationCode"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              pattern="[0-9]{6}"
+              placeholder="Nhập mã 6 chữ số"
+              required
+              [disabled]="isLoading"
+            />
+          </div>
+        </div>
+        <div class="tix-actions">
+          <button type="submit" class="tix-btn-primary" [disabled]="isLoading || verificationCode.length !== 6">
+            Xác minh email
+          </button>
+          <button type="button" class="tix-btn-secondary" [disabled]="isLoading" (click)="resendVerificationCode()">
+            Gửi lại mã
+          </button>
+        </div>
+      </form>
+
+      <div *ngIf="isUnverifiedOidcSession" class="tix-form">
+        <p class="tix-switch-hint">Xác minh địa chỉ email trong email từ nhà cung cấp đăng nhập, sau đó đăng nhập lại THEFILM.</p>
+        <button type="button" class="tix-btn-primary" (click)="resetOidcSession()">Đăng nhập lại</button>
+      </div>
+
       <!-- FORM: ĐĂNG NHẬP CỤC BỘ (chỉ dùng khi không cấu hình OIDC) -->
       <form
-        *ngIf="isLoginMode && !usesOidc"
+        *ngIf="isLoginMode && !usesOidc && !isVerificationMode"
         class="tix-form"
         (ngSubmit)="submitLogin()"
         autocomplete="on"
@@ -156,7 +201,7 @@
 
       <!-- FORM: ĐĂNG KÝ CỤC BỘ (chỉ dùng khi không cấu hình OIDC) -->
       <form
-        *ngIf="!isLoginMode && !usesOidc"
+        *ngIf="!isLoginMode && !usesOidc && !isVerificationMode"
         class="tix-form"
         (ngSubmit)="submitRegister()"
         autocomplete="on"

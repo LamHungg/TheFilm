@@ -29,7 +29,16 @@ interface FilmApi {
   synopsis: string | null;
   runtimeMinutes: number | null;
   posterUri: string | null;
+  bannerUri: string | null;
   trailerUri: string | null;
+  releaseDate: string | null;
+  director: string | null;
+  cast: string[] | null;
+  externalRatingScore: number | null;
+  externalRatingCount: number | null;
+  externalRatingSource: string | null;
+  externalRatingUri: string | null;
+  externalRatingUpdatedAt: string | null;
   ageClassification: {
     code: string;
     name: string;
@@ -243,20 +252,24 @@ export class CinemaService {
       originalTitle: film.originalTitle || undefined,
       slug: `${film.id}-${this.slugify(film.title)}`,
       posterUrl,
-      bannerUrl: posterUrl,
+      bannerUrl: film.bannerUri || posterUrl,
       rating,
       ratingDesc: film.ageClassification?.name || film.ageClassification?.description || '',
       duration: film.runtimeMinutes ?? 120,
-      releaseDate: '',
+      releaseDate: film.releaseDate || '',
       status,
       genres: (film.genres ?? []).map((g) => g.name),
       formats: ['2D'],
       languages: ['Phụ đề Việt'],
-      director: '',
-      cast: [],
+      director: film.director || '',
+      cast: film.cast || [],
       synopsis: film.synopsis || '',
       trailerUrl: film.trailerUri || '',
-      score: 0,
+      score: Number(film.externalRatingScore ?? 0),
+      ratingCount: film.externalRatingCount ?? 0,
+      ratingSource: film.externalRatingSource || '',
+      ratingSourceUrl: film.externalRatingUri || '',
+      ratingUpdatedAt: film.externalRatingUpdatedAt || '',
       figmaTheme: THEMES[(film.id - 1) % THEMES.length] || 'navy',
       category: film.genres?.[0]?.name,
     };

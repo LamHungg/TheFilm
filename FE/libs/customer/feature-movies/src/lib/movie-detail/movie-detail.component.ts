@@ -2,7 +2,9 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { forkJoin } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { formatVND } from '@the-film/shared/util';
 import {
   Movie,
@@ -33,6 +35,17 @@ interface CinemaScheduleGroup {
   badgeLabel: string;
   badgeVariant: 'red' | 'gold' | 'navy';
   rooms: GroupedRoomShowtime[];
+}
+
+interface FilmReview {
+  id: number;
+  displayName: string;
+  score: number;
+  title: string;
+  content: string;
+  tags: string[];
+  createdAt: string;
+  verifiedPurchase: boolean;
 }
 
 const WEEKDAY_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -68,18 +81,34 @@ export class MovieDetailComponent implements OnInit {
 
   allShowtimes: Showtime[] = [];
   cinemaGroups: CinemaScheduleGroup[] = [];
+  expandedCinemaId = '';
+  reviews: FilmReview[] = [];
+  reviewAverage = 0;
+  reviewCount = 0;
+  reviewScore = 10;
+  reviewTitle = '';
+  reviewContent = '';
+  reviewMessage = '';
+  reviewError = '';
+  isSubmittingReview = false;
 
   selectedShowtime: Showtime | null = null;
   selectedSlotCinema: Cinema | null = null;
   selectedSlotRoomLabel = '';
   posterError = false;
+  safeTrailerUrl: SafeResourceUrl | null = null;
+  directTrailerUrl = '';
+  heroBackdropUrl = '';
+  isTrailerPlaying = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private cinemaService: CinemaService,
     private bookingService: BookingService,
-    private cdr: ChangeDetectorRef
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {
     this.availableDates = this.buildUpcomingDates(5);
     this.selectedDate = this.availableDates[0]?.date || '';
@@ -92,6 +121,10 @@ export class MovieDetailComponent implements OnInit {
       this.cinemaService.getMovieBySlug(slug).subscribe((m) => {
         if (m) {
           this.movie = m;
+          this.heroBackdropUrl = this.movieHeroBackdrop(m) || m.posterUrl || '';
+          this.isTrailerPlaying = false;
+          this.prepareTrailer(m.trailerUrl);
+          this.loadReviews(m.id);
           this.loadCinemasAndShowtimes();
         } else {
           this.router.navigate(['/movies']);
@@ -177,6 +210,9 @@ export class MovieDetailComponent implements OnInit {
 
   onDateChange(date: string): void {
     this.selectedDate = date;
+    this.selectedShowtime = null;
+    this.selectedSlotCinema = null;
+    this.selectedSlotRoomLabel = '';
     this.fetchShowtimesForDate();
   }
 
@@ -267,25 +303,71 @@ export class MovieDetailComponent implements OnInit {
     }
 
     this.cinemaGroups = groups;
-
-    const currentStillVisible = this.selectedShowtime
-      ? groups
-          .flatMap((g) => g.rooms)
-          .flatMap((r) => r.slots)
-          .find((s) => s.id === this.selectedShowtime?.id)
-      : undefined;
-
-    if (currentStillVisible) {
-      this.selectedShowtime = currentStillVisible;
-    } else if (groups.length > 0 && groups[0].rooms.length > 0 && groups[0].rooms[0].slots.length > 0) {
-      const firstGroup = groups[0];
-      const firstRoom = firstGroup.rooms[0];
-      this.selectSlot(firstGroup.cinema, firstRoom, firstRoom.slots[0]);
-    } else {
+    if (!groups.some((group) => group.cinema.id === this.expandedCinemaId)) {
+      this.expandedCinemaId = '';
+    }
+    const currentStillVisible = this.selectedShowtime && groups
+      .flatMap((g) => g.rooms).flatMap((r) => r.slots)
+      .some((s) => s.id === this.selectedShowtime?.id);
+    if (!currentStillVisible) {
       this.selectedShowtime = null;
       this.selectedSlotCinema = null;
       this.selectedSlotRoomLabel = '';
     }
+  }
+
+  toggleCinema(group: CinemaScheduleGroup): void {
+    this.expandedCinemaId = this.expandedCinemaId === group.cinema.id ? '' : group.cinema.id;
+    this.selectedCinemaId = this.expandedCinemaId;
+    if (this.selectedShowtime && this.selectedSlotCinema?.id !== this.expandedCinemaId) {
+      this.selectedShowtime = null;
+      this.selectedSlotCinema = null;
+      this.selectedSlotRoomLabel = '';
+    }
+  }
+
+  private loadReviews(filmId: string): void {
+    this.http.get<{ success: boolean; data: { items: FilmReview[]; averageScore: number; reviewCount: number } }>(
+      `/api/v1/public/films/${encodeURIComponent(filmId)}/reviews`
+    ).subscribe({
+      next: (response) => {
+        this.reviews = response.data?.items ?? [];
+        this.reviewAverage = response.data?.averageScore ?? 0;
+        this.reviewCount = response.data?.reviewCount ?? 0;
+        this.cdr.markForCheck();
+      },
+      error: () => { this.reviews = []; this.reviewAverage = 0; this.reviewCount = 0; this.cdr.markForCheck(); },
+    });
+  }
+
+  submitReview(): void {
+    if (!this.movie || !this.reviewContent.trim()) {
+      this.reviewError = 'Hãy nhập nội dung đánh giá.';
+      return;
+    }
+    this.isSubmittingReview = true;
+    this.reviewError = '';
+    this.reviewMessage = '';
+    this.http.post(`/api/v1/public/films/${encodeURIComponent(this.movie.id)}/reviews`, {
+      score: this.reviewScore,
+      title: this.reviewTitle.trim(),
+      content: this.reviewContent.trim(),
+      tags: [],
+    }).subscribe({
+      next: () => {
+        this.reviewMessage = 'Đã gửi đánh giá của bạn.';
+        this.reviewTitle = '';
+        this.reviewContent = '';
+        this.loadReviews(this.movie!.id);
+        this.isSubmittingReview = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        this.reviewError = error?.error?.error?.message || 'Hãy đăng nhập và có vé hợp lệ của phim để gửi đánh giá.';
+        this.isSubmittingReview = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   selectSlot(cinema: Cinema, room: GroupedRoomShowtime, showtime: Showtime): void {
@@ -313,5 +395,68 @@ export class MovieDetailComponent implements OnInit {
 
   onPosterError(): void {
     this.posterError = true;
+  }
+
+  onHeroBackdropError(): void {
+    const fallback = this.movie?.bannerUrl && this.movie.bannerUrl !== this.movie.posterUrl
+      ? this.movie.bannerUrl
+      : this.movie?.posterUrl;
+    if (fallback && this.heroBackdropUrl !== fallback) {
+      this.heroBackdropUrl = fallback;
+      return;
+    }
+    this.heroBackdropUrl = '';
+  }
+
+  get heroTagline(): string {
+    return this.movie?.slug === '1-ngay-con-con-me' ? 'Còn mẹ là còn tất cả!' : '';
+  }
+
+  private movieHeroBackdrop(movie: Movie): string {
+    return movie.bannerUrl && movie.bannerUrl !== movie.posterUrl ? movie.bannerUrl : '';
+  }
+
+  playTrailer(): void {
+    if (this.safeTrailerUrl || this.directTrailerUrl) this.isTrailerPlaying = true;
+  }
+
+  closeTrailer(): void {
+    this.isTrailerPlaying = false;
+  }
+
+  private prepareTrailer(rawUrl: string): void {
+    this.safeTrailerUrl = null;
+    this.directTrailerUrl = '';
+    if (!rawUrl) return;
+    try {
+      const url = new URL(rawUrl);
+      if (url.protocol !== 'https:') return;
+      const host = url.hostname.toLowerCase();
+      let videoId = '';
+      if (host === 'youtu.be') videoId = url.pathname.split('/').filter(Boolean)[0] || '';
+      if (host === 'youtube.com' || host === 'www.youtube.com' || host === 'm.youtube.com') {
+        videoId = url.searchParams.get('v') || url.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1] || '';
+      }
+      if (host === 'youtube-nocookie.com' || host === 'www.youtube-nocookie.com') {
+        videoId = url.pathname.match(/^\/embed\/([^/]+)/)?.[1] || '';
+      }
+      if (/^[A-Za-z0-9_-]{6,20}$/.test(videoId)) {
+        this.safeTrailerUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+          `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&autoplay=1`
+        );
+        return;
+      }
+      if (/\.(mp4|webm)(?:$|\?)/i.test(url.href)) {
+        this.directTrailerUrl = url.href;
+      }
+    } catch {
+      // Ignore malformed or insecure links; they are never embedded.
+    }
+  }
+
+  get ratingUpdateLabel(): string {
+    if (!this.movie?.ratingUpdatedAt) return '';
+    const date = new Date(this.movie.ratingUpdatedAt);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('vi-VN');
   }
 }

@@ -2,6 +2,7 @@ export interface UserProfile {
   appUserId?: number | null;
   subject?: string;
   email?: string | null;
+  emailVerified?: boolean;
   displayName: string;
   phone?: string | null;
   preferredCinemaId?: number | null;

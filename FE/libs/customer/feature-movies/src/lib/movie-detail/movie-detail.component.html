@@ -1,279 +1,71 @@
-<div class="showtimes-detail-page" *ngIf="movie">
-  <!-- Subtle Breadcrumb -->
-  <div class="breadcrumb-row">
-    <a routerLink="/">Trang chủ</a>
-    <span class="sep">/</span>
-    <a routerLink="/movies">Phim</a>
-    <span class="sep">/</span>
-    <span class="current">{{ movie.title }}</span>
-  </div>
+<main class="showtimes-detail-page movie-detail-page" *ngIf="movie">
+  <nav class="breadcrumb-row" aria-label="Điều hướng">
+    <a routerLink="/">Trang chủ</a><span class="sep">/</span><a routerLink="/movies">Phim</a><span class="sep">/</span><span class="current">{{ movie.title }}</span>
+  </nav>
 
-  <!-- Figma 2-Column Layout: Left Schedule (638px) | Right Movie & Summary Card (418px) -->
-  <div class="figma-detail-grid">
-    <!-- LEFT COLUMN: SUẤT CHIẾU -->
-    <section class="schedule-column">
-      <header class="schedule-header">
-        <h1 class="page-heading">SUẤT CHIẾU</h1>
-        <p class="page-subheading">Chọn suất chiếu bạn muốn xem</p>
-      </header>
+  <section class="film-hero" [class.trailer-playing]="isTrailerPlaying">
+    <img class="hero-backdrop" *ngIf="heroBackdropUrl" [src]="heroBackdropUrl" [alt]="''" (error)="onHeroBackdropError()" />
+    <div class="hero-copy">
+      <span class="hero-kicker">♥ Phim đang chiếu</span>
+      <h1 class="movie-detail-title">{{ movie.title }}</h1>
+      <div class="hero-subtitle">
+        <span>{{ movie.originalTitle || movie.title }}</span><span *ngIf="movie.releaseDate">{{ movie.releaseDate | date:'yyyy' }}</span>
+        <span>{{ movie.duration }} phút</span>
+      </div>
+      <div class="hero-ratings">
+        <div class="rating-source-score" *ngIf="movie.score > 0"><b>⭐ {{ movie.score | number:'1.0-1' }}</b><span>/10 · {{ movie.ratingCount | number }} đánh giá MoMo</span></div>
+        <div class="rating-age"><strong>{{ movie.rating }}</strong><span>Độ tuổi</span></div>
+      </div>
+      <p class="hero-tagline" *ngIf="heroTagline">{{ heroTagline }}</p>
+      <div class="hero-actions">
+        <a class="button-buy figma-btn-primary" href="#showtimes">▣ Mua vé ngay</a>
+        <a class="button-review figma-btn-secondary" href="#reviews">☆ Xem đánh giá</a>
+      </div>
+      <div class="hero-description">
+        <img *ngIf="movie.posterUrl" [src]="movie.posterUrl" [alt]="'Poster ' + movie.title" (error)="onPosterError()" />
+        <div><span class="eyebrow">NỘI DUNG</span><p class="movie-synopsis-text">{{ movie.synopsis || 'Thông tin nội dung phim đang được cập nhật.' }}</p></div>
+      </div>
+      <div class="hero-meta"><span><small>NGÀY CHIẾU</small>{{ movie.releaseDate ? (movie.releaseDate | date:'dd/MM/yyyy') : 'Đang cập nhật' }}</span><span><small>THỂ LOẠI</small>{{ movie.genres.join(', ') || 'Đang cập nhật' }}</span><span><small>ĐẠO DIỄN</small>{{ movie.director || 'Đang cập nhật' }}</span></div>
+    </div>
+    <button class="hero-play-button" *ngIf="!isTrailerPlaying && (safeTrailerUrl || directTrailerUrl)" type="button" [attr.aria-label]="'Phát trailer ' + movie.title" (click)="playTrailer()">▶</button>
+    <div class="hero-player" *ngIf="isTrailerPlaying">
+      <button class="hero-player-close" type="button" aria-label="Đóng trailer" (click)="closeTrailer()">×</button>
+      <iframe *ngIf="safeTrailerUrl" [src]="safeTrailerUrl" [title]="'Trailer ' + movie.title" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <video *ngIf="directTrailerUrl" [src]="directTrailerUrl" controls autoplay preload="metadata" [title]="'Trailer ' + movie.title"></video>
+    </div>
+  </section>
 
-      <!-- Date Selection Carousel (Date Selection in Figma) -->
-      <div class="date-selection-row">
-        <button
-          type="button"
-          class="date-nav-btn"
-          (click)="shiftDate(-1)"
-          aria-label="Ngày trước"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
-
-        <div class="date-pills-track">
-          <button
-            type="button"
-            *ngFor="let d of availableDates"
-            class="date-schedule-btn"
-            [class.active]="selectedDate === d.date"
-            (click)="onDateChange(d.date)"
-          >
-            <span class="date-num">{{ d.shortDate }}</span>
-            <span class="date-day">{{ d.weekday }}</span>
+  <section class="showtimes-section" id="showtimes">
+    <div class="section-heading"><div><h2>Lịch chiếu {{ movie.title }}</h2><p>Chọn ngày, rạp rồi chọn giờ chiếu phù hợp</p></div>
+      <label class="city-picker location-row"><span class="pin-icon" aria-hidden="true">⌖</span><select class="location-select figma-select" [(ngModel)]="selectedCity" (change)="applyShowtimeFilter()" aria-label="Chọn tỉnh thành"><option value="">Tất cả khu vực</option><option *ngFor="let city of availableCities" [value]="city">{{ city }}</option></select></label>
+    </div>
+    <div class="date-track date-selection-row"><button *ngFor="let d of availableDates" type="button" class="date-card date-schedule-btn" [class.active]="selectedDate === d.date" (click)="onDateChange(d.date)"><small class="date-num">{{ d.weekday }}</small><strong class="date-day">{{ d.shortDate.split('/')[0] }}</strong></button></div>
+    <div class="schedule-layout">
+      <div class="cinema-list">
+        <article class="cinema-card cinema-schedule-block" *ngFor="let group of cinemaGroups" [class.expanded]="expandedCinemaId === group.cinema.id">
+          <button type="button" class="cinema-toggle" [attr.aria-expanded]="expandedCinemaId === group.cinema.id" (click)="toggleCinema(group)">
+            <span class="cinema-mark">▣</span><span class="cinema-summary"><strong>{{ group.cinema.name }}</strong><small>{{ group.cinema.address }}</small></span><span class="showtimes-count">{{ group.rooms.length }} phòng · {{ group.rooms.length ? group.rooms[0].slots.length : 0 }} suất</span><span class="chevron">{{ expandedCinemaId === group.cinema.id ? '⌃' : '⌄' }}</span>
           </button>
-        </div>
-
-        <button
-          type="button"
-          class="date-nav-btn"
-          (click)="shiftDate(1)"
-          aria-label="Ngày tiếp theo"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
-      </div>
-
-      <div class="section-divider"></div>
-
-      <!-- Location Selector (Dropdown Location in Figma) -->
-      <div class="location-row">
-        <svg class="pin-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-          <circle cx="12" cy="10" r="3"></circle>
-        </svg>
-        <select
-          [(ngModel)]="selectedCity"
-          (change)="applyShowtimeFilter()"
-          class="location-select"
-          aria-label="Chọn khu vực"
-        >
-          <option value="">TẤT CẢ KHU VỰC</option>
-          <option *ngFor="let city of availableCities" [value]="city">
-            {{ city | uppercase }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Search Bar + Inline Filter Triggers -->
-      <div class="filter-toolbar">
-        <div class="cinema-search-box">
-          <input
-            type="text"
-            [(ngModel)]="cinemaSearch"
-            (input)="applyShowtimeFilter()"
-            placeholder="Tìm tên rạp chiếu..."
-          />
-          <svg class="search-svg" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </div>
-
-        <div class="inline-filters">
-          <select
-            [(ngModel)]="selectedRoomType"
-            (change)="applyShowtimeFilter()"
-            class="inline-filter-select"
-            aria-label="Lọc phòng chiếu"
-          >
-            <option value="ALL">Phòng chiếu</option>
-            <option value="STANDARD">2D Standard</option>
-            <option value="VIP">VIP</option>
-            <option value="GOLD_CLASS">Gold Class</option>
-          </select>
-
-          <select
-            [(ngModel)]="sortBy"
-            (change)="applyShowtimeFilter()"
-            class="inline-filter-select"
-            aria-label="Sắp xếp"
-          >
-            <option value="time">Sắp xếp: Giờ chiếu</option>
-            <option value="price">Sắp xếp: Giá vé</option>
-          </select>
-
-          <select
-            [(ngModel)]="selectedCinemaId"
-            (change)="applyShowtimeFilter()"
-            class="inline-filter-select"
-            aria-label="Chọn rạp"
-          >
-            <option value="">Rạp chiếu phim</option>
-            <option *ngFor="let c of cinemas" [value]="c.id">{{ c.name }}</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Cinema Schedule Blocks (Time Picker Frame in Figma) -->
-      <div class="time-picker-frame">
-        <div class="cinema-schedule-block" *ngFor="let group of cinemaGroups">
-          <!-- Cinema Title + Brand Badge -->
-          <div class="cinema-header-row">
-            <div class="cinema-name-wrap">
-              <span class="star-circle" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                </svg>
-              </span>
-              <h2 class="cinema-name">{{ group.cinema.name | uppercase }}</h2>
-            </div>
-
-            <span class="cinema-brand-badge" [ngClass]="'badge-' + group.badgeVariant">
-              {{ group.badgeLabel }}
-            </span>
-          </div>
-
-          <p class="cinema-address">{{ group.cinema.address | uppercase }}</p>
-
-          <!-- Room Type & Showtime Slots -->
-          <div class="room-schedule-list">
-            <div class="room-schedule-group" *ngFor="let room of group.rooms">
-              <div class="room-head-row">
-                <span class="room-type-title">{{ room.format }} · {{ room.roomName | uppercase }}</span>
-                <span class="room-price-range" *ngIf="room.minPrice > 0">
-                  {{ formatPrice(room.minPrice) }}
-                  <ng-container *ngIf="room.maxPrice > room.minPrice">
-                    - {{ formatPrice(room.maxPrice) }}
-                  </ng-container>
-                </span>
-              </div>
-
-              <div class="time-slots-grid">
-                <button
-                  type="button"
-                  *ngFor="let st of room.slots"
-                  class="time-slot-btn"
-                  [class.selected]="selectedShowtime?.id === st.id"
-                  [title]="'Còn ' + st.availableSeats + '/' + st.totalSeats + ' ghế' + (st.priceStandard > 0 ? ' · Giá từ ' + formatPrice(st.priceStandard) : '')"
-                  (click)="selectSlot(group.cinema, room, st)"
-                >
-                  {{ st.startTime }}
-                </button>
-              </div>
+          <div class="cinema-expanded room-schedule-list" *ngIf="expandedCinemaId === group.cinema.id">
+            <div class="room-schedule-group" *ngFor="let room of group.rooms"><div class="room-head-row"><strong>{{ room.format }} {{ room.roomName }}</strong><span *ngIf="room.minPrice">Từ {{ formatPrice(room.minPrice) }}</span></div>
+              <div class="time-slots-grid"><button *ngFor="let st of room.slots" type="button" class="time-slot-btn" [class.selected]="selectedShowtime?.id === st.id" (click)="selectSlot(group.cinema, room, st)"><strong>{{ st.startTime }}</strong><small>Còn {{ st.availableSeats }} ghế</small></button></div>
             </div>
           </div>
-        </div>
-
-        <!-- Empty State -->
-        <div class="empty-showtimes" *ngIf="cinemaGroups.length === 0">
-          <p>Hiện chưa có suất chiếu phù hợp với bộ lọc hoặc ngày đã chọn.</p>
-          <button
-            type="button"
-            class="btn-reset-filter"
-            (click)="selectedCity = ''; cinemaSearch = ''; selectedRoomType = 'ALL'; selectedCinemaId = ''; applyShowtimeFilter()"
-          >
-            Xem tất cả suất chiếu
-          </button>
-        </div>
+        </article>
+        <div class="empty-showtimes" *ngIf="cinemaGroups.length === 0"><strong>Chưa có suất chiếu cho ngày này</strong><p>Hãy thử chọn ngày hoặc khu vực khác. Lịch chiếu mới sẽ xuất hiện tại đây khi rạp được cập nhật.</p><button class="figma-btn-secondary" type="button" (click)="selectedCity = ''; cinemaSearch = ''; selectedRoomType = 'ALL'; selectedCinemaId = ''; applyShowtimeFilter()">Xóa bộ lọc</button></div>
       </div>
-    </section>
+      <aside class="booking-summary schedule-details-card"><span class="eyebrow">VÉ CỦA BẠN</span><ng-container *ngIf="selectedShowtime && selectedSlotCinema; else chooseSlot"><h3 class="summary-cinema-name">{{ selectedSlotCinema.name }}</h3><p class="summary-date">{{ selectedDateLabel }}</p><div class="summary-time summary-room-time-row"><strong>{{ selectedShowtime.startTime }}</strong><span>{{ selectedSlotRoomLabel }}</span></div><small class="summary-seats-info">Còn {{ selectedShowtime.availableSeats }} / {{ selectedShowtime.totalSeats }} ghế</small><button class="btn-buy-now figma-btn-primary" type="button" (click)="bookSelectedShowtime()">Chọn ghế</button></ng-container><ng-template #chooseSlot><p class="summary-date">Mở một rạp để xem các giờ chiếu, sau đó chọn giờ để tiếp tục.</p><button class="btn-buy-now figma-btn-primary" type="button" disabled>Chọn ghế</button></ng-template></aside>
+    </div>
+  </section>
 
-    <!-- RIGHT COLUMN: MOVIE POSTER, METADATA & CHECKOUT SUMMARY CARD -->
-    <aside class="movie-column">
-      <!-- Clean 16px Rounded Movie Poster -->
-      <div class="movie-poster-box">
-        <img
-          *ngIf="!posterError && movie.posterUrl; else detailPosterFallback"
-          [src]="movie.posterUrl"
-          [alt]="movie.title"
-          (error)="onPosterError()"
-        />
-        <ng-template #detailPosterFallback>
-          <div class="poster-fallback-box">
-            <span class="fb-cat">{{ movie.category || (movie.genres[0] | uppercase) }}</span>
-            <strong class="fb-title">{{ movie.title }}</strong>
-          </div>
-        </ng-template>
-      </div>
-
-      <!-- Uppercase Movie Title -->
-      <h2 class="movie-detail-title">{{ movie.title | uppercase }}</h2>
-
-      <!-- Metadata Table matching Figma (Thể loại, Thời lượng, Đạo diễn, Phân loại độ tuổi) -->
-      <div class="movie-meta-table">
-        <div class="meta-row">
-          <span class="meta-label">Thể loại</span>
-          <span class="meta-value">{{ movie.genres.join(', ') }}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Thời lượng</span>
-          <span class="meta-value">{{ formatDuration(movie.duration) }}</span>
-        </div>
-        <div class="meta-row" *ngIf="movie.originalTitle">
-          <span class="meta-label">Tên gốc</span>
-          <span class="meta-value">{{ movie.originalTitle }}</span>
-        </div>
-        <div class="meta-row" *ngIf="movie.director">
-          <span class="meta-label">Đạo diễn</span>
-          <span class="meta-value">{{ movie.director }}</span>
-        </div>
-        <div class="meta-row">
-          <span class="meta-label">Phân loại độ tuổi</span>
-          <span class="meta-value">{{ movie.rating }}</span>
-        </div>
-        <div class="meta-row" *ngIf="movie.releaseDate">
-          <span class="meta-label">Khởi chiếu</span>
-          <span class="meta-value">{{ movie.releaseDate }}</span>
-        </div>
-      </div>
-
-      <p class="movie-synopsis-text">{{ movie.synopsis }}</p>
-
-      <!-- Schedule Details Card (Schehdule Details Card in Figma) -->
-      <div class="schedule-details-card" *ngIf="selectedShowtime && selectedSlotCinema; else noSlotSelected">
-        <h3 class="summary-cinema-name">{{ selectedSlotCinema.name | uppercase }}</h3>
-        <p class="summary-date">{{ selectedDateLabel }}</p>
-
-        <div class="summary-room-time-row">
-          <span class="summary-room">{{ selectedSlotRoomLabel | uppercase }}</span>
-          <span class="summary-time">{{ selectedShowtime.startTime }}</span>
-        </div>
-
-        <p class="summary-seats-info">
-          <ng-container *ngIf="selectedShowtime.priceStandard > 0">
-            Giá từ {{ formatPrice(selectedShowtime.priceStandard) }} &middot;
-          </ng-container>
-          Còn {{ selectedShowtime.availableSeats }}/{{ selectedShowtime.totalSeats }} ghế trống
-        </p>
-
-        <p class="summary-helper">*Bạn có thể chọn ghế ở bước tiếp theo</p>
-
-        <button type="button" class="btn-buy-now" (click)="bookSelectedShowtime()">
-          MUA NGAY
-        </button>
-      </div>
-
-      <ng-template #noSlotSelected>
-        <div class="schedule-details-card empty-card">
-          <h3 class="summary-cinema-name">CHƯA CHỌN SUẤT CHIẾU</h3>
-          <p class="summary-date">Vui lòng chọn một giờ chiếu bên trái để tiếp tục đặt ghế.</p>
-          <button type="button" class="btn-buy-now" disabled>
-            MUA NGAY
-          </button>
-        </div>
-      </ng-template>
-    </aside>
-  </div>
-</div>
+  <section class="reviews-section" id="reviews">
+    <div class="reviews-main">
+      <div class="reviews-heading"><div><h2>Đánh giá từ người xem</h2><p>Đánh giá do khán giả THEFILM gửi</p></div><a *ngIf="movie.ratingSourceUrl" [href]="movie.ratingSourceUrl" target="_blank" rel="noopener noreferrer">Điểm MoMo ↗</a></div>
+      <div class="review-average"><span>★</span><strong>{{ reviewCount ? (reviewAverage | number:'1.1-1') : '—' }}</strong><small>/10 · {{ reviewCount }} đánh giá THEFILM</small></div>
+      <article class="review-card" *ngFor="let review of reviews"><div class="review-user"><span class="avatar">{{ review.displayName.charAt(0) | uppercase }}</span><div><strong>{{ review.displayName }}</strong><small>{{ review.createdAt | date:'d MMM, y' }} <em *ngIf="review.verifiedPurchase">✓ Đã mua vé THEFILM</em></small></div></div><h3>⭐ {{ review.score }}/10 · {{ review.title || 'Đánh giá phim' }}</h3><p>{{ review.content }}</p><div class="review-tags" *ngIf="review.tags.length"><span *ngFor="let tag of review.tags">{{ tag }}</span></div></article>
+      <p class="no-reviews" *ngIf="reviews.length === 0">Chưa có đánh giá THEFILM cho phim này. Hãy là người đầu tiên chia sẻ sau khi xem phim.</p>
+      <p class="external-rating-note" *ngIf="movie.score > 0">Điểm tham khảo MoMo: <strong>★ {{ movie.score | number:'1.1-1' }}/10</strong> · {{ movie.ratingCount | number }} lượt đánh giá. Điểm này được giữ riêng với đánh giá THEFILM.</p>
+    </div>
+    <form class="review-form" (ngSubmit)="submitReview()"><span class="eyebrow">CHIA SẺ CẢM NHẬN</span><h2>Viết đánh giá</h2><p>Chỉ tài khoản có vé đã phát hành của phim mới gửi được đánh giá.</p><label>Điểm của bạn <select class="figma-select" [(ngModel)]="reviewScore" name="reviewScore"><option *ngFor="let score of [10,9,8,7,6,5,4,3,2,1]" [ngValue]="score">{{ score }}/10</option></select></label><label>Tiêu đề <input class="figma-input" name="reviewTitle" [(ngModel)]="reviewTitle" maxlength="120" placeholder="Cảm nhận ngắn của bạn" /></label><label>Nội dung <textarea class="figma-input" name="reviewContent" [(ngModel)]="reviewContent" rows="5" maxlength="2000" placeholder="Bạn thích điều gì ở bộ phim?"></textarea></label><p class="form-success" *ngIf="reviewMessage">{{ reviewMessage }}</p><p class="form-error" *ngIf="reviewError">{{ reviewError }}</p><button class="figma-btn-primary" type="submit" [disabled]="isSubmittingReview">{{ isSubmittingReview ? 'Đang gửi…' : 'Gửi đánh giá' }}</button></form>
+  </section>
+</main>

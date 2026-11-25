@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '@the-film/customer/data-access';
 
 @Component({
@@ -16,6 +16,11 @@ export class AuthComponent implements OnDestroy {
   isLoading = false;
   loadingMessage = '';
   errorMessage = '';
+  infoMessage = '';
+  isVerificationMode = false;
+  verificationEmail = '';
+  verificationCode = '';
+  isUnverifiedOidcSession = false;
 
   // Login form model
   loginEmail = '';
@@ -39,6 +44,7 @@ export class AuthComponent implements OnDestroy {
   }
 
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private redirectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -49,7 +55,7 @@ export class AuthComponent implements OnDestroy {
 
   constructor() {
     if (this.authService.isAuthenticated()) {
-      queueMicrotask(() => void this.navigateToMember());
+      queueMicrotask(() => this.checkExistingSession());
     }
   }
 
@@ -60,7 +66,9 @@ export class AuthComponent implements OnDestroy {
   setMode(isLoginMode: boolean): void {
     if (this.isLoading) return;
     this.isLoginMode = isLoginMode;
+    this.isVerificationMode = false;
     this.errorMessage = '';
+    this.infoMessage = '';
   }
 
   startOidcFlow(): void {
@@ -119,7 +127,7 @@ export class AuthComponent implements OnDestroy {
 
     this.authService.loginWithCredentials({ email, password }).subscribe({
       next: () => {
-        void this.navigateToMember();
+        void this.navigateAfterAuth();
       },
       error: (err) => {
         this.isLoading = false;
@@ -173,9 +181,7 @@ export class AuthComponent implements OnDestroy {
         password,
       })
       .subscribe({
-        next: () => {
-          void this.navigateToMember();
-        },
+        next: () => void this.navigateAfterAuth(),
         error: (err) => {
           this.isLoading = false;
           this.loadingMessage = '';
@@ -190,13 +196,69 @@ export class AuthComponent implements OnDestroy {
       });
   }
 
-  private async navigateToMember(): Promise<void> {
+  submitEmailVerification(): void {
+    if (this.isLoading || !this.verificationEmail || !/^\d{6}$/.test(this.verificationCode.trim())) return;
+    this.errorMessage = '';
+    this.infoMessage = '';
+    this.isLoading = true;
+    this.loadingMessage = 'Đang xác minh email…';
+    this.authService.verifyEmail(this.verificationEmail, this.verificationCode.trim()).subscribe({
+      next: () => void this.navigateAfterAuth(),
+      error: (err) => {
+        this.isLoading = false;
+        this.loadingMessage = '';
+        this.errorMessage = err?.error?.error?.message || err?.error?.message || 'Mã xác minh không hợp lệ hoặc đã hết hạn.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  resendVerificationCode(): void {
+    if (this.isLoading || !this.verificationEmail) return;
+    this.isLoading = true;
+    this.loadingMessage = 'Đang gửi lại mã xác minh…';
+    this.authService.resendEmailVerification(this.verificationEmail).subscribe({
+      next: (message) => {
+        this.isLoading = false;
+        this.loadingMessage = '';
+        this.infoMessage = message;
+        this.errorMessage = '';
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.loadingMessage = '';
+        this.errorMessage = err?.error?.error?.message || err?.error?.message || 'Không thể gửi mã. Vui lòng thử lại.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  resetOidcSession(): void {
+    this.authService.logout();
+  }
+
+  private checkExistingSession(): void {
+    this.authService.getProfile().subscribe({
+      next: () => void this.navigateAfterAuth(),
+      error: () => {
+        this.errorMessage = 'Không kiểm tra được trạng thái xác minh email. Vui lòng đăng nhập lại.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private async navigateAfterAuth(): Promise<void> {
     this.clearRedirectTimeout();
     this.isLoading = true;
-    this.loadingMessage = 'Đang mở khu vực thành viên…';
+    this.loadingMessage = 'Đang mở trang…';
 
     try {
-      const navigated = await this.router.navigate(['/member']);
+      const requestedUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      const returnUrl = requestedUrl?.startsWith('/') && !requestedUrl.startsWith('//')
+        ? requestedUrl
+        : '/member';
+      const navigated = await this.router.navigateByUrl(returnUrl);
       if (!navigated) this.showActionError();
       else {
         this.isLoading = false;

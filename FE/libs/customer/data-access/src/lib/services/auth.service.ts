@@ -54,6 +54,7 @@ interface ApiResponse<T> {
 export interface AuthUserPayload {
   email: string;
   displayName: string;
+  emailVerified?: boolean;
   phone?: string | null;
   roles?: string[];
 }
@@ -63,6 +64,11 @@ export interface AuthResponseBody {
   tokenType: string;
   expiresIn: number;
   user: AuthUserPayload;
+}
+
+export interface EmailVerificationStart {
+  email: string;
+  expiresInSeconds: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -107,6 +113,7 @@ export class AuthService {
             displayName: data.user.displayName,
             email: data.user.email,
             phone: data.user.phone,
+            emailVerified: data.user.emailVerified,
           };
           const expiresAt = Date.now() + (data.expiresIn || 86400) * 1000;
           this.setSession(data.accessToken, userProfile, expiresAt);
@@ -115,6 +122,7 @@ export class AuthService {
           displayName: data.user.displayName,
           email: data.user.email,
           phone: data.user.phone,
+          emailVerified: data.user.emailVerified,
         })),
       );
   }
@@ -138,20 +146,48 @@ export class AuthService {
       .pipe(
         map((res) => res.data),
         tap((data) => {
-          const userProfile: UserProfile = {
+          const user: UserProfile = {
             displayName: data.user.displayName,
             email: data.user.email,
             phone: data.user.phone,
+            emailVerified: data.user.emailVerified,
           };
-          const expiresAt = Date.now() + (data.expiresIn || 86400) * 1000;
-          this.setSession(data.accessToken, userProfile, expiresAt);
+          this.setSession(data.accessToken, user, Date.now() + (data.expiresIn || 86400) * 1000);
         }),
         map((data) => ({
           displayName: data.user.displayName,
           email: data.user.email,
           phone: data.user.phone,
+          emailVerified: data.user.emailVerified,
         })),
       );
+  }
+
+  verifyEmail(email: string, code: string): Observable<UserProfile> {
+    return this.http
+      .post<ApiResponse<AuthResponseBody>>('/api/v1/auth/email-verification/confirm', { email, code })
+      .pipe(
+        map((res) => res.data),
+        tap((data) => {
+          const user: UserProfile = {
+            displayName: data.user.displayName,
+            email: data.user.email,
+            emailVerified: data.user.emailVerified,
+          };
+          this.setSession(data.accessToken, user, Date.now() + (data.expiresIn || 86400) * 1000);
+        }),
+        map((data) => ({
+          displayName: data.user.displayName,
+          email: data.user.email,
+          emailVerified: data.user.emailVerified,
+        })),
+      );
+  }
+
+  resendEmailVerification(email: string): Observable<string> {
+    return this.http
+      .post<ApiResponse<string>>('/api/v1/auth/email-verification/resend', { email })
+      .pipe(map((res) => res.data));
   }
 
   logout(): void {

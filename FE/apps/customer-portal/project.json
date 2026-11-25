@@ -14,6 +14,7 @@
         "outputPath": "dist/apps/customer-portal",
         "browser": "apps/customer-portal/src/main.ts",
         "tsConfig": "apps/customer-portal/tsconfig.app.json",
+        "polyfills": ["zone.js"],
         "inlineStyleLanguage": "scss",
         "assets": [
           {

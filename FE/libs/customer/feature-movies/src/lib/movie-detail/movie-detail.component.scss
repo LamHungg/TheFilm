@@ -639,3 +639,216 @@
     }
   }
 }
+
+// Trang chi tiết: giữ lại bảng màu, font và kiểu control của THEFILM;
+// các quy tắc dưới đây chỉ sắp xếp lại khối nội dung theo bố cục tham chiếu.
+.movie-detail-page { max-width: 1440px; }
+.breadcrumb-row > span { display: inline-flex; align-items: center; }
+.film-hero { display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(320px, .95fr); gap:32px; align-items:center; padding:28px; margin-bottom:42px; }
+.hero-copy { min-width:0; }
+.hero-copy h1 { margin:10px 0 12px; }
+.hero-subtitle,.hero-ratings,.hero-actions,.hero-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.hero-description { display:grid; grid-template-columns:120px minmax(0,1fr); gap:18px; align-items:start; margin-top:22px; }
+.hero-description img { width:120px; height:166px; object-fit:cover; }
+.hero-meta { margin:18px 0 0 138px; }
+.hero-meta span { display:flex; flex-direction:column; gap:4px; }
+.hero-trailer { position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; }
+.hero-trailer iframe,.hero-trailer video { display:block; width:100%; height:100%; border:0; }
+.hero-trailer > span { position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); pointer-events:none; }
+.hero-ratings.movie-rating-panel { display:flex; align-items:center; gap:12px; margin:12px 0 18px; padding:12px 14px; border:1px solid #e8d7a1; border-radius:8px; background:#fffaf0; }
+.rating-source-score b { color:#9a6500; font-size:20px; font-weight:700; white-space:nowrap; }
+.rating-source-score span,.rating-age span { color:#5a637a; font-size:12px; }
+.rating-age strong { padding:3px 6px; border-radius:4px; color:#fff; background:#b63b3b; }
+.city-picker.location-row { display:inline-flex; align-items:center; gap:8px; margin:0; padding:4px 8px; border:1px solid #9da8be; border-radius:6px; color:#333; background:#fff; }
+.city-picker .location-select { width:auto; min-width:150px; padding:4px 32px 4px 2px; border:0; color:#333; background-color:#fff; font-family:'Roboto','Inter',sans-serif; font-size:14px; outline:none; }
+.cinema-toggle { padding:14px; border:1px solid #bdc5d4; border-radius:8px; color:#333; background:#fff; font-family:'Roboto','Inter',sans-serif; font-size:14px; }
+.cinema-card.expanded .cinema-toggle { border-color:#5a637a; border-radius:8px 8px 0 0; background:#f4f7fc; }
+.cinema-expanded { border:1px solid #bdc5d4; border-top:0; border-radius:0 0 8px 8px; }
+.time-slots-grid .time-slot-btn { min-width:90px; padding:9px 14px; border:1px solid #9da8be; border-radius:6px; color:#333; background:#fff; font-family:'Roboto','Inter',sans-serif; font-size:14px; }
+.time-slots-grid .time-slot-btn.selected { border-color:#223b6b; color:#fff; background:#223b6b; }
+.time-slots-grid .time-slot-btn small { color:#5a637a; font-size:11px; }
+.time-slots-grid .time-slot-btn.selected small { color:#fff; }
+.empty-showtimes { background:#f8fafc; border:1px dashed #bdc5d4; border-radius:10px; color:#5a637a; }
+.empty-showtimes button { min-height:38px; padding:0 18px; border:1px solid #9da8be; border-radius:6px; color:#1a2c50; background:#fff; font-family:'Roboto','Inter',sans-serif; font-size:13px; cursor:pointer; }
+.hero-meta { font-family:'Roboto','Inter',sans-serif; font-size:14px; color:#333; }
+.hero-meta small { color:#5a637a; font-size:11px; }
+.hero-copy .movie-detail-title { margin:0 0 12px; }
+.hero-description .movie-synopsis-text { margin:5px 0 0; }
+
+// Những vùng mới dùng lại màu sắc, typography và control chung của THEFILM.
+.hero-kicker { display:inline-flex; align-items:center; padding:4px 9px; border-radius:4px; color:var(--primary); background:var(--primary-light); font-size:12px; font-weight:700; }
+.hero-subtitle { color:var(--text-muted); font-size:16px; line-height:1.5; }
+.hero-tagline { display:inline-flex; margin:0 0 16px; padding:5px 9px; border-radius:4px; color:var(--text-800); background:var(--bg-subtle); font-size:13px; }
+.hero-description img { border-radius:8px; box-shadow:0 3px 10px rgba(15,23,42,.12); }
+.hero-trailer { border-radius:var(--radius-card); background:#111; box-shadow:0 8px 24px rgba(15,23,42,.12); }
+.hero-trailer > span { display:grid; width:64px; height:64px; place-items:center; border:2px solid #fff; border-radius:50%; color:#fff; background:rgba(26,44,80,.35); font-size:24px; }
+.hero-meta { gap:20px; }
+.hero-meta span { min-width:90px; }
+.section-heading { margin-bottom:18px; }
+.section-heading h2,.reviews-heading h2 { color:var(--text-dark); font-size:24px; font-weight:700; line-height:1.3; }
+.section-heading p,.reviews-heading p { margin-top:5px; color:var(--text-muted); font-size:14px; }
+.city-picker.location-row { box-shadow:0 1px 3px rgba(15,23,42,.05); }
+.date-track.date-selection-row { margin:18px 0 22px; padding-bottom:4px; }
+.date-track .date-schedule-btn { min-width:72px; padding:10px 12px; border-color:var(--border-divider); border-radius:8px; }
+.date-track .date-schedule-btn .date-num { color:var(--text-muted); font-size:11px; }
+.date-track .date-schedule-btn .date-day { color:var(--text-dark); font-size:20px; }
+.date-track .date-schedule-btn.active .date-num,.date-track .date-schedule-btn.active .date-day { color:#fff; }
+.cinema-list { gap:10px; }
+.cinema-card.cinema-schedule-block { gap:0; overflow:hidden; border:1px solid var(--border-light); border-radius:10px; background:var(--bg-white); transition:border-color .15s ease,box-shadow .15s ease; }
+.cinema-card.expanded { border-color:var(--border-divider); box-shadow:0 4px 14px rgba(15,23,42,.06); }
+.cinema-card .cinema-toggle { min-height:76px; padding:14px 16px; border:0; border-radius:0; background:var(--bg-white); }
+.cinema-card .cinema-toggle:hover { background:#f8fafc; }
+.cinema-card.expanded .cinema-toggle { border-color:transparent; border-radius:0; background:#f8fafc; }
+.cinema-mark { display:grid; flex:0 0 38px; width:38px; height:38px; place-items:center; border-radius:8px; color:var(--gold-dark); background:var(--primary); }
+.cinema-summary strong { color:var(--text-dark); font-size:15px; font-weight:700; }
+.cinema-summary small { color:var(--text-muted); font-size:12px; }
+.showtimes-count { padding:4px 8px; border-radius:var(--radius-pill); color:var(--text-muted); background:#f1f5f9; font-size:11px; }
+.chevron { color:var(--text-muted); font-size:18px; }
+.cinema-expanded { padding:4px 18px 16px 68px; border-color:var(--border-light); background:#fff; }
+.room-schedule-group { padding:12px 0 4px; border-top:1px solid var(--border-light); }
+.room-head-row strong { color:var(--text-dark); font-size:14px; font-weight:600; }
+.time-slots-grid .time-slot-btn { min-width:98px; height:auto; align-items:flex-start; padding:8px 12px; border-color:var(--border-divider); border-radius:6px; }
+.time-slots-grid .time-slot-btn strong { font-size:14px; }
+.time-slots-grid .time-slot-btn:hover:not(.selected) { border-color:var(--primary); background:var(--primary-light); }
+.time-slots-grid .time-slot-btn.selected small { color:#e5eaf3; }
+.empty-showtimes { padding:40px 24px; border-color:var(--border-divider); background:#f8fafc; }
+.empty-showtimes strong { display:block; margin-bottom:6px; color:var(--text-dark); font-size:16px; }
+.empty-showtimes p { max-width:560px; margin:0 auto 18px; color:var(--text-muted); line-height:1.55; }
+.empty-showtimes .figma-btn-secondary { height:38px; font-size:13px; }
+.booking-summary.schedule-details-card { gap:14px; padding:22px 20px; border-color:var(--border-light); box-shadow:0 3px 12px rgba(15,23,42,.05); }
+.booking-summary .eyebrow { color:var(--text-muted); font-size:11px; font-weight:700; letter-spacing:.06em; }
+.booking-summary .summary-cinema-name { font-size:17px; }
+.booking-summary .summary-date { font-size:13px; }
+.booking-summary .summary-time strong { color:var(--primary); font-size:25px; }
+.booking-summary .summary-time span { color:var(--text-muted); font-size:13px; }
+.booking-summary .summary-seats-info { margin:0; }
+.booking-summary .btn-buy-now { width:100%; }
+.booking-summary .btn-buy-now:not(:disabled) { min-height:46px; }
+.reviews-section { align-items:start; padding-top:32px; border-top:1px solid var(--border-light); }
+.reviews-main { min-width:0; }
+.reviews-heading { margin-bottom:14px; }
+.reviews-heading a { color:var(--primary-blue); font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap; }
+.reviews-heading a:hover { text-decoration:underline; }
+.review-average { gap:8px; margin:14px 0 18px; }
+.review-average span { color:var(--gold); font-size:34px; line-height:1; }
+.review-average strong { color:var(--text-dark); font-size:36px; font-weight:800; line-height:1; }
+.review-average small { color:var(--text-muted); font-size:13px; }
+.review-card { padding:18px 0; border-top:1px solid var(--border-light); }
+.review-user { gap:11px; }
+.review-user .avatar { display:grid; flex:0 0 40px; width:40px; height:40px; place-items:center; border-radius:50%; color:#fff; background:var(--primary); font-size:15px; font-weight:700; }
+.review-user strong { color:var(--text-dark); font-size:14px; font-weight:700; }
+.review-user small { color:var(--text-muted); font-size:12px; }
+.review-user em { color:#13855b; font-style:normal; font-weight:600; }
+.review-card h3 { margin:13px 0 7px; color:var(--text-dark); font-size:14px; font-weight:700; }
+.review-card p { color:var(--text-body); font-size:14px; line-height:1.65; }
+.review-tags { flex-wrap:wrap; margin-top:12px; }
+.review-tags span { padding:4px 9px; border-radius:var(--radius-sm); color:var(--text-800); background:var(--bg-subtle); font-size:11px; }
+.no-reviews,.external-rating-note { margin-top:12px; padding:16px; border:1px solid var(--border-light); border-radius:10px; color:var(--text-muted); background:#f8fafc; font-size:13px; line-height:1.55; }
+.external-rating-note { background:#fffaf0; border-color:#e8d7a1; }
+.external-rating-note strong { color:#9a6500; }
+.review-form { gap:13px; padding:22px; border:1px solid var(--border-light); border-radius:var(--radius-card); background:#fff; box-shadow:0 4px 16px rgba(15,23,42,.05); }
+.review-form .eyebrow { color:var(--primary-blue); font-size:11px; font-weight:700; letter-spacing:.06em; }
+.review-form h2 { margin:0; color:var(--text-dark); font-size:20px; font-weight:700; }
+.review-form > p { color:var(--text-muted); font-size:13px; line-height:1.5; }
+.review-form label { gap:6px; color:var(--text-body); font-size:13px; font-weight:600; }
+.review-form .figma-select { height:42px; background-color:#f7f8fb; }
+.review-form .figma-input { height:42px; background:#f7f8fb; font-weight:400; }
+.review-form textarea.figma-input { min-height:120px; height:auto; padding:11px 14px; resize:vertical; }
+.review-form .form-success,.review-form .form-error { margin:0; font-size:13px; font-weight:600; }
+.review-form .form-success { color:var(--success); }
+.review-form .form-error { color:#c62828; }
+.review-form .figma-btn-primary { align-self:flex-start; min-width:160px; }
+@media(max-width:900px) { .reviews-section { gap:20px; }.review-form { padding:18px; } }
+@media(max-width:600px) { .section-heading h2,.reviews-heading h2 { font-size:20px; }.cinema-card .cinema-toggle { min-height:68px; padding:11px; }.cinema-mark { flex-basis:32px; width:32px; height:32px; }.cinema-summary strong { font-size:13px; }.cinema-summary small { font-size:11px; }.cinema-expanded { padding:4px 10px 12px; }.reviews-section { padding-top:24px; }.review-average strong { font-size:30px; }.review-form { padding:16px; } }
+
+// Hero toàn chiều ngang theo trang tham chiếu, giữ CTA và typography của THEFILM.
+.film-hero {
+  position:relative;
+  isolation:isolate;
+  width:100vw;
+  max-width:none;
+  min-height:500px;
+  margin:0 0 42px calc(50% - 50vw);
+  padding:34px max(24px, calc((100vw - 1440px) / 2 + 72px));
+  grid-template-columns:minmax(380px, 440px) minmax(0, 1fr);
+  gap:40px;
+  align-items:center;
+  overflow:hidden;
+  background:#102a2c;
+  border-radius:0;
+}
+.hero-backdrop { position:absolute; z-index:-2; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 42%; }
+.film-hero::before { position:absolute; z-index:-1; inset:0; content:''; background:linear-gradient(90deg,rgba(5,30,32,.99) 0%,rgba(5,30,32,.94) 27%,rgba(5,30,32,.72) 47%,rgba(5,30,32,.08) 100%); }
+.hero-copy { position:relative; z-index:1; width:100%; max-width:440px; color:#fff; }
+.hero-kicker { padding:3px 8px; color:#333; background:#fff; font-size:11px; font-weight:500; }
+.hero-copy .movie-detail-title { margin:14px 0 10px; color:#f7f7f8; font-size:40px; font-weight:800; line-height:1.12; letter-spacing:-.02em; }
+.hero-subtitle { gap:12px; color:#c9d1d2; font-size:15px; }
+.hero-ratings { display:flex; flex-wrap:wrap; align-items:center; gap:24px; margin:20px 0 7px; padding:0; border:0; background:transparent; }
+.rating-source-score { display:flex; align-items:baseline; gap:5px; }
+.rating-source-score b { color:#fff; font-size:27px; }
+.rating-source-score span,.rating-age span { color:#c3cccc; font-size:12px; }
+.rating-age { display:inline-flex; align-items:center; gap:7px; }
+.rating-age strong { padding:3px 6px; color:#fff; background:#b63b3b; font-size:12px; }
+.hero-tagline { margin:6px 0 18px; padding:0; color:#e0e5e4; background:transparent; font-size:13px; font-style:italic; }
+.hero-actions { gap:10px; margin-bottom:20px; }
+.hero-actions .button-buy { min-height:44px; }
+.hero-actions .button-review { min-height:42px; }
+.hero-description { grid-template-columns:100px minmax(0,1fr); gap:14px; margin-top:0; }
+.hero-description img { width:100px; height:142px; border-radius:4px; box-shadow:none; }
+.hero-description .eyebrow { color:#b9c3c3; font-size:10px; }
+.hero-description .movie-synopsis-text { display:-webkit-box; margin:4px 0 0; overflow:hidden; color:#d3dbda; font-size:12px; line-height:1.55; -webkit-box-orient:vertical; -webkit-line-clamp:4; }
+.hero-meta { gap:18px; margin:15px 0 0 114px; color:#f1f4f4; font-size:12px; }
+.hero-meta span { min-width:0; }
+.hero-meta small { color:#aebaba; font-size:9px; }
+.hero-play-button { position:absolute; z-index:1; top:50%; left:69%; display:grid; width:68px; height:68px; place-items:center; padding-left:5px; transform:translate(-50%,-50%); border:2px solid #fff; border-radius:50%; color:#fff; background:rgba(9,32,33,.2); font-size:28px; cursor:pointer; transition:background .15s ease,transform .15s ease; }
+.hero-play-button:hover { transform:translate(-50%,-50%) scale(1.06); background:rgba(9,32,33,.5); }
+.hero-player { position:absolute; z-index:4; inset:0; background:#000; }
+.hero-player iframe,.hero-player video { display:block; width:100%; height:100%; border:0; }
+.hero-player-close { position:absolute; z-index:5; top:18px; right:24px; width:38px; height:38px; border:1px solid rgba(255,255,255,.7); border-radius:50%; color:#fff; background:rgba(0,0,0,.5); font-size:25px; cursor:pointer; }
+@media(max-width:900px) {
+  .film-hero { min-height:560px; grid-template-columns:minmax(0, 1fr); align-content:center; gap:24px; padding:32px max(24px, calc((100vw - 720px) / 2)); }
+  .hero-copy { max-width:560px; }
+  .hero-play-button { left:72%; }
+  .hero-backdrop { object-position:60% center; }
+  .film-hero::before { background:linear-gradient(90deg,rgba(5,30,32,.98) 0%,rgba(5,30,32,.84) 55%,rgba(5,30,32,.35) 100%); }
+}
+@media(max-width:600px) {
+  .film-hero { min-height:580px; margin-bottom:30px; padding:28px 18px; }
+  .hero-copy { max-width:100%; }
+  .hero-copy .movie-detail-title { font-size:32px; }
+  .hero-subtitle { font-size:13px; }
+  .hero-ratings { gap:16px; margin:14px 0 6px; }
+  .rating-source-score b { font-size:24px; }
+  .hero-description { grid-template-columns:82px minmax(0,1fr); gap:12px; }
+  .hero-description img { width:82px; height:118px; }
+  .hero-meta { gap:12px; margin-left:94px; }
+  .hero-play-button { top:27%; left:auto; right:20px; width:56px; height:56px; transform:translateY(-50%); }
+  .hero-play-button:hover { transform:translateY(-50%) scale(1.05); }
+}
+.showtimes-section { margin:40px 0; }
+.section-heading,.reviews-heading { display:flex; justify-content:space-between; align-items:center; gap:18px; }
+.date-track { display:flex; gap:8px; overflow-x:auto; margin:20px 0; }
+.date-card { display:flex; flex:0 0 68px; flex-direction:column; align-items:center; gap:5px; }
+.schedule-layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:22px; align-items:start; }
+.cinema-list { display:flex; flex-direction:column; gap:10px; }
+.cinema-card { display:block; }
+.cinema-toggle { width:100%; display:flex; align-items:center; gap:12px; text-align:left; cursor:pointer; }
+.cinema-summary { display:flex; flex:1; min-width:0; flex-direction:column; gap:4px; }
+.cinema-summary small { overflow:hidden; text-overflow:ellipsis; }
+.cinema-expanded { padding:14px 18px 18px; }
+.room-schedule-group { margin-top:12px; }
+.room-head-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.time-slots-grid { display:flex; flex-wrap:wrap; gap:10px; }
+.time-slot-btn { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; }
+.empty-showtimes { padding:28px; text-align:center; }
+.booking-summary { position:sticky; top:18px; }
+.summary-time { display:flex; flex-direction:column; gap:5px; margin:18px 0; }
+.booking-summary button { width:100%; margin-top:16px; }
+.reviews-section { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(270px,.8fr); gap:32px; margin:48px 0 0; }
+.review-average,.review-user,.review-tags { display:flex; align-items:center; gap:10px; }
+.review-card { padding:18px 0; }
+.review-user > div { display:flex; flex-direction:column; gap:4px; }
+.review-form { align-self:start; display:flex; flex-direction:column; gap:12px; }
+.review-form label { display:flex; flex-direction:column; gap:6px; }
+@media (max-width:900px) { .film-hero,.schedule-layout,.reviews-section { grid-template-columns:1fr; }.booking-summary { position:static; }.hero-trailer { grid-row:1; }.hero-meta { margin-left:0; } }
+@media (max-width:600px) { .film-hero { padding:16px; }.hero-description { grid-template-columns:86px minmax(0,1fr); }.hero-description img { width:86px; height:126px; }.section-heading { align-items:flex-start; flex-direction:column; }.cinema-toggle { gap:8px; }.cinema-expanded { padding:12px 8px; } }

@@ -20,6 +20,10 @@ export interface Movie {
   synopsis: string;
   trailerUrl: string;
   score: number; // e.g. 9.2
+  ratingCount?: number;
+  ratingSource?: string;
+  ratingSourceUrl?: string;
+  ratingUpdatedAt?: string;
   figmaTheme: 'navy' | 'coral' | 'purple' | 'teal';
   category?: string;
 }

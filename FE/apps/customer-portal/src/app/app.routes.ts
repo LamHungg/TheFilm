@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+import { bookingAccessGuard } from './booking-access.guard';
 
 export const appRoutes: Route[] = [
   {
@@ -28,6 +29,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'booking/:showtimeId',
+    canActivate: [bookingAccessGuard],
     loadComponent: () =>
       import('@the-film/customer/feature-booking').then((m) => m.BookingWorkflowComponent),
   },
