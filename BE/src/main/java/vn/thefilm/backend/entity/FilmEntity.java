@@ -1,6 +1,7 @@
 package vn.thefilm.backend.entity;
 
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -51,8 +52,35 @@ public class FilmEntity {
     @Column(name = "poster_uri")
     private String posterUri;
 
+    @Column(name = "banner_uri", length = 1000)
+    private String bannerUri;
+
     @Column(name = "trailer_uri")
     private String trailerUri;
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(name = "director", length = 300)
+    private String director;
+
+    @Column(name = "cast_names", length = 2000)
+    private String castNames;
+
+    @Column(name = "external_rating_score", precision = 3, scale = 1)
+    private java.math.BigDecimal externalRatingScore;
+
+    @Column(name = "external_rating_count")
+    private Integer externalRatingCount;
+
+    @Column(name = "external_rating_source", length = 80)
+    private String externalRatingSource;
+
+    @Column(name = "external_rating_uri", length = 1000)
+    private String externalRatingUri;
+
+    @Column(name = "external_rating_updated_at")
+    private OffsetDateTime externalRatingUpdatedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "approval_status")
@@ -107,14 +135,26 @@ public class FilmEntity {
     }
 
     public void updateDetails(String titleLocal, String titleOriginal, String synopsis, Integer runtimeMinutes,
-            AgeClassificationEntity ageClassification, String posterUri, String trailerUri) {
+            AgeClassificationEntity ageClassification, String posterUri, String bannerUri, String trailerUri,
+            LocalDate releaseDate, String director, String castNames,
+            java.math.BigDecimal externalRatingScore, Integer externalRatingCount,
+            String externalRatingSource, String externalRatingUri, OffsetDateTime externalRatingUpdatedAt) {
         this.titleLocal = titleLocal;
         this.titleOriginal = titleOriginal;
         this.synopsis = synopsis;
         this.runtimeMinutes = runtimeMinutes;
         this.ageClassification = ageClassification;
         this.posterUri = posterUri;
+        this.bannerUri = bannerUri;
         this.trailerUri = trailerUri;
+        this.releaseDate = releaseDate;
+        this.director = director;
+        this.castNames = castNames;
+        this.externalRatingScore = externalRatingScore;
+        this.externalRatingCount = externalRatingCount;
+        this.externalRatingSource = externalRatingSource;
+        this.externalRatingUri = externalRatingUri;
+        this.externalRatingUpdatedAt = externalRatingUpdatedAt;
     }
 
     public void replaceGenres(Set<FilmGenreEntity> newGenres) {
@@ -154,9 +194,22 @@ public class FilmEntity {
         return posterUri;
     }
 
+    public String getBannerUri() {
+        return bannerUri;
+    }
+
     public String getTrailerUri() {
         return trailerUri;
     }
+
+    public LocalDate getReleaseDate() { return releaseDate; }
+    public String getDirector() { return director; }
+    public String getCastNames() { return castNames; }
+    public java.math.BigDecimal getExternalRatingScore() { return externalRatingScore; }
+    public Integer getExternalRatingCount() { return externalRatingCount; }
+    public String getExternalRatingSource() { return externalRatingSource; }
+    public String getExternalRatingUri() { return externalRatingUri; }
+    public OffsetDateTime getExternalRatingUpdatedAt() { return externalRatingUpdatedAt; }
 
     public FilmApprovalStatus getApprovalStatus() {
         return approvalStatus;

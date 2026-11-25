@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import vn.thefilm.backend.dto.AdminCatalogDtos.FilmAdminDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.FilmCreateRequest;
@@ -32,16 +34,19 @@ import vn.thefilm.backend.enums.FilmApprovalStatus;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.AdminActionContext;
 import vn.thefilm.backend.service.AdminFilmService;
+import vn.thefilm.backend.service.PosterStorageService;
 
 @RestController
 @RequestMapping("/api/v1/admin/films")
-@PreAuthorize("hasRole('CHAIN_ADMIN')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'MOVIES')")
 public class AdminFilmController {
 
     private final AdminFilmService filmService;
+    private final PosterStorageService posterStorageService;
 
-    public AdminFilmController(AdminFilmService filmService) {
+    public AdminFilmController(AdminFilmService filmService, PosterStorageService posterStorageService) {
         this.filmService = filmService;
+        this.posterStorageService = posterStorageService;
     }
 
     @GetMapping
@@ -70,6 +75,11 @@ public class AdminFilmController {
             @RequestHeader(value = "X-Request-Id", required = false) String traceId,
             HttpServletRequest http) {
         return ApiResponse.success(filmService.create(request, ctx(principal, traceId, http)));
+    }
+
+    @PostMapping(path = "/posters", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<String> uploadPoster(@RequestParam("file") MultipartFile file) {
+        return ApiResponse.success(posterStorageService.store(file));
     }
 
     @PutMapping("/{id}")

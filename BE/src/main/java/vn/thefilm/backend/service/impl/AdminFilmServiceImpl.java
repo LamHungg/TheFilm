@@ -133,6 +133,13 @@ public class AdminFilmServiceImpl implements AdminFilmService {
         FilmEntity film = new FilmEntity(code, request.titleLocal().trim(), blankToNull(request.titleOriginal()),
                 request.synopsis(), request.runtimeMinutes(), findAge(request.ageClassificationId()),
                 blankToNull(request.posterUri()), blankToNull(request.trailerUri()));
+        film.updateDetails(request.titleLocal().trim(), blankToNull(request.titleOriginal()), request.synopsis(),
+                request.runtimeMinutes(), findAge(request.ageClassificationId()), blankToNull(request.posterUri()),
+                blankToNull(request.bannerUri()),
+                blankToNull(request.trailerUri()), request.releaseDate(), blankToNull(request.director()),
+                blankToNull(request.castNames()), request.externalRatingScore(), request.externalRatingCount(),
+                blankToNull(request.externalRatingSource()), blankToNull(request.externalRatingUri()),
+                request.externalRatingUpdatedAt());
         film.replaceGenres(findGenres(request.genreIds()));
         FilmEntity saved = filmRepository.save(film);
         audit.record(ctx, "FILM_CREATE", "FILM", saved.getFilmId(), null, snapshot(saved));
@@ -146,7 +153,11 @@ public class AdminFilmServiceImpl implements AdminFilmService {
         Map<String, Object> before = snapshot(film);
         film.updateDetails(request.titleLocal().trim(), blankToNull(request.titleOriginal()), request.synopsis(),
                 request.runtimeMinutes(), findAge(request.ageClassificationId()),
-                blankToNull(request.posterUri()), blankToNull(request.trailerUri()));
+                blankToNull(request.posterUri()), blankToNull(request.bannerUri()),
+                blankToNull(request.trailerUri()), request.releaseDate(),
+                blankToNull(request.director()), blankToNull(request.castNames()), request.externalRatingScore(),
+                request.externalRatingCount(), blankToNull(request.externalRatingSource()),
+                blankToNull(request.externalRatingUri()), request.externalRatingUpdatedAt());
         film.replaceGenres(findGenres(request.genreIds()));
         FilmEntity saved = filmRepository.save(film);
         audit.record(ctx, "FILM_UPDATE", "FILM", filmId, before, snapshot(saved));
@@ -163,14 +174,14 @@ public class AdminFilmServiceImpl implements AdminFilmService {
         }
         if (!TRANSITIONS.getOrDefault(current, Set.of()).contains(status)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Khong the chuyen trang thai phim tu " + current + " sang " + status);
+                    "Không thể chuyển trạng thái phim từ " + current + " sang " + status + ". Hãy tải lại trang để kiểm tra trạng thái mới nhất.");
         }
         if (status == FilmApprovalStatus.ARCHIVED) {
             long upcoming = screeningRepository.countUpcomingByFilm(filmId,
                     List.of(ScreeningStatus.SCHEDULED, ScreeningStatus.ON_SALE), OffsetDateTime.now());
             if (upcoming > 0) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Phim con " + upcoming + " suat chieu sap toi, hay huy suat truoc khi luu tru");
+                        "Phim còn " + upcoming + " suất chiếu sắp tới. Hãy hủy các suất chiếu đó trước khi lưu trữ phim.");
             }
         }
         film.changeApprovalStatus(status);
@@ -268,7 +279,9 @@ public class AdminFilmServiceImpl implements AdminFilmService {
         AgeClassificationEntity age = f.getAgeClassification();
         return new FilmAdminDto(f.getFilmId(), f.getFilmCode(), f.getTitleLocal(), f.getTitleOriginal(),
                 f.getSynopsis(), f.getRuntimeMinutes(), age == null ? null : age.getAgeClassificationId(),
-                f.getPosterUri(), f.getTrailerUri(), f.getApprovalStatus(), genreIds);
+                f.getPosterUri(), f.getBannerUri(), f.getTrailerUri(), f.getReleaseDate(), f.getDirector(), f.getCastNames(),
+                f.getExternalRatingScore(), f.getExternalRatingCount(), f.getExternalRatingSource(),
+                f.getExternalRatingUri(), f.getExternalRatingUpdatedAt(), f.getApprovalStatus(), genreIds);
     }
 
     private FilmVersionDto toVersionDto(FilmVersionEntity v) {
@@ -288,6 +301,12 @@ public class AdminFilmServiceImpl implements AdminFilmService {
         map.put("filmCode", f.getFilmCode());
         map.put("titleLocal", f.getTitleLocal());
         map.put("runtimeMinutes", f.getRuntimeMinutes());
+        map.put("releaseDate", f.getReleaseDate());
+        map.put("director", f.getDirector());
+        map.put("castNames", f.getCastNames());
+        map.put("externalRatingScore", f.getExternalRatingScore());
+        map.put("externalRatingCount", f.getExternalRatingCount());
+        map.put("externalRatingSource", f.getExternalRatingSource());
         map.put("status", f.getApprovalStatus() == null ? null : f.getApprovalStatus().name());
         return map;
     }

@@ -166,6 +166,7 @@ public class CatalogServiceImpl implements CatalogService {
                 film.getSynopsis(),
                 film.getRuntimeMinutes(),
                 film.getPosterUri(),
+                film.getBannerUri(),
                 film.getTrailerUri(),
                 age,
                 status,
@@ -173,7 +174,18 @@ public class CatalogServiceImpl implements CatalogService {
                         .filter(genre -> genre.getStatus() == ActiveStatus.ACTIVE)
                         .map(genre -> new GenreResponse(genre.getGenreCode(), genre.getGenreName()))
                         .sorted((first, second) -> first.name().compareToIgnoreCase(second.name()))
-                        .toList());
+                        .toList(),
+                film.getReleaseDate(),
+                film.getDirector(),
+                film.getCastNames() == null || film.getCastNames().isBlank()
+                        ? List.of()
+                        : java.util.Arrays.stream(film.getCastNames().split("\\s*[,;]\\s*"))
+                                .filter(name -> !name.isBlank()).toList(),
+                film.getExternalRatingScore(),
+                film.getExternalRatingCount(),
+                film.getExternalRatingSource(),
+                film.getExternalRatingUri(),
+                film.getExternalRatingUpdatedAt());
     }
 
     private CinemaResponse toCinemaResponse(CinemaEntity cinema) {
