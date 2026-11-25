@@ -1,130 +1,208 @@
 <div class="fnb-view">
-  <!-- Header -->
   <header class="ops-page-header">
     <div class="header-left">
       <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; F&B & KHO</div>
       <h1 class="page-title">Quầy F&B và quản lý tồn kho</h1>
-      <p class="page-desc">
-        Dữ liệu theo phạm vi rạp · Mọi thay đổi có người thao tác và thời điểm.
-      </p>
+      <p class="page-desc">Danh mục, giá bán và biến động kho theo rạp đang chọn.</p>
     </div>
-    <div class="header-right">
-      <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Thêm sản phẩm F&B</button>
+    <div class="header-actions">
+      <label class="cinema-picker">
+        <span>Rạp quản lý</span>
+        <select [ngModel]="selectedCinemaId" (ngModelChange)="onCinemaChange($event)" [disabled]="loading || !cinemas.length">
+          @for (cinema of cinemas; track cinema.cinemaId) {
+            <option [ngValue]="cinema.cinemaId">{{ cinema.cinemaName }} ({{ cinema.cinemaCode }})</option>
+          }
+        </select>
+      </label>
+      <button class="btn-primary-action" type="button" (click)="openCreateModal()" [disabled]="!selectedCinemaId || !categories.length">
+        + Thêm sản phẩm F&B
+      </button>
     </div>
   </header>
 
-  <!-- Filter Pills Bar -->
+  @if (errorMessage && !modal) { <div class="fnb-alert error" role="alert">{{ errorMessage }}</div> }
+  @if (noticeMessage) { <div class="fnb-alert success" role="status">{{ noticeMessage }}</div> }
+
   <div class="filter-pills-bar">
-    @for (tab of tabs; track tab.label; let i = $index) {
-      <button
-        class="filter-pill"
-        [class.active]="tab.active"
-        (click)="selectTab(i)"
-        type="button"
-      >
+    @for (tab of tabs; track tab.key) {
+      <button class="filter-pill" [class.active]="activeTab === tab.key" (click)="selectTab(tab.key)" type="button">
         {{ tab.label }}
       </button>
     }
   </div>
 
-  <!-- KPI Grid -->
   <section class="kpi-grid">
-    @for (kpi of kpis; track kpi.label) {
-      <div class="kpi-card">
-        <span class="kpi-label">{{ kpi.label }}</span>
-        <span class="kpi-value">{{ kpi.value }}</span>
-        <span class="kpi-delta">{{ kpi.delta }}</span>
-      </div>
-    }
+    <div class="kpi-card"><span class="kpi-label">Tồn kho khả dụng</span><span class="kpi-value">{{ metrics.availableStock | number:'1.0-0':'vi-VN' }}</span><span class="kpi-delta">Tổng tồn trừ lượng đang giữ</span></div>
+    <div class="kpi-card"><span class="kpi-label">Cảnh báo hết hàng</span><span class="kpi-value">{{ metrics.lowStockProducts | number:'1.0-0':'vi-VN' }}</span><span class="kpi-delta">{{ lowStockProductNames }}</span></div>
+    <div class="kpi-card"><span class="kpi-label">Hao hụt tháng</span><span class="kpi-value">@if (metrics.monthlyWastePercent === null) { — } @else { {{ metrics.monthlyWastePercent | number:'1.0-1':'vi-VN' }}% }</span><span class="kpi-delta">Bình quân tỷ lệ hủy theo mặt hàng tháng này</span></div>
+    <div class="kpi-card"><span class="kpi-label">Doanh thu F&B hôm nay</span><span class="kpi-value">{{ metrics.revenueToday | currency:'VND':'symbol':'1.0-0':'vi-VN' }}</span><span class="kpi-delta">Đơn F&B đã phát hành</span></div>
   </section>
 
-  <!-- Product Table Card -->
+  <div class="fnb-toolbar">
+    <label class="product-search">
+      <span>Tìm sản phẩm</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Mã hoặc tên sản phẩm" />
+    </label>
+    <button class="btn-secondary" type="button" (click)="refresh()" [disabled]="loading">Tải lại</button>
+  </div>
+
   <div class="table-card">
     <div class="card-inner-table">
       <div class="table-header-row">
-        <div class="col-head col-code">MÃ SP</div>
-        <div class="col-head col-name">TÊN SẢN PHẨM</div>
-        <div class="col-head col-cat">DANH MỤC</div>
-        <div class="col-head col-stock">TỒN KHO</div>
-        <div class="col-head col-price">ĐƠN GIÁ</div>
-        <div class="col-head col-status">TRẠNG THÁI</div>
+        <div class="col-head col-code">Mã SP</div>
+        <div class="col-head col-name">Tên sản phẩm</div>
+        <div class="col-head col-cat">Danh mục</div>
+        <div class="col-head col-stock">Tồn khả dụng</div>
+        <div class="col-head col-price">Đơn giá</div>
+        <div class="col-head col-status">Trạng thái</div>
+        <div class="col-head col-actions">Thao tác</div>
       </div>
 
-      <div class="table-body">
-        @for (p of getFilteredProducts(); track p.code) {
-          <div class="table-data-row">
-            <div class="col-cell col-code font-bold text-red">{{ p.code }}</div>
-            <div class="col-cell col-name font-medium">{{ p.name }}</div>
-            <div class="col-cell col-cat">
-              <span class="cat-pill">{{ p.category }}</span>
+      @if (loading) {
+        <div class="fnb-empty">Đang tải dữ liệu F&B từ hệ thống…</div>
+      } @else if (!filteredProducts.length) {
+        <div class="fnb-empty">
+          @if (products.length && searchTerm) { Không tìm thấy sản phẩm phù hợp. }
+          @else if (isStockTab && !products.length) { Chưa có sản phẩm để kiểm kê tại rạp này. }
+          @else { Chưa có sản phẩm F&B tại rạp này. Thêm sản phẩm để bắt đầu quản lý danh mục và tồn kho. }
+          @if (!products.length && categories.length) {
+            <button class="btn-secondary" type="button" (click)="openCreateModal()">Thêm sản phẩm đầu tiên</button>
+          }
+          @if (!categories.length) { <span>Chưa có danh mục F&B trong Oracle.</span> }
+        </div>
+      } @else {
+        <div class="table-body">
+          @for (product of filteredProducts; track product.productId) {
+            <div class="table-data-row">
+              <div class="col-cell col-code font-bold text-red">{{ product.productCode }}</div>
+              <div class="col-cell col-name font-medium">
+                <span>{{ product.productName }}</span>
+                <small>{{ product.unitCode }} · {{ product.productType === 'COMBO' ? 'Combo' : 'Sản phẩm' }}</small>
+              </div>
+              <div class="col-cell col-cat"><span class="cat-pill">{{ product.categoryName }}</span></div>
+              <div class="col-cell col-stock" [class.text-warning]="stockLabel(product) === 'Sắp hết' || stockLabel(product) === 'Hết hàng'">
+                @if (product.trackInventory) {
+                  {{ product.availableQuantity | number:'1.0-3':'vi-VN' }}
+                  <small>ngưỡng {{ product.lowStockThreshold | number:'1.0-3':'vi-VN' }}</small>
+                } @else { Không theo dõi }
+              </div>
+              <div class="col-cell col-price font-bold">
+                @if (product.unitPrice !== null) { {{ product.unitPrice | currency:'VND':'symbol':'1.0-0':'vi-VN' }} }
+                @else { <span class="text-warning">Chưa có giá</span> }
+              </div>
+              <div class="col-cell col-status" [class.text-green]="product.status === 'ACTIVE' && stockLabel(product) === 'Còn hàng'"
+                [class.text-warning]="product.status === 'INACTIVE' || stockLabel(product) === 'Sắp hết' || stockLabel(product) === 'Hết hàng'">
+                {{ product.status === 'INACTIVE' ? 'Ngừng bán' : stockLabel(product) }}
+              </div>
+              <div class="col-cell col-actions">
+                <button type="button" class="row-action" (click)="openEditModal(product)">Sửa</button>
+                @if (product.trackInventory) { <button type="button" class="row-action" (click)="openStockModal(product)">Kho</button> }
+              </div>
             </div>
-            <div class="col-cell col-stock" [class.text-warning]="p.isWarning">{{ p.stock }}</div>
-            <div class="col-cell col-price font-bold">{{ p.price }}</div>
-            <div class="col-cell col-status" [class.text-green]="!p.isWarning" [class.text-warning]="p.isWarning">
-              {{ p.status }}
-            </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </div>
   </div>
 
-  <!-- MODAL: Thêm Sản Phẩm F&B Mới -->
-  @if (isModalOpen) {
-    <div class="modal-backdrop" (click)="closeCreateModal()">
+  @if (isStockTab) {
+    <section class="movement-card">
+      <div class="movement-header">
+        <div><h2>Lịch sử biến động kho</h2><p>20 giao dịch mới nhất tại rạp đang chọn</p></div>
+      </div>
+      @if (recentMovements.length) {
+        <div class="movement-table-wrap">
+          <table class="movement-table">
+            <thead><tr><th>Thời điểm</th><th>Chứng từ</th><th>Sản phẩm</th><th>Kho / quầy</th><th>Nghiệp vụ</th><th>Biến động</th><th>Tồn sau</th><th>Lý do</th></tr></thead>
+            <tbody>
+              @for (movement of recentMovements; track movement.transactionNumber) {
+                <tr>
+                  <td>{{ movement.occurredAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ movement.transactionNumber }}</td>
+                  <td><strong>{{ movement.productCode }}</strong><small>{{ movement.productName }}</small></td>
+                  <td>{{ movement.locationName }}</td>
+                  <td>{{ movementLabel(movement.transactionType) }}</td>
+                  <td [class.text-green]="movement.quantityDelta > 0" [class.text-warning]="movement.quantityDelta < 0">
+                    {{ movement.quantityDelta > 0 ? '+' : '' }}{{ movement.quantityDelta | number:'1.0-3':'vi-VN' }}
+                  </td>
+                  <td>{{ movement.quantityAfter | number:'1.0-3':'vi-VN' }}</td>
+                  <td class="movement-reason">{{ movement.reason }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else { <div class="fnb-empty compact">Chưa có giao dịch kho nào.</div> }
+    </section>
+  }
+
+  @if (modal) {
+    <div class="modal-backdrop" (click)="closeModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
-            <h2 class="modal-title">Thêm sản phẩm F&B mới</h2>
-            <p class="modal-subtitle">Đăng ký mặt hàng ẩm thực / combo bắp nước tại quầy rạp</p>
+            <h2 class="modal-title">
+              @if (modal === 'create') { Thêm sản phẩm F&B }
+              @else if (modal === 'edit') { Cập nhật sản phẩm }
+              @else { Ghi nhận biến động kho }
+            </h2>
+            <p class="modal-subtitle">
+              @if (modal === 'stock' && stockProduct) { {{ stockProduct.productName }} · {{ selectedCinema?.cinemaName }} }
+              @else { Thay đổi được lưu trực tiếp vào dữ liệu của rạp. }
+            </p>
           </div>
-          <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
+          <button class="btn-close" type="button" (click)="closeModal()" [disabled]="saving">✕</button>
         </div>
+        @if (errorMessage) { <div class="alert-box error" role="alert">{{ errorMessage }}</div> }
 
-        @if (saveError) {
-          <div class="alert-box error">{{ saveError }}</div>
+        @if (modal === 'create') {
+          <form class="modal-form" (ngSubmit)="submitCreateProduct()">
+            <div class="form-grid">
+              <div class="form-group"><label>Mã sản phẩm (*)</label><input class="form-input" name="productCode" [(ngModel)]="createForm.productCode" maxlength="60" required placeholder="VD: FNB-008" /></div>
+              <div class="form-group"><label>Danh mục (*)</label><select class="form-select" name="categoryId" [(ngModel)]="createForm.categoryId" required>
+                @for (category of categories; track category.categoryId) { <option [ngValue]="category.categoryId">{{ category.categoryName }}</option> }
+              </select></div>
+              <div class="form-group full-width"><label>Tên sản phẩm (*)</label><input class="form-input" name="productName" [(ngModel)]="createForm.productName" maxlength="250" required /></div>
+              <div class="form-group"><label>Loại mặt hàng</label><select class="form-select" name="productType" [(ngModel)]="createForm.productType"><option value="ITEM">Sản phẩm đơn</option><option value="COMBO">Combo</option></select></div>
+              <div class="form-group"><label>Đơn vị</label><input class="form-input" name="unitCode" [(ngModel)]="createForm.unitCode" maxlength="20" required placeholder="PHAN, LY, CHAI…" /></div>
+              <div class="form-group"><label>Giá bán tại rạp (*)</label><input class="form-input" type="number" min="1" step="1000" name="unitPrice" [(ngModel)]="createForm.unitPrice" required /></div>
+              <div class="form-group"><label>Ngưỡng cảnh báo tồn</label><input class="form-input" type="number" min="0.001" step="1" name="lowStockThreshold" [(ngModel)]="createForm.lowStockThreshold" required /></div>
+              <div class="form-group"><label>Tồn đầu kỳ</label><input class="form-input" type="number" min="0" step="1" name="initialStock" [(ngModel)]="createForm.initialStock" [disabled]="!createForm.trackInventory" /></div>
+              <label class="check-field"><input type="checkbox" name="trackInventory" [(ngModel)]="createForm.trackInventory" /> Theo dõi tồn kho</label>
+            </div>
+            <div class="modal-footer"><button class="btn-cancel" type="button" (click)="closeModal()" [disabled]="saving">Hủy</button><button class="btn-save" type="submit" [disabled]="saving">{{ saving ? 'Đang lưu…' : 'Tạo sản phẩm' }}</button></div>
+          </form>
+        } @else if (modal === 'edit' && editingProduct) {
+          <form class="modal-form" (ngSubmit)="submitEditProduct()">
+            <div class="form-grid">
+              <div class="form-group full-width"><label>Mã sản phẩm</label><input class="form-input" [value]="editingProduct.productCode" disabled /></div>
+              <div class="form-group full-width"><label>Tên sản phẩm (*)</label><input class="form-input" name="productName" [(ngModel)]="editForm.productName" maxlength="250" required /></div>
+              <div class="form-group"><label>Danh mục</label><select class="form-select" name="categoryId" [(ngModel)]="editForm.categoryId">
+                @for (category of categories; track category.categoryId) { <option [ngValue]="category.categoryId">{{ category.categoryName }}</option> }
+              </select></div>
+              <div class="form-group"><label>Giá bán tại rạp (*)</label><input class="form-input" type="number" min="1" step="1000" name="unitPrice" [(ngModel)]="editForm.unitPrice" required /></div>
+              <div class="form-group"><label>Ngưỡng cảnh báo tồn</label><input class="form-input" type="number" min="0.001" step="1" name="lowStockThreshold" [(ngModel)]="editForm.lowStockThreshold" required /></div>
+              <div class="form-group"><label>Trạng thái</label><select class="form-select" name="status" [(ngModel)]="editForm.status"><option value="ACTIVE">Đang bán</option><option value="INACTIVE">Ngừng bán</option></select></div>
+            </div>
+            <div class="modal-footer"><button class="btn-cancel" type="button" (click)="closeModal()" [disabled]="saving">Hủy</button><button class="btn-save" type="submit" [disabled]="saving">{{ saving ? 'Đang lưu…' : 'Lưu thay đổi' }}</button></div>
+          </form>
+        } @else if (modal === 'stock' && stockProduct) {
+          <form class="modal-form" (ngSubmit)="submitStockMovement()">
+            @if (!locations.length) { <div class="fnb-alert error">Rạp chưa có kho/quầy hoạt động để ghi sổ tồn.</div> }
+            <div class="form-grid">
+              <div class="form-group full-width"><label>Kho / quầy (*)</label><select class="form-select" name="locationId" [(ngModel)]="stockForm.locationId" required>
+                @for (location of locations; track location.locationId) { <option [ngValue]="location.locationId">{{ location.locationName }}</option> }
+              </select></div>
+              <div class="form-group"><label>Loại nghiệp vụ</label><select class="form-select" name="transactionType" [(ngModel)]="stockForm.transactionType">
+                <option value="RECEIPT">Nhập kho</option><option value="ISSUE">Xuất kho</option><option value="WASTE">Hủy / hao hụt</option><option value="COUNT">Kiểm kê (số thực tế)</option>
+              </select></div>
+              <div class="form-group"><label>{{ stockForm.transactionType === 'COUNT' ? 'Số lượng thực tế' : 'Số lượng biến động' }} (*)</label><input class="form-input" type="number" [min]="stockForm.transactionType === 'COUNT' ? 0 : 0.001" step="1" name="quantity" [(ngModel)]="stockForm.quantity" required /></div>
+              <div class="form-group"><label>Giá vốn (tùy chọn)</label><input class="form-input" type="number" min="0" step="1000" name="unitCost" [(ngModel)]="stockForm.unitCost" /></div>
+              <div class="form-group full-width"><label>Lý do / ghi chú (*)</label><textarea class="form-input form-textarea" name="reason" [(ngModel)]="stockForm.reason" maxlength="1000" required></textarea></div>
+            </div>
+            <div class="modal-footer"><button class="btn-cancel" type="button" (click)="closeModal()" [disabled]="saving">Hủy</button><button class="btn-save" type="submit" [disabled]="saving || !locations.length">{{ saving ? 'Đang ghi sổ…' : 'Xác nhận biến động' }}</button></div>
+          </form>
         }
-
-        <form (ngSubmit)="submitCreateProduct()" class="modal-form">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Mã sản phẩm (*)</label>
-              <input type="text" [(ngModel)]="newProduct.code" name="code" class="form-input" placeholder="VD: FNB-008" required />
-            </div>
-
-            <div class="form-group">
-              <label>Danh mục phân loại (*)</label>
-              <select [(ngModel)]="newProduct.category" name="category" class="form-select">
-                <option value="Bắp">Bắp rang bơ</option>
-                <option value="Nước">Nước ngọt / Nước giải khát</option>
-                <option value="Combo">Combo bắp nước</option>
-                <option value="Snack">Snack & Ăn vặt</option>
-              </select>
-            </div>
-
-            <div class="form-group full-width">
-              <label>Tên món / Tên sản phẩm (*)</label>
-              <input type="text" [(ngModel)]="newProduct.name" name="name" class="form-input" placeholder="VD: Combo Bắp Phô Mai L + 2 Pepsi Zero" required />
-            </div>
-
-            <div class="form-group">
-              <label>Giá bán niêm yết (VNĐ) (*)</label>
-              <input type="number" [(ngModel)]="newProduct.priceValue" name="priceValue" class="form-input" min="0" step="1000" required />
-            </div>
-
-            <div class="form-group">
-              <label>Số lượng tồn kho ban đầu (*)</label>
-              <input type="number" [(ngModel)]="newProduct.stock" name="stock" class="form-input" min="0" required />
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
-            <button type="submit" class="btn-save">
-              Xác nhận thêm món
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   }

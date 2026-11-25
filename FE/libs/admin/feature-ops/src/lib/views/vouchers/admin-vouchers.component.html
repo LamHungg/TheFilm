@@ -1,0 +1,159 @@
+<div class="voucher-view">
+  <header class="ops-page-header">
+    <div>
+      <div class="breadcrumb-text">THEFILM &nbsp; / &nbsp; GIÁ & ƯU ĐÃI &nbsp; / &nbsp; VOUCHER</div>
+      <h1 class="page-title">Chiến dịch voucher</h1>
+      <p class="page-desc">Tạo chương trình giảm giá, phát hành mã và theo dõi lượt sử dụng.</p>
+    </div>
+    <button class="btn-primary-action" type="button" (click)="openCreate()">+ Tạo chiến dịch</button>
+  </header>
+
+  @if (message) { <div class="voucher-alert success" role="status">{{ message }}</div> }
+  @if (error && !isModalOpen) { <div class="voucher-alert error" role="alert">{{ error }}</div> }
+
+  <section class="voucher-toolbar">
+    <div class="toolbar-copy">
+      <strong>{{ campaigns.length }} chiến dịch</strong>
+      <span>Voucher chỉ được trừ tiền sau khi máy chủ xác nhận hợp lệ.</span>
+    </div>
+    <div class="toolbar-controls">
+      <input type="search" [(ngModel)]="keyword" (keyup.enter)="loadCampaigns()" placeholder="Tìm mã, tên hoặc voucher..." aria-label="Tìm chiến dịch" />
+      <select [(ngModel)]="statusFilter" (change)="loadCampaigns()" aria-label="Lọc trạng thái">
+        <option value="">Tất cả trạng thái</option>
+        <option value="DRAFT">Nháp</option>
+        <option value="ACTIVE">Đang chạy</option>
+        <option value="PAUSED">Tạm dừng</option>
+        <option value="EXPIRED">Hết hạn</option>
+        <option value="CANCELLED">Đã hủy</option>
+      </select>
+      <button class="btn-secondary" type="button" (click)="loadCampaigns()">Tải lại</button>
+    </div>
+  </section>
+
+  <section class="voucher-table-card">
+    <div class="table-topline">
+      <div><span class="section-kicker">QUẢN LÝ KHUYẾN MÃI</span><h2>Chiến dịch và mã voucher</h2></div>
+      @if (loading) { <span class="loading-tag">Đang tải...</span> }
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>CHIẾN DỊCH</th><th>MỨC GIẢM</th><th>THỜI HẠN</th><th>NGÂN SÁCH</th><th>MÃ / LƯỢT DÙNG</th><th>TRẠNG THÁI</th><th>THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (!loading && campaigns.length === 0) {
+            <tr><td colspan="7" class="empty-row">{{ error ? 'Không tải được dữ liệu.' : 'Chưa có chiến dịch voucher. Tạo chiến dịch đầu tiên để phát hành mã.' }}</td></tr>
+          }
+          @for (campaign of campaigns; track campaign.campaignId) {
+            <tr>
+              <td class="campaign-cell">
+                <strong>{{ campaign.campaignName }}</strong>
+                <span>{{ campaign.campaignCode }}</span>
+              </td>
+              <td class="discount-cell">{{ discountLabel(campaign) }}</td>
+              <td class="date-cell">{{ campaign.validFrom | date:'dd/MM/yy HH:mm' }}<span>đến {{ campaign.validTo | date:'dd/MM/yy HH:mm' }}</span></td>
+              <td class="budget-cell">
+                @if (campaign.budgetAmount == null) { <strong>Không giới hạn</strong> }
+                @else {
+                  <strong>{{ money(campaign.budgetUsed) }}</strong><span> / {{ money(campaign.budgetAmount) }}</span>
+                  <div class="budget-track"><i [style.width.%]="budgetPercent(campaign)"></i></div>
+                }
+              </td>
+              <td class="count-cell"><strong>{{ campaign.voucherCount }}</strong> mã<span>{{ campaign.redeemedCount }} lượt dùng</span></td>
+              <td><span class="status-pill" [attr.data-status]="campaign.status">{{ statusLabel(campaign.status) }}</span></td>
+              <td class="actions-cell">
+                <button class="text-action" type="button" (click)="toggleCodes(campaign)">{{ openCampaignId === campaign.campaignId ? 'Đóng mã' : 'Quản lý mã' }}</button>
+                @if (campaign.status === 'DRAFT' || campaign.status === 'PAUSED') {
+                  <button class="text-action" type="button" [disabled]="statusBusy.has(campaign.campaignId)" (click)="changeStatus(campaign, 'ACTIVE')">{{ campaign.status === 'DRAFT' ? 'Kích hoạt' : 'Tiếp tục' }}</button>
+                } @else if (campaign.status === 'ACTIVE') {
+                  <button class="text-action" type="button" [disabled]="statusBusy.has(campaign.campaignId)" (click)="changeStatus(campaign, 'PAUSED')">Tạm dừng</button>
+                }
+                @if (campaign.status === 'DRAFT' || campaign.status === 'PAUSED') {
+                  <button class="text-action" type="button" (click)="openEdit(campaign)">Sửa</button>
+                }
+                @if (campaign.status === 'DRAFT' || campaign.status === 'ACTIVE' || campaign.status === 'PAUSED') {
+                  <button class="text-action danger" type="button" [disabled]="statusBusy.has(campaign.campaignId)" (click)="changeStatus(campaign, 'CANCELLED')">Hủy</button>
+                }
+              </td>
+            </tr>
+            @if (openCampaignId === campaign.campaignId) {
+              <tr class="codes-row">
+                <td colspan="7">
+                  <div class="codes-panel">
+                    <div class="codes-heading">
+                      <div><strong>Mã của {{ campaign.campaignCode }}</strong><span>Mã ở trạng thái hoạt động mới áp dụng được tại bước thanh toán.</span></div>
+                      @if (voucherLoading.has(campaign.campaignId)) { <span class="loading-tag">Đang tải mã...</span> }
+                    </div>
+                    <form class="issue-form" (ngSubmit)="addCodes(campaign)">
+                      <label>Tiền tố mã<input [(ngModel)]="voucherPrefixes[campaign.campaignId]" name="prefix-{{ campaign.campaignId }}" required maxlength="60" /></label>
+                      <label>Số lượng<input type="number" [(ngModel)]="voucherQuantities[campaign.campaignId]" name="quantity-{{ campaign.campaignId }}" min="1" max="5000" required /></label>
+                      <button class="btn-secondary" type="submit" [disabled]="voucherSaving.has(campaign.campaignId)">{{ voucherSaving.has(campaign.campaignId) ? 'Đang phát hành...' : 'Phát hành thêm mã' }}</button>
+                    </form>
+                    <div class="voucher-code-list">
+                      @for (voucher of voucherRows[campaign.campaignId] || []; track voucher.voucherId) {
+                        <div class="voucher-code-item">
+                          <code>{{ voucher.voucherCode }}</code>
+                          <span class="status-pill" [attr.data-status]="voucher.status">{{ statusLabel(voucher.status) }}</span>
+                          @if (voucher.status === 'ACTIVE') { <button class="text-action danger" type="button" (click)="cancelCode(campaign.campaignId, voucher)">Hủy mã</button> }
+                        </div>
+                      }
+                      @if (!voucherLoading.has(campaign.campaignId) && (voucherRows[campaign.campaignId] || []).length === 0) {
+                        <p class="codes-empty">Chiến dịch này chưa có mã voucher.</p>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  @if (isModalOpen) {
+    <div class="voucher-modal-backdrop" (click)="closeModal()">
+      <section class="voucher-modal" role="dialog" aria-modal="true" aria-labelledby="voucher-modal-title" (click)="$event.stopPropagation()">
+        <header class="modal-heading">
+          <div><h2 id="voucher-modal-title">{{ editing ? 'Chỉnh sửa chiến dịch' : 'Tạo chiến dịch voucher' }}</h2><p>Thiết lập mức giảm, ngân sách và số mã phát hành.</p></div>
+          <button type="button" class="close-button" aria-label="Đóng" (click)="closeModal()">×</button>
+        </header>
+        @if (error) { <div class="voucher-alert error" role="alert">{{ error }}</div> }
+        <form class="campaign-form" (ngSubmit)="saveCampaign()">
+          <div class="campaign-code-note wide">
+            @if (editing) { <span>Mã chiến dịch</span><strong>{{ editing.campaignCode }}</strong> }
+            @else { <span>Mã chiến dịch sẽ được tự động tạo khi lưu.</span> }
+          </div>
+          <label class="wide">Tên chiến dịch *<input [(ngModel)]="form.campaignName" name="campaignName" required maxlength="200" placeholder="Ví dụ: Ưu đãi thành viên tháng 12" /></label>
+          <label>Loại giảm giá<select [ngModel]="form.discountType" (ngModelChange)="onDiscountTypeChange($event)" name="discountType"><option value="PERCENT">Phần trăm</option><option value="FIXED">Số tiền cố định</option></select></label>
+          <label>Mức giảm ({{ form.discountType === 'PERCENT' ? '%' : '₫' }}) *
+            @if (form.discountType === 'PERCENT') {
+              <input type="number" [(ngModel)]="form.discountValue" name="discountValue" min="0.01" max="100" step="0.01" required />
+            } @else {
+              <input type="text" inputmode="numeric" [value]="moneyInput(form.discountValue)" (input)="onMoneyInput('discountValue', $event)" aria-label="Mức giảm bằng đồng" required />
+            }
+          </label>
+          <label>Áp dụng cho đơn từ (₫)<span class="field-help">Tổng giá trị đơn phải đạt mức này mới dùng được voucher; để trống nếu không giới hạn.</span><input type="text" inputmode="numeric" [value]="moneyInput(form.minimumOrderAmount)" (input)="onMoneyInput('minimumOrderAmount', $event)" placeholder="Không giới hạn" /></label>
+          @if (form.discountType === 'PERCENT') {
+            <label>Giảm tối đa mỗi đơn (₫)<input type="text" inputmode="numeric" [value]="moneyInput(form.maxDiscount)" (input)="onMoneyInput('maxDiscount', $event)" placeholder="Không giới hạn" /></label>
+          }
+          <label>Ngân sách chiến dịch (₫)<span class="field-help">Tổng tiền ưu đãi tối đa cho toàn chiến dịch; để trống nếu không giới hạn.</span><input type="text" inputmode="numeric" [value]="moneyInput(form.budgetAmount)" (input)="onMoneyInput('budgetAmount', $event)" placeholder="Không giới hạn" /></label>
+          <label>Tổng lượt dùng<input type="number" [(ngModel)]="form.usageLimit" name="usageLimit" min="1" placeholder="Không giới hạn" /></label>
+          <label>Lượt / khách<input type="number" [(ngModel)]="form.perCustomerLimit" name="perCustomerLimit" min="1" placeholder="Không giới hạn" /></label>
+          <label>Bắt đầu *<input type="datetime-local" [(ngModel)]="form.validFrom" name="validFrom" required /></label>
+          <label>Kết thúc *<input type="datetime-local" [(ngModel)]="form.validTo" name="validTo" required /></label>
+          <label class="wide">Tiền tố voucher *<input [(ngModel)]="form.voucherPrefix" name="voucherPrefix" [readonly]="!!editing" required maxlength="60" placeholder="Ví dụ: THEFILM-T12" /></label>
+          @if (!editing) { <label>Số mã phát hành<input type="number" [(ngModel)]="form.voucherCount" name="voucherCount" min="1" max="5000" required /></label> }
+          <label class="stack-option"><input type="checkbox" [(ngModel)]="form.stackable" name="stackable" /> Cho phép cộng dồn với ưu đãi khác</label>
+          <footer class="modal-actions">
+            <button type="button" class="btn-secondary" [disabled]="saving" (click)="closeModal()">Hủy</button>
+            <button type="submit" class="btn-primary-action" [disabled]="saving">{{ saving ? 'Đang lưu...' : editing ? 'Lưu thay đổi' : 'Tạo chiến dịch và phát hành mã' }}</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
+</div>
