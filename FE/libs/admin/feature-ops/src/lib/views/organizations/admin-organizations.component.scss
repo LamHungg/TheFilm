@@ -44,6 +44,11 @@
   }
 }
 
+.permission-hint {
+  color: #9a6700 !important;
+  margin-top: 4px !important;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -65,6 +70,11 @@
       border-color: #c90e29;
       color: #c90e29;
     }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
   .btn-primary-action {
@@ -85,7 +95,42 @@
     &:hover {
       background-color: #b00b23;
     }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
+}
+
+.setup-notice {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #f0d89a;
+  border-radius: 8px;
+  background: #fff9e8;
+  color: #72540a;
+  font-size: 12px;
+}
+
+.org-save-notice {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #a8dfc0;
+  border-radius: 8px;
+  background: #effaf4;
+  color: #176b42;
+  font-size: 12px;
+}
+
+.save-progress {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid #b8d6f7;
+  border-radius: 8px;
+  background: #f1f7ff;
+  color: #284c75;
+  font-size: 12px;
 }
 
 .filter-pills-bar {
@@ -163,7 +208,17 @@
       }
 
       &.chains-grid {
-        grid-template-columns: 120px 1fr 120px;
+        grid-template-columns: 100px minmax(180px, 1fr) 100px 170px;
+        padding-right: 6px;
+
+        .col-head:nth-child(3) {
+          text-align: center;
+        }
+
+        .col-head:last-child {
+          text-align: right;
+          padding-right: 28px;
+        }
       }
 
       .col-head {
@@ -189,7 +244,16 @@
       }
 
       &.chains-grid {
-        grid-template-columns: 120px 1fr 120px;
+        grid-template-columns: 100px minmax(180px, 1fr) 100px 170px;
+        padding-right: 6px;
+
+        .col-cell:nth-child(3) {
+          text-align: center;
+        }
+
+        .chain-actions {
+          justify-content: flex-end;
+        }
       }
 
       &:hover {
@@ -288,6 +352,11 @@
       padding: 4px 10px;
       border-radius: 6px;
       letter-spacing: 0.5px;
+
+      &.badge-inactive {
+        background-color: #f1f2f5;
+        color: #666b78;
+      }
     }
   }
 
@@ -297,6 +366,34 @@
     font-style: italic;
     padding: 20px 0;
   }
+}
+
+.btn-row-action {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid #e2e4e9;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #c90e29;
+    color: #c90e29;
+  }
+
+  &.btn-row-danger {
+    color: #b42318;
+    border-color: #f1c5c2;
+  }
+}
+
+.chain-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .cinema-props-card {
@@ -343,6 +440,41 @@
           font-weight: 600;
         }
       }
+    }
+  }
+}
+
+.cinema-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f2f5;
+}
+
+.cinema-props-empty {
+  p {
+    margin: 0 0 12px;
+    color: #666b78;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .btn-outline-action {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid #e2e4e9;
+    border-radius: 99px;
+    background: #ffffff;
+    color: #1a1b21;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #c90e29;
+      color: #c90e29;
     }
   }
 }
@@ -454,6 +586,58 @@
       border-color: #c90e29;
       background: #ffffff;
     }
+  }
+}
+
+.empty-entity-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid #f0d89a;
+  border-radius: 8px;
+  background: #fff9e8;
+  color: #72540a;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.cinema-entity-empty-notice {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+}
+
+.cinema-code-with-empty-entity {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.cinema-province-near-top {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.field-hint {
+  color: #666b78;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.btn-link-action {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c90e29;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
   }
 }
 

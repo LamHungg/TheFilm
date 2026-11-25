@@ -27,6 +27,14 @@
     }
   </div>
 
+  <div class="schedule-status-note" [class.published-note]="tabs[1].active" role="status">
+    @if (tabs[1].active) {
+      <span>Đang xem các suất đã công bố và mở bán trên trang khách hàng.</span>
+    } @else {
+      <span>Đang xem tất cả suất {{ dateFilterEnabled ? 'trong khoảng ' + scheduleRangeLabel : 'không giới hạn ngày' }}. Suất SCHEDULED chưa mở bán; suất ON_SALE đã được công bố cho khách.</span>
+    }
+  </div>
+
   <!-- Scheduler Control Bar -->
   <div class="scheduler-controls-bar">
     <div class="ctrl-group">
@@ -43,15 +51,47 @@
       <div class="ctrl-select-mock">Tất cả loại phòng ({{ rooms.length }} phòng)</div>
     </div>
 
+    <div class="ctrl-group date-filter-group">
+      <label class="ctrl-label" for="schedule-from-date">Từ ngày</label>
+      <input
+        id="schedule-from-date"
+        class="ctrl-select-native ctrl-date-native"
+        type="date"
+        [(ngModel)]="scheduleFromDate"
+        [disabled]="!dateFilterEnabled"
+      />
+    </div>
+
+    <div class="ctrl-group date-filter-group">
+      <label class="ctrl-label" for="schedule-to-date">Đến ngày</label>
+      <input
+        id="schedule-to-date"
+        class="ctrl-select-native ctrl-date-native"
+        type="date"
+        [(ngModel)]="scheduleToDate"
+        [disabled]="!dateFilterEnabled"
+      />
+    </div>
+
+    <label class="date-filter-toggle">
+      <input type="checkbox" [ngModel]="dateFilterEnabled" (ngModelChange)="onDateFilterToggle($event)" />
+      <span>Lọc theo ngày</span>
+    </label>
+
     <div class="ctrl-actions">
+      <button class="btn-outline-action btn-filter-apply" type="button" (click)="loadSchedule()" [disabled]="loading || (dateFilterEnabled && (!scheduleFromDate || !scheduleToDate))">Áp dụng</button>
       <button class="btn-outline-action" type="button" (click)="loadSchedule()">Làm mới lịch</button>
     </div>
   </div>
 
+  @if (scheduleFilterError) {
+    <div class="schedule-filter-error" role="alert">{{ scheduleFilterError }}</div>
+  }
+
   <!-- Timeline Grid Card -->
   <div class="timeline-card">
     <div class="timeline-header">
-      <span class="timeline-title">LỊCH THEO PHÒNG CHIẾU - {{ cinemas.length > 0 ? (cinemas[0].cinemaName) : 'Đang tải' }}</span>
+      <span class="timeline-title">LỊCH THEO PHÒNG CHIẾU - {{ selectedCinemaName }} · {{ scheduleRangeLabel }}</span>
       @if (loading) {
         <span class="loading-tag">Đang tải dữ liệu...</span>
       }
@@ -72,10 +112,10 @@
           </div>
 
           <div class="shows-stream">
-            @if (row.shows.length === 0) {
-              <div class="no-shows-text">Chưa có suất chiếu nào được xếp hôm nay</div>
+            @if (getVisibleShows(row.shows).length === 0) {
+              <div class="no-shows-text">Chưa có suất chiếu trong khoảng ngày đã chọn</div>
             }
-            @for (show of row.shows; track show.screeningId) {
+            @for (show of getVisibleShows(row.shows); track show.screeningId) {
               <div class="show-block" [class.cancelled]="show.status === 'CANCELLED'">
                 <div class="show-badge-row">
                   <span class="show-time">{{ show.time }}</span>
@@ -83,6 +123,20 @@
                 </div>
                 <div class="show-movie" [title]="show.movie">{{ show.movie }}</div>
                 <div class="show-occupancy">Loại: {{ show.type }} · Trạng thái: {{ show.status }}</div>
+                <button class="show-details-button" type="button" (click)="openScreeningDetails(show.screeningId)">
+                  Xem chi tiết
+                </button>
+                @if (show.status === 'SCHEDULED') {
+                  <button class="publish-screening-button" type="button" [disabled]="publishingScreeningIds.has(show.screeningId)" (click)="publishScreening(show.screeningId)">
+                    {{ publishingScreeningIds.has(show.screeningId) ? 'Đang công bố...' : 'Công bố mở bán' }}
+                  </button>
+                }
+                @if (publishErrors[show.screeningId]) {
+                  <small class="publish-screening-error" role="alert">{{ publishErrors[show.screeningId] }}</small>
+                }
+                @if (publishSuccesses[show.screeningId]) {
+                  <small class="publish-screening-success" role="status">{{ publishSuccesses[show.screeningId] }}</small>
+                }
               </div>
             }
           </div>
@@ -108,6 +162,9 @@
         }
 
         <form (ngSubmit)="submitCreateScreening()" class="modal-form">
+          @if (films.length === 0) {
+            <div class="alert-box error" role="alert">Chưa có phim đã duyệt để xếp lịch. Hãy duyệt phim trong mục Phim trước.</div>
+          }
           <div class="form-grid">
             <div class="form-group">
               <label>Cụm rạp (*)</label>
@@ -138,14 +195,21 @@
 
             <div class="form-group">
               <label>Phiên bản phim (*)</label>
-              <select [(ngModel)]="newScreening.filmVersionId" name="filmVersionId" class="form-select">
-                @if (availableVersions.length === 0) {
-                  <option [value]="1">Bản chuẩn 2D mặc định (ID: 1)</option>
+              <select [(ngModel)]="newScreening.filmVersionId" name="filmVersionId" class="form-select" [disabled]="isLoadingVersions || availableVersions.length === 0" required>
+                @if (isLoadingVersions) {
+                  <option [ngValue]="0">Đang tải phiên bản...</option>
+                } @else if (availableVersions.length === 0) {
+                  <option [ngValue]="0">Chưa có phiên bản hoạt động</option>
                 }
                 @for (v of availableVersions; track v.filmVersionId) {
-                  <option [value]="v.filmVersionId">{{ v.versionCode }} (Định dạng: {{ v.formatCode }})</option>
+                  <option [ngValue]="v.filmVersionId">{{ v.versionCode }} (Định dạng: {{ v.formatCode }})</option>
                 }
               </select>
+              @if (filmVersionLoadError) {
+                <small class="field-hint error-text" role="alert">{{ filmVersionLoadError }}</small>
+              } @else if (!isLoadingVersions && newScreening.filmId && availableVersions.length === 0) {
+                <small class="field-hint error-text" role="alert">Phim chưa có phiên bản hoạt động. Hãy tạo phiên bản phim trước khi xếp lịch.</small>
+              }
             </div>
 
             <div class="form-group">
@@ -158,14 +222,48 @@
               </select>
             </div>
 
-            <div class="form-group">
-              <label>Ngày chiếu (*)</label>
-              <input type="date" [(ngModel)]="newScreening.startDate" name="startDate" class="form-input" required />
+            <div class="form-group full-width">
+              <label>Ngày và giờ chiếu (*) · {{ selectedScreenings.length }} ngày</label>
+              <div class="screening-date-picker">
+                <input type="text" name="startDate" class="form-input screening-date-trigger" [value]="screeningDateSummary" placeholder="Bấm để chọn một hoặc nhiều ngày" readonly aria-haspopup="dialog" [attr.aria-expanded]="screeningCalendarOpen" (click)="toggleScreeningCalendar()" (keydown.enter)="$event.preventDefault(); toggleScreeningCalendar()" (keydown.space)="$event.preventDefault(); toggleScreeningCalendar()" />
+                @if (screeningCalendarOpen) {
+                  <section class="screening-calendar" role="dialog" aria-label="Chọn nhiều ngày chiếu">
+                    <header class="screening-calendar-header">
+                      <button type="button" aria-label="Tháng trước" [disabled]="screeningCalendarMonth <= minimumStartDate.slice(0, 7)" (click)="changeScreeningCalendarMonth(-1)">‹</button>
+                      <strong>{{ screeningCalendarMonthLabel }}</strong>
+                      <button type="button" aria-label="Tháng sau" (click)="changeScreeningCalendarMonth(1)">›</button>
+                    </header>
+                    <div class="screening-calendar-weekdays" role="row">
+                      @for (weekday of screeningCalendarWeekdays; track weekday) {
+                        <span role="columnheader">{{ weekday }}</span>
+                      }
+                    </div>
+                    <div class="screening-calendar-days" role="grid">
+                      @for (day of screeningCalendarDays; track day.date) {
+                        <button type="button" role="gridcell" [class.other-month]="!day.inCurrentMonth" [class.selected]="day.selected" [disabled]="day.disabled" [attr.aria-pressed]="day.selected" [attr.aria-label]="formatScreeningDate(day.date)" (click)="toggleScreeningCalendarDate(day)">{{ day.day }}</button>
+                      }
+                    </div>
+                    <footer class="screening-calendar-footer">
+                      <span>Đã chọn {{ selectedScreenings.length }}/31 ngày</span>
+                      <button type="button" (click)="closeScreeningCalendar()">Xong</button>
+                    </footer>
+                  </section>
+                }
+              </div>
+              <small class="field-hint">Chọn ngày trên lịch; mỗi ngày có giờ chiếu riêng. Tối đa 31 ngày mỗi lần.</small>
             </div>
 
-            <div class="form-group">
-              <label>Giờ bắt đầu (*)</label>
-              <input type="time" [(ngModel)]="newScreening.startTime" name="startTime" class="form-input" required />
+            <div class="screening-schedule-list full-width" aria-live="polite">
+              @for (screening of selectedScreenings; track screening.date) {
+                <div class="screening-schedule-row">
+                  <span class="screening-schedule-date">{{ formatScreeningDate(screening.date) }}</span>
+                  <label>
+                    <span>Giờ chiếu</span>
+                    <input type="time" [(ngModel)]="screening.startTime" [name]="'screening-time-' + screening.date" class="form-input" [min]="minimumTimeForDate(screening.date)" required />
+                  </label>
+                  <button type="button" class="screening-schedule-remove" (click)="removeScreeningDate(screening.date)" [attr.aria-label]="'Bỏ ngày ' + formatScreeningDate(screening.date)">×</button>
+                </div>
+              }
             </div>
 
             <div class="form-group full-width">
@@ -176,12 +274,105 @@
 
           <div class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
-            <button type="submit" class="btn-save" [disabled]="isCreating">
+            <button type="submit" class="btn-save" [disabled]="isCreating || isLoadingVersions || !hasSelectedActiveVersion() || films.length === 0">
               {{ isCreating ? 'Đang lưu...' : 'Xác nhận tạo suất chiếu' }}
             </button>
           </div>
         </form>
       </div>
+    </div>
+  }
+
+  @if (selectedScreening; as detail) {
+    <div class="modal-backdrop" (click)="closeScreeningDetails()">
+      <section class="modal-card screening-detail-modal" role="dialog" aria-modal="true" aria-labelledby="screening-detail-title" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 id="screening-detail-title" class="modal-title">Chi tiết suất chiếu #{{ detail.screeningId }}</h2>
+            <p class="modal-subtitle">Thông tin lịch chiếu và trạng thái vận hành</p>
+          </div>
+          <button class="btn-close" type="button" aria-label="Đóng" (click)="closeScreeningDetails()">✕</button>
+        </div>
+
+        @if (isEditingScreening) {
+          <form class="screening-edit-form" (ngSubmit)="submitScreeningUpdate()">
+            @if (screeningEditError) {
+              <div class="alert-box error" role="alert">{{ screeningEditError }}</div>
+            }
+            <div class="screening-edit-grid">
+              <label class="full-width">
+                <span>Ngày và giờ bắt đầu (*)</span>
+                <input type="datetime-local" [(ngModel)]="screeningEditForm.startsAt" name="editStartsAt" required />
+              </label>
+              <label>
+                <span>Loại suất chiếu (*)</span>
+                <select [(ngModel)]="screeningEditForm.screeningTypeCode" name="editScreeningTypeCode" required>
+                  <option value="STANDARD">Chiếu thường (STANDARD)</option>
+                  <option value="SNEAK_PREVIEW">Suất chiếu sớm (SNEAK_PREVIEW)</option>
+                  <option value="MIDNIGHT">Suất nửa đêm (MIDNIGHT)</option>
+                  <option value="ADVANCE">Vé mở bán trước (ADVANCE)</option>
+                </select>
+              </label>
+              <label>
+                <span>Thời gian dọn phòng (phút)</span>
+                <input type="number" [(ngModel)]="screeningEditForm.cleanupMinutes" name="editCleanupMinutes" min="0" max="240" />
+              </label>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-cancel" type="button" (click)="cancelEditingScreening()" [disabled]="isUpdatingScreening">Hủy chỉnh sửa</button>
+              <button class="btn-save" type="submit" [disabled]="isUpdatingScreening">
+                {{ isUpdatingScreening ? 'Đang lưu...' : 'Lưu thay đổi' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <dl class="screening-detail-grid">
+            <div class="screening-detail-item featured">
+              <dt>Phim</dt>
+              <dd>{{ detail.filmTitle || ('Phim #' + detail.filmId) }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Rạp chiếu</dt>
+              <dd>{{ selectedCinemaName }} · {{ detail.roomName || ('Phòng #' + detail.roomId) }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Ngày, giờ bắt đầu</dt>
+              <dd>{{ formatScreeningDateTime(detail.startsAt) }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Ngày, giờ kết thúc</dt>
+              <dd>{{ formatScreeningDateTime(detail.endsAt) }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Phiên bản phim</dt>
+              <dd>#{{ detail.filmVersionId }} · {{ detail.formatCode }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Loại suất chiếu</dt>
+              <dd>{{ detail.screeningTypeCode }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Loại phòng</dt>
+              <dd>{{ detail.roomTypeName || detail.roomTypeCode || '—' }}</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Thời gian dọn phòng</dt>
+              <dd>{{ detail.cleanupMinutes }} phút</dd>
+            </div>
+            <div class="screening-detail-item">
+              <dt>Trạng thái</dt>
+              <dd><span class="screening-status-chip" [class.on-sale]="detail.status === 'ON_SALE'">{{ screeningStatusLabel(detail.status) }} · {{ detail.status }}</span></dd>
+            </div>
+          </dl>
+
+          <div class="modal-footer">
+            <button class="btn-cancel" type="button" (click)="closeScreeningDetails()">Đóng</button>
+            @if (detail.status === 'SCHEDULED') {
+              <button class="btn-save" type="button" (click)="startEditingScreening(detail)">Chỉnh sửa suất</button>
+            }
+          </div>
+        }
+      </section>
     </div>
   }
 </div>

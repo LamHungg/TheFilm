@@ -50,6 +50,16 @@
 
   <!-- Movie Table Card -->
   <div class="table-card">
+    <div class="table-toolbar">
+      <label class="movie-search">
+        <span aria-hidden="true">⌕</span>
+        <input type="search" placeholder="Tìm theo mã hoặc tên phim" [(ngModel)]="searchTerm" (ngModelChange)="applyFilter()" />
+      </label>
+      <button class="table-refresh" type="button" (click)="loadData()" [disabled]="isLoading">Tải lại</button>
+    </div>
+    @if (loadError) {
+      <div class="load-error" role="alert"><span>{{ loadError }}</span><button type="button" (click)="loadData()">Thử lại</button></div>
+    }
     <div class="card-inner-table">
       <div class="table-header-row">
         <div class="col-head col-code">MÃ PHIM</div>
@@ -57,6 +67,7 @@
         <div class="col-head col-duration">THỜI LƯỢNG</div>
         <div class="col-head col-rating">PHÂN LOẠI</div>
         <div class="col-head col-status">TRẠNG THÁI</div>
+        <div class="col-head col-actions">THAO TÁC</div>
       </div>
 
       <div class="table-body">
@@ -70,8 +81,10 @@
               <div class="col-cell col-code font-mono">{{ m.filmCode }}</div>
               <div class="col-cell col-title">
                 <div class="title-with-poster">
-                  @if (m.posterUri) {
-                    <img [src]="m.posterUri" alt="Poster" class="table-poster-thumb" />
+                  @if (m.posterUri && !posterErrors.has(m.filmId)) {
+                    <img [src]="m.posterUri" alt="Poster phim" class="table-poster-thumb" (error)="onPosterImageError(m.filmId)" />
+                  } @else {
+                    <div class="table-poster-fallback" aria-label="Chưa có ảnh poster">THEFILM</div>
                   }
                   <div class="title-texts">
                     <span class="title-vn">{{ m.titleLocal }}</span>
@@ -93,9 +106,36 @@
               <div
                 class="col-cell col-status"
                 [class.text-green]="m.approvalStatus === 'APPROVED'"
-                [class.text-amber]="m.approvalStatus === 'DRAFT'"
+                [class.text-amber]="m.approvalStatus === 'DRAFT' || m.approvalStatus === 'PENDING'"
               >
-                {{ m.approvalStatus === 'APPROVED' ? 'Đã duyệt chiếu' : (m.approvalStatus === 'DRAFT' ? 'Bản nháp' : m.approvalStatus) }}
+                {{ getStatusLabel(m.approvalStatus) }}
+              </div>
+              <div class="col-cell col-actions">
+                <div class="film-row-actions">
+                  <button class="row-edit-button" type="button" (click)="openEditModal(m)">Sửa</button>
+                  <button class="row-edit-button" type="button" (click)="openVersionsModal(m)">Phiên bản</button>
+                  <select
+                    class="status-action-select"
+                    [name]="'status-' + m.filmId"
+                    [(ngModel)]="statusDrafts[m.filmId]"
+                    [disabled]="statusBusy.has(m.filmId) || getStatusOptions(m.approvalStatus).length === 0"
+                    [attr.aria-label]="'Chọn trạng thái mới cho phim ' + m.titleLocal"
+                  >
+                    <option value="">Đổi trạng thái...</option>
+                    @for (option of getStatusOptions(m.approvalStatus); track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                  <button
+                    class="row-edit-button status-apply-button"
+                    type="button"
+                    (click)="applyFilmStatus(m)"
+                    [disabled]="!statusDrafts[m.filmId] || statusBusy.has(m.filmId)"
+                  >{{ statusBusy.has(m.filmId) ? 'Đang lưu...' : 'Áp dụng' }}</button>
+                </div>
+                @if (statusErrors[m.filmId]) {
+                  <small class="status-action-error" role="alert">{{ statusErrors[m.filmId] }}</small>
+                }
               </div>
             </div>
           }
@@ -110,21 +150,28 @@
       <div class="modal-dialog" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div class="modal-titles">
-            <h2 class="modal-title">Tạo hồ sơ phim mới</h2>
-            <p class="modal-subtitle">Nhập thông tin phim vào hệ thống phân phối của cụm rạp THEFILM</p>
+            <h2 class="modal-title">{{ editingFilmId ? 'Chỉnh sửa hồ sơ phim' : 'Tạo hồ sơ phim mới' }}</h2>
+            <p class="modal-subtitle">Thông tin được lưu vào danh mục phim THEFILM và hiển thị trên trang khách hàng.</p>
           </div>
           <button class="btn-close-modal" type="button" (click)="closeCreateModal()">✕</button>
         </div>
 
         <div class="modal-body">
+          @if (formError) {
+            <div class="load-error" role="alert">{{ formError }}</div>
+          }
+          @if (lookupsError) {
+            <div class="load-error" role="alert"><span>{{ lookupsError }}</span><button type="button" (click)="loadLookups()">Tải lại danh mục</button></div>
+          }
           <div class="form-row two-cols">
             <div class="form-group">
-              <label class="form-label">Mã phim (Code) <span class="required">*</span></label>
+              <label class="form-label">Mã phim <span class="required">*</span></label>
               <input
                 type="text"
                 class="form-control"
                 placeholder="VD: THEFILM-005"
                 [(ngModel)]="newFilm.filmCode"
+                [readonly]="editingFilmId !== null"
               />
             </div>
             <div class="form-group">
@@ -170,13 +217,83 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Poster URL (Ảnh bìa)</label>
+              <label class="form-label">Ảnh poster · URL</label>
               <input
-                type="text"
+                type="url"
                 class="form-control"
-                placeholder="https://..."
+                placeholder="https://... (đường dẫn bên ngoài có thể hết hạn)"
                 [(ngModel)]="newFilm.posterUri"
+                (ngModelChange)="onPosterUrlChanged()"
               />
+              <span class="field-hint">Để ảnh luôn có sẵn, tải ảnh PNG/JPEG lên kho THEFILM bên dưới.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ảnh nền phim · URL</label>
+              <input type="url" class="form-control" placeholder="https://.../anh-nen-phim.jpg" [(ngModel)]="newFilm.bannerUri" (ngModelChange)="bannerPreviewFailed = false" />
+              <span class="field-hint">Ảnh ngang dùng ở đầu trang chi tiết; để trống sẽ dùng poster.</span>
+              @if (newFilm.bannerUri) {
+                @if (!bannerPreviewFailed) {
+                  <img class="banner-preview" [src]="newFilm.bannerUri" alt="Xem trước ảnh nền phim" (error)="onBannerPreviewError()" />
+                } @else {
+                  <div class="banner-preview-fallback">Không tải được ảnh nền. Kiểm tra lại đường dẫn.</div>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Ngày khởi chiếu</label>
+              <input type="date" class="form-control" [(ngModel)]="newFilm.releaseDate" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Đạo diễn</label>
+              <input type="text" class="form-control" placeholder="Tên đạo diễn" [(ngModel)]="newFilm.director" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Diễn viên (ngăn cách bằng dấu phẩy)</label>
+            <input type="text" class="form-control" placeholder="Tên diễn viên 1, Tên diễn viên 2" [(ngModel)]="newFilm.castNames" />
+          </div>
+
+          <div class="form-group poster-upload-group">
+            <label class="form-label" for="poster-file">Lưu poster vào kho THEFILM</label>
+            <input id="poster-file" type="file" accept="image/png,image/jpeg" (change)="onPosterSelected($event)" />
+            <span class="field-hint">Ảnh được lưu trên máy chủ và dùng đường dẫn nội bộ ổn định; tối đa 10 MB.</span>
+            @if (posterPreviewUrl || newFilm.posterUri) {
+              @if (!posterPreviewFailed) {
+                <img class="poster-preview" [src]="posterPreviewUrl || newFilm.posterUri" alt="Xem trước poster" (error)="posterPreviewFailed = true" />
+              } @else {
+                <div class="poster-preview-fallback">Không tải được ảnh xem trước.</div>
+              }
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Trailer (YouTube hoặc URL HTTPS)</label>
+            <input type="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." [(ngModel)]="newFilm.trailerUri" />
+            <span class="field-hint">YouTube sẽ phát ngay trong trang phim. URL video trực tiếp cần là nguồn HTTPS công khai.</span>
+          </div>
+
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Điểm đánh giá tham khảo</label>
+              <input type="number" min="0" max="10" step="0.1" class="form-control" [(ngModel)]="newFilm.externalRatingScore" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Số lượt đánh giá</label>
+              <input type="number" min="0" class="form-control" [(ngModel)]="newFilm.externalRatingCount" />
+            </div>
+          </div>
+          <div class="form-row two-cols">
+            <div class="form-group">
+              <label class="form-label">Nguồn điểm</label>
+              <input type="text" class="form-control" placeholder="MoMo Cinema" [(ngModel)]="newFilm.externalRatingSource" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Trang đánh giá</label>
+              <input type="url" class="form-control" placeholder="https://www.momo.vn/cinema/..." [(ngModel)]="newFilm.externalRatingUri" />
             </div>
           </div>
 
@@ -215,7 +332,98 @@
             [disabled]="isSubmitting"
             (click)="submitCreate()"
           >
-            {{ isSubmitting ? 'Đang tạo...' : 'Lưu & tạo bản ghi' }}
+            {{ isSubmitting ? 'Đang lưu...' : (editingFilmId ? 'Lưu thay đổi' : 'Tạo hồ sơ phim') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showVersionsModal && versionFilm) {
+    <div class="modal-backdrop" (click)="closeVersionsModal()">
+      <div class="modal-dialog versions-dialog" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-titles">
+            <h2 class="modal-title">Phiên bản chiếu</h2>
+            <p class="modal-subtitle">{{ versionFilm.titleLocal }} · {{ versionFilm.runtimeMinutes }} phút</p>
+          </div>
+          <button class="btn-close-modal" type="button" (click)="closeVersionsModal()" aria-label="Đóng">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (versionsError) {
+            <div class="load-error" role="alert"><span>{{ versionsError }}</span><button type="button" (click)="loadFilmVersions(versionFilm.filmId)">Tải lại</button></div>
+          }
+
+          <section class="versions-list">
+            <h3>Danh sách phiên bản</h3>
+            @if (versionsLoading) {
+              <p class="field-hint">Đang tải phiên bản phim...</p>
+            } @else if (filmVersions.length === 0) {
+              <p class="field-hint">Phim chưa có phiên bản. Thêm bản chiếu bên dưới trước khi xếp lịch.</p>
+            } @else {
+              <div class="version-list-rows">
+                @for (version of filmVersions; track version.filmVersionId) {
+                  <div class="version-list-row">
+                    <strong>{{ version.versionCode }}</strong>
+                    <span>{{ version.formatCode }}</span>
+                    <span>{{ version.languageCode || 'Ngôn ngữ gốc' }} / phụ đề {{ version.subtitleCode || 'không có' }}</span>
+                    <span>{{ version.runtimeMinutes }} phút</span>
+                    <span [class.text-green]="version.status === 'ACTIVE'">{{ version.status === 'ACTIVE' ? 'Hoạt động' : version.status }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="version-create-section">
+            <h3>Thêm phiên bản</h3>
+            <p class="field-hint">Ví dụ: 2D tiếng Việt, 2D phụ đề tiếng Việt hoặc 3D tiếng Việt. Phiên bản mới được kích hoạt để dùng khi xếp lịch.</p>
+            @if (versionFormError) {
+              <div class="load-error" role="alert">{{ versionFormError }}</div>
+            }
+            <div class="form-row two-cols">
+              <div class="form-group">
+                <label class="form-label">Mã phiên bản <span class="required">*</span></label>
+                <input class="form-control" [(ngModel)]="newVersion.versionCode" placeholder="VD: 2D_VN" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Định dạng chiếu <span class="required">*</span></label>
+                <select class="form-control" [(ngModel)]="newVersion.formatCode">
+                  <option value="2D">2D</option>
+                  <option value="3D">3D</option>
+                  <option value="IMAX">IMAX</option>
+                  <option value="4DX">4DX</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ngôn ngữ âm thanh</label>
+                <select class="form-control" [(ngModel)]="newVersion.languageCode">
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">Tiếng Anh</option>
+                  <option value="">Ngôn ngữ khác / không khai báo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phụ đề</label>
+                <select class="form-control" [(ngModel)]="newVersion.subtitleCode">
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">Tiếng Anh</option>
+                  <option value="">Không có</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thời lượng (phút) <span class="required">*</span></label>
+                <input type="number" class="form-control" min="1" max="9999" [(ngModel)]="newVersion.runtimeMinutes" />
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" type="button" (click)="closeVersionsModal()">Đóng</button>
+          <button class="btn-submit" type="button" [disabled]="versionSaving || versionsLoading || !!versionsError" (click)="saveFilmVersion()">
+            {{ versionSaving ? 'Đang lưu...' : 'Thêm phiên bản' }}
           </button>
         </div>
       </div>

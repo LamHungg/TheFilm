@@ -14,4 +14,5 @@ export * from './lib/views/tax-invoices/admin-tax-invoices.component';
 export * from './lib/views/reports/admin-reports.component';
 export * from './lib/views/generic/admin-generic.component';
 export * from './lib/services/admin-ops.service';
+export * from './lib/services/admin-auth.service';
 export * from './lib/admin.routes';

@@ -17,7 +17,7 @@
 
     <!-- Menu List -->
     <nav class="sidebar-nav">
-      @for (item of navItems; track item.path) {
+      @for (item of visibleNavItems; track item.path) {
         <a
           [routerLink]="item.path"
           routerLinkActive="active"
@@ -35,11 +35,12 @@
       <div class="profile-divider"></div>
       <div class="profile-card">
         <div class="user-avatar">
-          <span class="avatar-initials">LH</span>
+          <span class="avatar-initials">{{ initials }}</span>
         </div>
         <div class="user-info">
-          <span class="user-name">Lam Hùng · Quản lý</span>
-          <span class="user-scope">THEFILM · Rạp Nguyễn Trãi</span>
+          <span class="user-name">{{ auth.currentUser()?.displayName || 'Nhân viên THEFILM' }}</span>
+          <span class="user-scope">{{ auth.currentUser()?.email }}</span>
+          <button type="button" class="admin-sign-out" (click)="logout()">Đăng xuất</button>
         </div>
       </div>
     </div>
@@ -83,16 +84,23 @@
         <!-- Top User Dropdown -->
         <div class="top-user-pill">
           <div class="top-avatar">
-            <span>LH</span>
+            <span>{{ initials }}</span>
           </div>
-          <span class="top-name">Lam Hùng  ⌄</span>
+          <span class="top-name">{{ auth.currentUser()?.displayName || 'Nhân viên' }}  ⌄</span>
         </div>
       </div>
     </header>
 
     <!-- Content Outlet Area -->
     <main class="ops-content-area">
-      <router-outlet></router-outlet>
+      @if (permissionsLoaded && visibleNavItems.length === 0) {
+        <section class="permission-empty-state" role="status">
+          <h2>Tài khoản chưa được cấp chức năng</h2>
+          <p>Liên hệ Quản trị chuỗi để gán phòng ban và quyền sử dụng các chức năng phù hợp.</p>
+        </section>
+      } @else {
+        <router-outlet></router-outlet>
+      }
     </main>
   </div>
 </div>

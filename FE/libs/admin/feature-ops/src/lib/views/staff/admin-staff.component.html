@@ -9,9 +9,29 @@
       </p>
     </div>
     <div class="header-right">
+      @if (canManageDepartmentPermissions) {
+        <button class="btn-outline-action" type="button" (click)="openPermissionModal()">Quyền chức năng phòng ban</button>
+      }
+      <button class="btn-outline-action" type="button" (click)="openCatalogModal()" [disabled]="!newStaff.chainId">
+        + Danh mục phòng ban / chức vụ
+      </button>
       <button class="btn-primary-action" type="button" (click)="openCreateModal()">+ Thêm nhân viên mới</button>
     </div>
   </header>
+
+  @if (chains.length === 0 || activeCinemas.length === 0) {
+    <div class="staff-setup-notice" role="status">
+      <strong>Chưa đủ dữ liệu tổ chức để phân công nhân viên.</strong>
+      @if (chains.length === 0) {
+        <span> Hãy tạo chuỗi theo thông tin thật trong mục <a href="/admin/organizations">Tổ chức & rạp</a>.</span>
+      } @else {
+        <span> Hãy tạo pháp nhân và rạp thực tế trong mục <a href="/admin/organizations">Tổ chức & rạp</a>.</span>
+      }
+      @if (departments.length === 0 || jobPositions.length === 0) {
+        <span> Phòng ban và chức vụ được thêm qua “Danh mục phòng ban / chức vụ”.</span>
+      }
+    </div>
+  }
 
   <!-- Filter Pills Bar -->
   <div class="filter-pills-bar">
@@ -26,6 +46,16 @@
       </button>
     }
   </div>
+
+  @if (saveSuccess) {
+    <div class="staff-save-success" role="status">{{ saveSuccess }}</div>
+  }
+  @if (statusSuccess) {
+    <div class="staff-save-success" role="status">{{ statusSuccess }}</div>
+  }
+  @if (permissionSuccess) {
+    <div class="staff-save-success" role="status">{{ permissionSuccess }}</div>
+  }
 
   <!-- Middle Layout -->
   <div class="ops-middle-layout">
@@ -62,7 +92,7 @@
               <div class="col-cell col-phone">{{ s.phone || 'Chưa cập nhật' }}</div>
               <div class="col-cell col-email text-muted">{{ s.email || '—' }}</div>
               <div class="col-cell col-status" [class.text-green]="s.status === 'ACTIVE'">
-                {{ s.status === 'ACTIVE' ? 'Đang làm việc' : s.status }}
+                {{ employeeStatusLabel(s.status) }}
               </div>
             </div>
           }
@@ -82,7 +112,13 @@
         </div>
 
         <div class="badge-active-pill" [class.inactive]="selectedStaff.status !== 'ACTIVE'">
-          {{ selectedStaff.status === 'ACTIVE' ? 'ĐANG LÀM VIỆC' : selectedStaff.status }}
+          {{ employeeStatusLabel(selectedStaff.status) }}
+        </div>
+        <div class="staff-status-actions">
+          <p>Trạng thái hồ sơ nhân viên chỉ do <strong>Quản trị chuỗi</strong> hoặc <strong>HR</strong> cập nhật. Mỗi lần đổi cần ghi lý do.</p>
+          @if (canManageEmployeeStatus) {
+            <button type="button" class="btn-outline-action" (click)="openStatusModal()">Đổi trạng thái</button>
+          }
         </div>
 
         <div class="info-list">
@@ -128,6 +164,9 @@
         @if (saveError) {
           <div class="alert-box error">{{ saveError }}</div>
         }
+        @if (lookupsError) {
+          <div class="alert-box error" role="alert">{{ lookupsError }}</div>
+        }
 
         <form (ngSubmit)="submitCreateStaff()" class="modal-form">
           <div class="form-grid">
@@ -148,7 +187,7 @@
 
             <div class="form-group">
               <label>Email cơ quan</label>
-              <input type="email" [(ngModel)]="newStaff.email" name="email" class="form-input" placeholder="VD: huy.pn@thefilm.vn" />
+              <input type="email" [(ngModel)]="newStaff.email" name="email" class="form-input" placeholder="Nhập email liên hệ" />
             </div>
 
             <div class="form-group">
@@ -160,15 +199,232 @@
               <label>Ngày nhận việc</label>
               <input type="date" [(ngModel)]="newStaff.hiredOn" name="hiredOn" class="form-input" />
             </div>
+
+            <div class="form-group">
+              <label>Chuỗi (*)</label>
+              <select [(ngModel)]="newStaff.chainId" (ngModelChange)="onChainChanged()" name="chainId" class="form-input" required>
+                <option [ngValue]="0">Chọn chuỗi</option>
+                @for (chain of chains; track chain.chainId) {
+                  <option [ngValue]="chain.chainId">{{ chain.chainName }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Rạp làm việc (*)</label>
+              <select [(ngModel)]="newStaff.cinemaId" name="cinemaId" class="form-input" required>
+                <option [ngValue]="null">Chọn rạp</option>
+                @for (cinema of activeCinemas; track cinema.cinemaId) {
+                  <option [ngValue]="cinema.cinemaId">{{ cinema.cinemaName }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Phòng ban (*)</label>
+              <select [(ngModel)]="newStaff.departmentId" name="departmentId" class="form-input" required>
+                <option [ngValue]="null">Chọn phòng ban</option>
+                @for (department of departments; track department.id) {
+                  <option [ngValue]="department.id">{{ department.name }}</option>
+                }
+              </select>
+              @if (departments.length === 0) {
+                <small>Chưa có phòng ban cho chuỗi này. Tạo danh mục bằng nút ở đầu trang.</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Chức vụ (*)</label>
+              <select [(ngModel)]="newStaff.jobPositionId" name="jobPositionId" class="form-input" required>
+                <option [ngValue]="null">Chọn chức vụ</option>
+                @for (position of jobPositions; track position.id) {
+                  <option [ngValue]="position.id">{{ position.name }}</option>
+                }
+              </select>
+              @if (jobPositions.length === 0) {
+                <small>Chưa có chức vụ cho chuỗi này. Tạo danh mục bằng nút ở đầu trang.</small>
+              }
+            </div>
           </div>
+
+          <div class="form-group account-setup">
+            <label>Tài khoản nhân viên-admin</label>
+            <select [(ngModel)]="newStaff.accountMode" name="accountMode" class="form-input">
+              <option value="NONE">Chỉ tạo hồ sơ, chưa cấp đăng nhập</option>
+              <option value="CREATE">Tạo tài khoản nội bộ riêng cho nhân viên</option>
+            </select>
+            <small>Tài khoản nội bộ dùng màn đăng nhập nhân viên riêng; không tạo hồ sơ hay thông tin đăng nhập khách hàng.</small>
+          </div>
+
+          @if (newStaff.accountMode === 'CREATE') {
+            <div class="form-grid account-setup">
+              <div class="form-group">
+                <label>Email đăng nhập nội bộ (*)</label>
+                <input type="email" [(ngModel)]="newStaff.accountEmail" name="accountEmail" class="form-input" placeholder="Nhập email tài khoản nhân viên" required />
+                <small>Email này thuộc tài khoản nhân viên; không cần trùng email liên hệ khách hàng.</small>
+              </div>
+              <div class="form-group">
+                <label>Mật khẩu ban đầu (*)</label>
+                <input type="password" [(ngModel)]="newStaff.initialPassword" name="initialPassword" class="form-input" minlength="12" autocomplete="new-password" required />
+                <small>Tối thiểu 12 ký tự. Chuyển mật khẩu cho nhân viên qua kênh riêng.</small>
+              </div>
+              <div class="form-group">
+                <label>Quyền hệ thống (*)</label>
+                <select [(ngModel)]="newStaff.roleCode" name="roleCode" class="form-input" required>
+                  <option value="">Chọn quyền hệ thống</option>
+                  <option value="CHAIN_ADMIN">Quản trị chuỗi</option>
+                  <option value="CINEMA_MANAGER">Quản lý rạp</option>
+                  <option value="HR">Nhân sự</option>
+                  <option value="CASHIER">Thu ngân</option>
+                  <option value="USHER">Soát vé</option>
+                </select>
+              </div>
+            </div>
+          }
 
           <div class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
             <button type="submit" class="btn-save" [disabled]="isSaving">
-              {{ isSaving ? 'Đang lưu...' : 'Xác nhận thêm nhân viên' }}
+              {{ isSaving ? 'Đang lưu...' : 'Lưu hồ sơ và tài khoản' }}
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  }
+
+  @if (isCatalogModalOpen) {
+    <div class="modal-backdrop" (click)="closeCatalogModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm danh mục nhân sự</h2>
+            <p class="modal-subtitle">Danh mục thuộc chuỗi đang chọn; nhập tên và mã theo cơ cấu thực tế.</p>
+          </div>
+          <button class="btn-close" (click)="closeCatalogModal()" type="button">✕</button>
+        </div>
+        @if (catalogError) { <div class="alert-box error" role="alert">{{ catalogError }}</div> }
+        <form (ngSubmit)="submitCatalog()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Loại danh mục (*)</label>
+              <select [(ngModel)]="newCatalog.kind" name="catalogKind" class="form-input" required>
+                <option value="departments">Phòng ban</option>
+                <option value="job-positions">Chức vụ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Mã (*)</label>
+              <input type="text" [(ngModel)]="newCatalog.code" name="catalogCode" class="form-input" placeholder="Mã theo quy ước nội bộ" required />
+            </div>
+            <div class="form-group full-width">
+              <label>Tên (*)</label>
+              <input type="text" [(ngModel)]="newCatalog.name" name="catalogName" class="form-input" placeholder="Tên phòng ban hoặc chức vụ thực tế" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeCatalogModal()">Hủy</button>
+            <button type="submit" class="btn-save" [disabled]="isCatalogSaving">{{ isCatalogSaving ? 'Đang lưu...' : 'Thêm danh mục' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isStatusModalOpen && selectedStaff) {
+    <div class="modal-backdrop" (click)="closeStatusModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Cập nhật trạng thái nhân viên</h2>
+            <p class="modal-subtitle">{{ selectedStaff.employeeCode }} · {{ selectedStaff.fullName }} · thay đổi có hiệu lực ngay</p>
+          </div>
+          <button class="btn-close" type="button" (click)="closeStatusModal()" [disabled]="isStatusSaving">✕</button>
+        </div>
+        @if (statusError) { <div class="alert-box error" role="alert">{{ statusError }}</div> }
+        <form class="modal-form" (ngSubmit)="submitEmployeeStatus()">
+          <div class="status-guidance">
+            <div><strong>Chờ xác nhận:</strong> hồ sơ vừa tạo, chưa xác nhận đi làm.</div>
+            <div><strong>Đang làm việc:</strong> đủ điều kiện được phân công nghiệp vụ.</div>
+            <div><strong>Đang nghỉ phép:</strong> tạm nghỉ; phạm vi phân công tại rạp không còn hiệu lực.</div>
+            <div><strong>Đã chấm dứt làm việc:</strong> chặn tài khoản nội bộ gắn với hồ sơ.</div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="employee-next-status">Trạng thái mới (*)</label>
+              <select id="employee-next-status" [(ngModel)]="nextEmployeeStatus" name="nextEmployeeStatus" class="form-input" required>
+                <option value="ACTIVE">Đang làm việc</option>
+                <option value="ON_LEAVE">Đang nghỉ phép</option>
+                <option value="TERMINATED">Đã chấm dứt làm việc</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label for="employee-status-reason">Lý do cập nhật (*)</label>
+              <textarea id="employee-status-reason" [(ngModel)]="statusReason" name="statusReason" class="form-input status-reason" maxlength="500" required placeholder="Ví dụ: Đã hoàn tất xác minh hồ sơ và bắt đầu làm việc từ hôm nay"></textarea>
+            </div>
+          </div>
+          <p class="status-audit-note">Ngày hiệu lực là ngày cập nhật. Người thực hiện, trạng thái trước/sau, ngày hiệu lực và lý do sẽ được ghi vào nhật ký kiểm toán.</p>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeStatusModal()" [disabled]="isStatusSaving">Hủy</button>
+            <button type="submit" class="btn-save" [disabled]="isStatusSaving || !statusReason.trim()">{{ isStatusSaving ? 'Đang cập nhật...' : 'Xác nhận đổi trạng thái' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isPermissionModalOpen) {
+    <div class="modal-backdrop" (click)="closePermissionModal()">
+      <div class="modal-card permission-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Phân quyền chức năng theo phòng ban</h2>
+            <p class="modal-subtitle">Nhân viên được nhận quyền theo các phòng ban đang được phân công.</p>
+          </div>
+          <button class="btn-close" type="button" (click)="closePermissionModal()" [disabled]="isPermissionSaving">✕</button>
+        </div>
+        @if (permissionError) { <div class="alert-box error" role="alert">{{ permissionError }}</div> }
+        <div class="permission-admin-note"><strong>Quản trị chuỗi</strong> luôn có toàn quyền và là quyền duy nhất được phép sửa ma trận này.</div>
+        <div class="permission-scope-select">
+          <div class="form-group">
+            <label for="permission-chain">Chuỗi (*)</label>
+            <select id="permission-chain" class="form-input" [(ngModel)]="permissionChainId" name="permissionChain" (ngModelChange)="loadPermissionDepartments()">
+              @for (chain of chains; track chain.chainId) {
+                <option [ngValue]="chain.chainId">{{ chain.chainName }}</option>
+              }
+            </select>
+          </div>
+          @if (permissionDepartments.length > 0) {
+            <div class="form-group permission-department-select">
+              <label for="permission-department">Phòng ban (*)</label>
+              <select id="permission-department" class="form-input" [(ngModel)]="selectedPermissionDepartmentId" name="permissionDepartment" (ngModelChange)="loadDepartmentPermissions()">
+                @for (department of permissionDepartments; track department.id) {
+                  <option [ngValue]="department.id">{{ department.name }} · {{ department.code }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+        @if (isPermissionLoading) {
+          <div class="empty-cell">Đang tải danh mục quyền...</div>
+        } @else if (departmentPermissions.length > 0) {
+          <div class="permission-module-list">
+            @for (permission of departmentPermissions; track permission.moduleCode) {
+              <label class="permission-module-row">
+                <input type="checkbox" [(ngModel)]="permission.enabled" [name]="'permission_' + permission.moduleCode" />
+                <span class="permission-module-copy">
+                  <strong>{{ permission.moduleName }}</strong>
+                  <small>{{ permission.description }}</small>
+                </span>
+              </label>
+            }
+          </div>
+        }
+        <div class="permission-audit-note">Các quyền có hiệu lực ngay sau khi lưu. API tự kiểm tra quyền; ẩn mục menu không thay thế kiểm tra bảo mật.</div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" (click)="closePermissionModal()" [disabled]="isPermissionSaving">Đóng</button>
+          <button type="button" class="btn-save" (click)="saveDepartmentPermissions()" [disabled]="isPermissionSaving || isPermissionLoading || !selectedPermissionDepartmentId">{{ isPermissionSaving ? 'Đang lưu...' : 'Lưu quyền phòng ban' }}</button>
+        </div>
       </div>
     </div>
   }

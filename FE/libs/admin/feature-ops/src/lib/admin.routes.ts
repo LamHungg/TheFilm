@@ -1,10 +1,17 @@
 import { Routes } from '@angular/router';
 import { AdminShellComponent } from './admin-shell/admin-shell.component';
+import { adminAuthGuard, adminLoginGuard } from './admin-auth.guard';
 
 export const ADMIN_ROUTES: Routes = [
   {
+    path: 'login',
+    canActivate: [adminLoginGuard],
+    loadComponent: () => import('./views/login/admin-login.component').then((m) => m.AdminLoginComponent),
+  },
+  {
     path: '',
     component: AdminShellComponent,
+    canActivateChild: [adminAuthGuard],
     children: [
       {
         path: '',
@@ -51,6 +58,13 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./views/pricing/admin-pricing.component').then(
             (m) => m.AdminPricingComponent
+          ),
+      },
+      {
+        path: 'vouchers',
+        loadComponent: () =>
+          import('./views/vouchers/admin-vouchers.component').then(
+            (m) => m.AdminVouchersComponent
           ),
       },
       {

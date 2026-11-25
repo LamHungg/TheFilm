@@ -27,6 +27,10 @@
     }
   </div>
 
+  @if (statusMessage) {
+    <div class="status-message" role="status">{{ statusMessage }}</div>
+  }
+
   <!-- Middle Layout -->
   <div class="ops-middle-layout">
     <!-- Left Table -->
@@ -41,10 +45,11 @@
       <div class="card-inner-table">
         <div class="table-header-row">
           <div class="col-head col-code">MÃ QUY TẮC</div>
-          <div class="col-head col-type">LOẠI PHÒNG & GHẾ</div>
+          <div class="col-head col-type">PHIM, PHÒNG & GHẾ</div>
           <div class="col-head col-validity">HIỆU LỰC</div>
           <div class="col-head col-price">GIÁ GỐC</div>
           <div class="col-head col-status">DUYỆT</div>
+          <div class="col-head col-actions">THAO TÁC</div>
         </div>
 
         <div class="table-body">
@@ -55,8 +60,8 @@
             <div class="table-data-row">
               <div class="col-cell col-code font-bold text-red">{{ r.ruleCode }}</div>
               <div class="col-cell col-type">
-                <div class="type-main">{{ getSeatTypeName(r.seatTypeId) }}</div>
-                <div class="type-sub text-muted">{{ getRoomTypeName(r.roomTypeId) }}</div>
+                <div class="type-main">{{ getFilmTitle(r.filmId) }}</div>
+                <div class="type-sub text-muted">{{ getSeatTypeName(r.seatTypeId) }} · {{ getRoomTypeName(r.roomTypeId) }}</div>
               </div>
               <div class="col-cell col-validity">
                 <div>{{ getWeekdayLabel(r.weekdayNo) }}</div>
@@ -65,6 +70,20 @@
               <div class="col-cell col-price font-bold">{{ formatPrice(r.basePrice) }}</div>
               <div class="col-cell col-status" [class.text-green]="r.approvalStatus === 'APPROVED'">
                 {{ r.approvalStatus }}
+              </div>
+              <div class="col-cell col-actions">
+                @if (r.approvalStatus === 'DRAFT' || r.approvalStatus === 'PENDING') {
+                  <button class="status-action-button" type="button" [disabled]="statusBusy.has(r.priceRuleId)" (click)="applyPriceRuleStatus(r)">
+                    {{ statusBusy.has(r.priceRuleId) ? 'Đang lưu...' : 'Duyệt & áp dụng' }}
+                  </button>
+                } @else if (r.approvalStatus === 'APPROVED') {
+                  <button class="status-action-button retire-action" type="button" [disabled]="statusBusy.has(r.priceRuleId)" (click)="applyPriceRuleStatus(r)">
+                    {{ statusBusy.has(r.priceRuleId) ? 'Đang lưu...' : 'Ngừng áp dụng' }}
+                  </button>
+                }
+                @if (statusErrors[r.priceRuleId]) {
+                  <small class="status-action-error" role="alert">{{ statusErrors[r.priceRuleId] }}</small>
+                }
               </div>
             </div>
           }
@@ -112,7 +131,7 @@
         <div class="modal-header">
           <div>
             <h2 class="modal-title">Tạo quy tắc giá vé mới</h2>
-            <p class="modal-subtitle">Thiết lập chính sách giá vé dựa trên loại ghế, phòng chiếu và thời gian</p>
+            <p class="modal-subtitle">Áp dụng theo phim, loại suất chiếu, ghế, rạp/phòng và thời gian</p>
           </div>
           <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
         </div>
@@ -137,6 +156,17 @@
               </select>
             </div>
 
+            <div class="form-group full-width">
+              <label>Phim áp dụng</label>
+              <select [(ngModel)]="newRule.filmId" name="filmId" class="form-select">
+                <option [ngValue]="null">Tất cả phim</option>
+                @for (film of films; track film.filmId) {
+                  <option [ngValue]="film.filmId">{{ film.titleLocal }} ({{ film.filmCode }})</option>
+                }
+              </select>
+              <small>Chọn phim để tạo giá riêng; để trống sẽ áp dụng chung. Có thể kết hợp với loại suất chiếu sớm.</small>
+            </div>
+
             <div class="form-group">
               <label>Loại phòng chiếu</label>
               <select [(ngModel)]="newRule.roomTypeId" name="roomTypeId" class="form-select">
@@ -149,12 +179,13 @@
 
             <div class="form-group">
               <label>Phạm vi áp dụng (Cụm rạp)</label>
-              <select [(ngModel)]="newRule.cinemaId" name="cinemaId" class="form-select">
+              <select [(ngModel)]="newRule.cinemaId" (ngModelChange)="onRuleCinemaChange($event)" name="cinemaId" class="form-select">
                 <option [ngValue]="null">Toàn bộ hệ thống rạp</option>
                 @for (c of cinemas; track c.cinemaId) {
                   <option [value]="c.cinemaId">{{ c.cinemaName }}</option>
                 }
               </select>
+              <small>Để chọn loại phòng thuộc riêng từng chuỗi, hãy chọn một rạp trước.</small>
             </div>
 
             <div class="form-group">

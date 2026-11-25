@@ -7,12 +7,28 @@
       <p class="page-desc">
         Dữ liệu trong phạm vi rạp được phân quyền · Mọi thay đổi có lịch sử thao tác.
       </p>
+      @if (!canManageOrganizations) {
+        <p class="page-desc permission-hint">Chỉ Quản trị chuỗi được tạo, chỉnh sửa và đổi trạng thái tổ chức.</p>
+      }
     </div>
     <div class="header-right">
-      <button class="btn-outline-action" type="button" (click)="openCinemaModal()">+ Thêm rạp chiếu</button>
-      <button class="btn-primary-action" type="button" (click)="openEntityModal()">+ Thêm pháp nhân</button>
+      @if (canManageOrganizations) {
+        <button class="btn-outline-action" type="button" (click)="openChainModal()">+ Tạo chuỗi</button>
+        <button class="btn-outline-action" type="button" (click)="openEntityModal()" [disabled]="activeChains.length === 0">+ Thêm pháp nhân</button>
+        <button class="btn-primary-action" type="button" (click)="openCinemaModal()" [disabled]="!canCreateCinema">+ Thêm rạp chiếu</button>
+      }
     </div>
   </header>
+
+  @if (orgNotice) {
+    <div class="org-save-notice" role="status">{{ orgNotice }}</div>
+  }
+
+  @if (activeChains.length === 0) {
+    <div class="setup-notice" role="status">
+      Chưa có chuỗi rạp trong dữ liệu. Tạo chuỗi theo thông tin thật trước, sau đó thêm pháp nhân và rạp.
+    </div>
+  }
 
   <!-- Filter Pills Bar -->
   <div class="filter-pills-bar">
@@ -42,6 +58,9 @@
           </div>
 
           <div class="table-body">
+            @if (legalEntities.length === 0) {
+              <div class="empty-text">Chưa có pháp nhân. Tạo chuỗi trước rồi thêm pháp nhân tại đây.</div>
+            }
             @for (e of legalEntities; track e.legalEntityId) {
               <div
                 class="table-data-row"
@@ -51,7 +70,7 @@
                 <div class="col-cell col-code font-bold">{{ e.entityCode }}</div>
                 <div class="col-cell col-name font-medium">{{ e.legalName }}</div>
                 <div class="col-cell col-tax">{{ e.taxIdentifier || 'Chưa cập nhật' }}</div>
-                <div class="col-cell col-status text-green">{{ e.status }}</div>
+                <div class="col-cell col-status" [class.text-green]="e.status === 'ACTIVE'" [class.text-muted]="e.status !== 'ACTIVE'">{{ e.status }}</div>
               </div>
             }
           </div>
@@ -75,7 +94,7 @@
 
           <div class="field-group">
             <label class="field-label">Mã số thuế doanh nghiệp</label>
-            <div class="field-box">{{ selectedEntity.taxIdentifier || '0316889922' }}</div>
+            <div class="field-box">{{ selectedEntity.taxIdentifier || 'Chưa cập nhật' }}</div>
           </div>
 
           <div class="field-group">
@@ -84,7 +103,15 @@
           </div>
 
           <div class="detail-footer-actions">
-            <div class="badge-in-use">ĐANG HOẠT ĐỘNG</div>
+            <div class="badge-in-use" [class.badge-inactive]="selectedEntity.status !== 'ACTIVE'">
+              {{ selectedEntity.status === 'ACTIVE' ? 'ĐANG HOẠT ĐỘNG' : 'NGỪNG HOẠT ĐỘNG' }}
+            </div>
+            @if (canManageOrganizations) {
+              <button type="button" class="btn-row-action" (click)="openEditEntity(selectedEntity)">Sửa hồ sơ</button>
+              <button type="button" class="btn-row-action" (click)="changeEntityStatus(selectedEntity)">
+                {{ selectedEntity.status === 'ACTIVE' ? 'Ngừng hoạt động' : 'Kích hoạt lại' }}
+              </button>
+            }
           </div>
         } @else {
           <div class="empty-text">Chọn một pháp nhân từ danh sách để xem hồ sơ.</div>
@@ -110,6 +137,9 @@
         </div>
 
         <div class="table-body">
+          @if (cinemas.length === 0) {
+            <div class="empty-text">Chưa có rạp. Tạo chuỗi và pháp nhân trước, rồi thêm rạp bằng thông tin thực tế.</div>
+          }
           @for (c of cinemas; track c.cinemaId) {
             <div
               class="table-data-row cinemas-grid"
@@ -120,8 +150,8 @@
               <div class="col-cell font-medium">{{ c.cinemaName }}</div>
               <div class="col-cell text-muted">{{ c.addressLine }}</div>
               <div class="col-cell">{{ c.provinceName || 'Toàn quốc' }}</div>
-              <div class="col-cell text-muted">{{ c.phone || '1900 6868' }} · {{ c.email || 'info@thefilm.vn' }}</div>
-              <div class="col-cell text-green font-semibold">{{ c.status }}</div>
+              <div class="col-cell text-muted">{{ c.phone || 'Chưa cập nhật' }} · {{ c.email || 'Chưa cập nhật' }}</div>
+              <div class="col-cell font-semibold" [class.text-green]="c.status === 'ACTIVE'" [class.text-muted]="c.status !== 'ACTIVE'">{{ c.status }}</div>
             </div>
           }
         </div>
@@ -140,23 +170,73 @@
           <div class="col-head">MÃ CHUỖI</div>
           <div class="col-head">TÊN CHUỖI DOANH NGHIỆP</div>
           <div class="col-head">TRẠNG THÁI</div>
+          <div class="col-head">THAO TÁC</div>
         </div>
 
         <div class="table-body">
+          @if (chains.length === 0) {
+            <div class="empty-text">Chưa có chuỗi. Chọn “Tạo chuỗi” và nhập mã, tên theo dữ liệu thật.</div>
+          }
           @for (ch of chains; track ch.chainId) {
-            <div class="table-data-row chains-grid">
+            <div class="table-data-row chains-grid" [class.selected]="selectedChain?.chainId === ch.chainId" (click)="selectChain(ch)">
               <div class="col-cell font-bold text-red">{{ ch.chainCode }}</div>
               <div class="col-cell font-medium">{{ ch.chainName }}</div>
-              <div class="col-cell text-green font-semibold">{{ ch.status }}</div>
+              <div class="col-cell font-semibold" [class.text-green]="ch.status === 'ACTIVE'" [class.text-muted]="ch.status !== 'ACTIVE'">{{ ch.status }}</div>
+              <div class="chain-actions" (click)="$event.stopPropagation()">
+                @if (canManageOrganizations) {
+                  <button type="button" class="btn-row-action" (click)="openEditChain(ch)">Sửa</button>
+                  <button type="button" class="btn-row-action" (click)="changeChainStatus(ch)">
+                    {{ ch.status === 'ACTIVE' ? 'Ngừng' : 'Kích hoạt' }}
+                  </button>
+                }
+              </div>
             </div>
           }
         </div>
       </div>
     </div>
+
+    <div class="table-card full-width-card">
+      <div class="table-header-title">
+        <span>CỤM RẠP TRỰC THUỘC · {{ selectedChain?.chainName || 'CHỌN CHUỖI' }} ({{ cinemasForSelectedChain.length }})</span>
+      </div>
+      @if (!selectedChain) {
+        <div class="empty-text">Chọn một chuỗi ở phía trên để xem các cụm rạp trực thuộc.</div>
+      } @else if (cinemasForSelectedChain.length === 0) {
+        <div class="empty-text">Chuỗi {{ selectedChain.chainName }} chưa có cụm rạp trực thuộc.</div>
+      } @else {
+        <div class="card-inner-table">
+          <div class="table-header-row cinemas-grid">
+            <div class="col-head">MÃ CỤM RẠP</div>
+            <div class="col-head">TÊN CỤM RẠP</div>
+            <div class="col-head">ĐỊA CHỈ</div>
+            <div class="col-head">TỈNH / TP</div>
+            <div class="col-head">PHÁP NHÂN</div>
+            <div class="col-head">TRẠNG THÁI</div>
+          </div>
+          <div class="table-body">
+            @for (cinema of cinemasForSelectedChain; track cinema.cinemaId) {
+              <div
+                class="table-data-row cinemas-grid"
+                [class.selected]="selectedCinema?.cinemaId === cinema.cinemaId"
+                (click)="selectCinema(cinema)"
+              >
+                <div class="col-cell font-bold text-red">{{ cinema.cinemaCode }}</div>
+                <div class="col-cell font-medium">{{ cinema.cinemaName }}</div>
+                <div class="col-cell text-muted">{{ cinema.addressLine }}</div>
+                <div class="col-cell">{{ cinema.provinceName || 'Chưa cập nhật' }}</div>
+                <div class="col-cell">{{ legalEntityName(cinema.legalEntityId) }}</div>
+                <div class="col-cell font-semibold" [class.text-green]="cinema.status === 'ACTIVE'" [class.text-muted]="cinema.status !== 'ACTIVE'">{{ cinema.status }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
   }
 
   <!-- Bottom Cinema Properties Panel -->
-  @if (selectedCinema) {
+  @if (selectedCinema && (!tabs[2].active || selectedCinema.chainId === selectedChain?.chainId)) {
     <section class="cinema-props-card">
       <h2 class="props-heading">THÔNG SỐ VẬN HÀNH · {{ selectedCinema.cinemaName }} ({{ selectedCinema.cinemaCode }})</h2>
       <div class="props-grid">
@@ -174,17 +254,38 @@
         </div>
         <div class="field-group">
           <label class="field-label">Hotline liên hệ</label>
-          <div class="field-box">{{ selectedCinema.phone || '1900 6868' }}</div>
+          <div class="field-box">{{ selectedCinema.phone || 'Chưa cập nhật' }}</div>
         </div>
         <div class="field-group">
           <label class="field-label">Email hỗ trợ</label>
-          <div class="field-box">{{ selectedCinema.email || 'support@thefilm.vn' }}</div>
+          <div class="field-box">{{ selectedCinema.email || 'Chưa cập nhật' }}</div>
         </div>
         <div class="field-group">
           <label class="field-label">Trạng thái</label>
           <div class="field-box text-green">{{ selectedCinema.status }}</div>
         </div>
       </div>
+      @if (canManageOrganizations) {
+        <div class="detail-footer-actions cinema-actions">
+          <button type="button" class="btn-row-action" (click)="openEditCinema(selectedCinema)">Sửa thông tin rạp</button>
+          @if (selectedCinema.status === 'ACTIVE') {
+            <button type="button" class="btn-row-action" (click)="changeCinemaStatus(selectedCinema, 'INACTIVE')">Ngừng hoạt động</button>
+            <button type="button" class="btn-row-action btn-row-danger" (click)="changeCinemaStatus(selectedCinema, 'CLOSED')">Đóng rạp</button>
+          } @else {
+            <button type="button" class="btn-row-action" (click)="changeCinemaStatus(selectedCinema, 'ACTIVE')">Kích hoạt lại</button>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (tabs[0].active && selectedEntity && !selectedCinema) {
+    <section class="cinema-props-card cinema-props-empty">
+      <h2 class="props-heading">CHƯA CÓ RẠP THUỘC PHÁP NHÂN · {{ selectedEntity.legalName }}</h2>
+      <p>Pháp nhân này chưa được liên kết với rạp chiếu nào. Thông tin vận hành của rạp thuộc pháp nhân khác sẽ không hiển thị ở đây.</p>
+      @if (canManageOrganizations && selectedEntity.status === 'ACTIVE') {
+        <button type="button" class="btn-outline-action" (click)="openCinemaModalForSelectedEntity()">Thêm rạp cho pháp nhân này</button>
+      }
     </section>
   }
 
@@ -194,8 +295,8 @@
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
-            <h2 class="modal-title">Thêm cụm rạp chiếu mới</h2>
-            <p class="modal-subtitle">Đăng ký chi nhánh cụm rạp mới vào hệ thống TheFilm</p>
+            <h2 class="modal-title">{{ editingCinemaId ? 'Chỉnh sửa thông tin rạp' : 'Thêm cụm rạp chiếu mới' }}</h2>
+            <p class="modal-subtitle">{{ editingCinemaId ? 'Mã rạp và chuỗi quản lý được giữ cố định.' : 'Đăng ký chi nhánh cụm rạp mới vào hệ thống TheFilm' }}</p>
           </div>
           <button class="btn-close" (click)="closeCinemaModal()" type="button">✕</button>
         </div>
@@ -203,21 +304,44 @@
         @if (cinemaError) {
           <div class="alert-box error">{{ cinemaError }}</div>
         }
+        @if (isCinemaSaving) {
+          <div class="save-progress" role="status">Đang lưu rạp vào Oracle. Hệ thống tự kết thúc chờ sau 30 giây; nếu hết giờ, hãy kiểm tra danh sách trước khi gửi lại.</div>
+        }
 
         <form (ngSubmit)="submitCreateCinema()" class="modal-form">
           <div class="form-grid">
             <div class="form-group">
-              <label>Pháp nhân quản lý (*)</label>
-              <select [(ngModel)]="newCinema.legalEntityId" name="legalEntityId" class="form-select">
-                @for (e of legalEntities; track e.legalEntityId) {
-                  <option [value]="e.legalEntityId">{{ e.legalName }} ({{ e.entityCode }})</option>
+              <label>Chuỗi rạp (*)</label>
+              <select [(ngModel)]="newCinema.chainId" (ngModelChange)="newCinema.legalEntityId = null" name="cinemaChainId" class="form-select" [disabled]="editingCinemaId !== null" required>
+                <option [ngValue]="null">Chọn chuỗi</option>
+                @for (ch of chains; track ch.chainId) {
+                  <option [ngValue]="ch.chainId" [disabled]="ch.status !== 'ACTIVE' && ch.chainId !== newCinema.chainId">{{ ch.chainName }}{{ ch.status !== 'ACTIVE' ? ' · Ngừng hoạt động' : '' }}</option>
                 }
               </select>
             </div>
-
             <div class="form-group">
+              <label>Pháp nhân quản lý (*)</label>
+              <select [(ngModel)]="newCinema.legalEntityId" name="legalEntityId" class="form-select" required>
+                <option [ngValue]="null">Chọn pháp nhân</option>
+                @for (e of legalEntitiesForCinema; track e.legalEntityId) {
+                  <option [value]="e.legalEntityId" [disabled]="e.status !== 'ACTIVE' && e.legalEntityId !== newCinema.legalEntityId">{{ e.legalName }} ({{ e.entityCode }}){{ e.status !== 'ACTIVE' ? ' · Ngừng hoạt động' : '' }}</option>
+                }
+              </select>
+              @if (!newCinema.chainId) {
+                <span class="field-hint">Chọn chuỗi rạp để xem các pháp nhân thuộc chuỗi đó.</span>
+              }
+            </div>
+
+            @if (newCinema.chainId && legalEntitiesForCinema.length === 0) {
+              <div class="empty-entity-notice cinema-entity-empty-notice" role="status">
+                <span>Chuỗi này chưa có pháp nhân.</span>
+                <button type="button" class="btn-link-action" (click)="createEntityForSelectedCinema()">Tạo pháp nhân</button>
+              </div>
+            }
+
+            <div class="form-group" [class.cinema-code-with-empty-entity]="newCinema.chainId && legalEntitiesForCinema.length === 0">
               <label>Mã rạp (*)</label>
-              <input type="text" [(ngModel)]="newCinema.cinemaCode" name="cinemaCode" class="form-input" placeholder="VD: TF03" required />
+              <input type="text" [(ngModel)]="newCinema.cinemaCode" name="cinemaCode" class="form-input" placeholder="VD: TF03" [readonly]="editingCinemaId !== null" required />
             </div>
 
             <div class="form-group full-width">
@@ -230,7 +354,7 @@
               <input type="text" [(ngModel)]="newCinema.addressLine" name="addressLine" class="form-input" placeholder="VD: Tầng B1, TTTM Vincom Landmark 81, Bình Thạnh" required />
             </div>
 
-            <div class="form-group">
+            <div class="form-group" [class.cinema-province-near-top]="!newCinema.chainId || legalEntitiesForCinema.length > 0">
               <label>Tỉnh / Thành phố</label>
               <input type="text" [(ngModel)]="newCinema.provinceName" name="provinceName" class="form-input" />
             </div>
@@ -254,7 +378,7 @@
           <div class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeCinemaModal()">Hủy bỏ</button>
             <button type="submit" class="btn-save" [disabled]="isCinemaSaving">
-              {{ isCinemaSaving ? 'Đang lưu...' : 'Xác nhận tạo rạp' }}
+              {{ isCinemaSaving ? 'Đang lưu...' : editingCinemaId ? 'Lưu thay đổi' : 'Xác nhận tạo rạp' }}
             </button>
           </div>
         </form>
@@ -268,8 +392,8 @@
       <div class="modal-card" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
-            <h2 class="modal-title">Thêm pháp nhân mới</h2>
-            <p class="modal-subtitle">Đăng ký pháp nhân doanh nghiệp để xuất hóa đơn và ký hợp đồng</p>
+            <h2 class="modal-title">{{ editingEntityId ? 'Chỉnh sửa hồ sơ pháp nhân' : 'Thêm pháp nhân mới' }}</h2>
+            <p class="modal-subtitle">{{ editingEntityId ? 'Chuỗi và mã pháp nhân được giữ cố định.' : 'Đăng ký pháp nhân doanh nghiệp để xuất hóa đơn và ký hợp đồng' }}</p>
           </div>
           <button class="btn-close" (click)="closeEntityModal()" type="button">✕</button>
         </div>
@@ -277,21 +401,25 @@
         @if (entityError) {
           <div class="alert-box error">{{ entityError }}</div>
         }
+        @if (isEntitySaving) {
+          <div class="save-progress" role="status">Đang lưu pháp nhân vào Oracle. Hệ thống tự kết thúc chờ sau 30 giây; nếu hết giờ, hãy kiểm tra danh sách trước khi gửi lại.</div>
+        }
 
         <form (ngSubmit)="submitCreateEntity()" class="modal-form">
           <div class="form-grid">
             <div class="form-group">
               <label>Chuỗi doanh nghiệp (*)</label>
-              <select [(ngModel)]="newEntity.chainId" name="chainId" class="form-select">
+              <select [(ngModel)]="newEntity.chainId" name="chainId" class="form-select" [disabled]="editingEntityId !== null" required>
+                <option [ngValue]="null">Chọn chuỗi</option>
                 @for (ch of chains; track ch.chainId) {
-                  <option [value]="ch.chainId">{{ ch.chainName }}</option>
+                  <option [ngValue]="ch.chainId" [disabled]="ch.status !== 'ACTIVE' && ch.chainId !== newEntity.chainId">{{ ch.chainName }}{{ ch.status !== 'ACTIVE' ? ' · Ngừng hoạt động' : '' }}</option>
                 }
               </select>
             </div>
 
             <div class="form-group">
               <label>Mã pháp nhân (*)</label>
-              <input type="text" [(ngModel)]="newEntity.entityCode" name="entityCode" class="form-input" placeholder="VD: LE03" required />
+              <input type="text" [(ngModel)]="newEntity.entityCode" name="entityCode" class="form-input" placeholder="VD: LE03" [readonly]="editingEntityId !== null" required />
             </div>
 
             <div class="form-group full-width">
@@ -300,16 +428,48 @@
             </div>
 
             <div class="form-group full-width">
-              <label>Mã số thuế doanh nghiệp (*)</label>
-              <input type="text" [(ngModel)]="newEntity.taxIdentifier" name="taxIdentifier" class="form-input" placeholder="VD: 0316998877" required />
+              <label>Mã số thuế doanh nghiệp</label>
+              <input type="text" [(ngModel)]="newEntity.taxIdentifier" name="taxIdentifier" class="form-input" placeholder="Nhập nếu đã có" />
             </div>
           </div>
 
           <div class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeEntityModal()">Hủy bỏ</button>
             <button type="submit" class="btn-save" [disabled]="isEntitySaving">
-              {{ isEntitySaving ? 'Đang lưu...' : 'Xác nhận tạo pháp nhân' }}
+              {{ isEntitySaving ? 'Đang lưu...' : editingEntityId ? 'Lưu thay đổi' : 'Xác nhận tạo pháp nhân' }}
             </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isChainModalOpen) {
+    <div class="modal-backdrop" (click)="closeChainModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">{{ editingChainId ? 'Chỉnh sửa chuỗi rạp' : 'Tạo chuỗi rạp' }}</h2>
+            <p class="modal-subtitle">{{ editingChainId ? 'Mã chuỗi được giữ cố định; chỉ cập nhật tên hiển thị.' : 'Nhập mã và tên chuỗi theo thông tin doanh nghiệp thực tế.' }}</p>
+          </div>
+          <button class="btn-close" (click)="closeChainModal()" type="button">✕</button>
+        </div>
+        @if (chainError) { <div class="alert-box error" role="alert">{{ chainError }}</div> }
+        @if (isChainSaving) { <div class="save-progress" role="status">Đang lưu chuỗi vào Oracle. Hệ thống tự kết thúc chờ sau 30 giây; nếu hết giờ, hãy kiểm tra danh sách trước khi gửi lại.</div> }
+        <form (ngSubmit)="submitCreateChain()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Mã chuỗi (*)</label>
+              <input type="text" [(ngModel)]="newChain.chainCode" name="chainCode" class="form-input" placeholder="Mã theo quy ước doanh nghiệp" [readonly]="editingChainId !== null" required />
+            </div>
+            <div class="form-group">
+              <label>Tên chuỗi (*)</label>
+              <input type="text" [(ngModel)]="newChain.chainName" name="chainName" class="form-input" placeholder="Tên chuỗi theo hồ sơ thực tế" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeChainModal()">Hủy</button>
+            <button type="submit" class="btn-save" [disabled]="isChainSaving">{{ isChainSaving ? 'Đang lưu...' : editingChainId ? 'Lưu thay đổi' : 'Tạo chuỗi' }}</button>
           </div>
         </form>
       </div>

@@ -84,11 +84,21 @@
       <!-- Right Visual Seat Map Preview -->
       <div class="seatmap-card">
         <div class="seatmap-header">
-          <h2 class="seatmap-title">
-            SƠ ĐỒ GHẾ · {{ selectedRoom ? (selectedRoom.roomName + ' (' + selectedRoom.roomCode + ')') : 'CHƯA CHỌN PHÒNG' }}
-          </h2>
-          <span class="seatmap-subtitle">Loại: {{ selectedRoom?.roomTypeName || 'Standard' }} · Quy chuẩn 120 ghế</span>
+          <div>
+            <h2 class="seatmap-title">
+              SƠ ĐỒ GHẾ · {{ selectedRoom ? (selectedRoom.roomName + ' (' + selectedRoom.roomCode + ')') : 'CHƯA CHỌN PHÒNG' }}
+            </h2>
+            <span class="seatmap-subtitle">Loại: {{ selectedRoom?.roomTypeName || '—' }} · {{ seatMapCount }} ghế đã cấu hình</span>
+          </div>
+          @if (selectedRoom) {
+            <button class="btn-layout-setup" type="button" (click)="openExistingLayoutModal()" [disabled]="isLoadingLayoutDraft">
+              {{ isLoadingLayoutDraft ? 'Đang tải sơ đồ...' : selectedRoom.activeLayoutId ? 'Điều chỉnh sơ đồ ghế' : 'Thiết lập sơ đồ ghế' }}
+            </button>
+          }
         </div>
+
+        @if (layoutSuccess) { <div class="alert-box success" role="status">{{ layoutSuccess }}</div> }
+        @if (layoutError) { <div class="alert-box error" role="alert">{{ layoutError }}</div> }
 
         <!-- Screen Indicator -->
         <div class="screen-indicator-box">
@@ -97,46 +107,48 @@
         </div>
 
         <!-- Seats Grid -->
+        @if (seatMapRows.length > 0) {
         <div class="seats-grid-container">
-          @for (row of rows; track row) {
+          @for (row of seatMapRows; track row.label) {
             <div class="seat-row">
-              <span class="row-letter">{{ row }}</span>
-              <div class="seat-cells">
-                @for (col of cols; track col) {
-                  <div
-                    class="seat-cell"
-                    [class.seat-vip]="row === 'E' || row === 'F' || row === 'G'"
-                    [class.seat-sweetbox]="row === 'H'"
-                    [title]="row + col"
-                  >
-                    <span class="seat-num">{{ col }}</span>
-                  </div>
+              <span class="row-letter">{{ row.label }}</span>
+              <div class="seat-cells" [style.grid-template-columns]="'repeat(' + seatMapColumnCount + ', 24px)'">
+                @for (seat of row.seats; track $index) {
+                  @if (seat) {
+                    <div
+                      class="seat-cell"
+                      [class.seat-vip]="seatStyleClass(seat.seatTypeCode) === 'seat-vip'"
+                      [class.seat-sweetbox]="seatStyleClass(seat.seatTypeCode) === 'seat-sweetbox'"
+                      [title]="seat.seatLabel + ' · ' + seat.seatTypeCode + (seat.sellable ? '' : ' · Không bán')"
+                    >
+                      <span class="seat-num">{{ seat.seatCode.slice(row.label.length) }}</span>
+                    </div>
+                  } @else {
+                    <span class="seat-gap" aria-hidden="true"></span>
+                  }
                 }
               </div>
-              <span class="row-letter">{{ row }}</span>
+              <span class="row-letter">{{ row.label }}</span>
             </div>
           }
         </div>
+        } @else {
+          <div class="empty-seatmap">{{ selectedRoom ? 'Phòng chưa có sơ đồ ghế hoạt động.' : 'Chọn phòng để xem sơ đồ ghế đã cấu hình.' }}</div>
+        }
 
         <!-- Legend -->
-        <div class="seat-legend">
-          <div class="legend-item">
-            <span class="legend-color normal"></span>
-            <span>Ghế thường</span>
+        @if (seatMapRows.length > 0) {
+          <div class="seat-legend">
+            @for (type of activeSeatTypes; track type.id) {
+              @if (hasSeatType(type.id)) {
+                <div class="legend-item">
+                  <span class="legend-color" [class.normal]="!seatStyleClass(type.typeCode)" [class.vip]="seatStyleClass(type.typeCode) === 'seat-vip'" [class.sweetbox]="seatStyleClass(type.typeCode) === 'seat-sweetbox'"></span>
+                  <span>{{ type.typeName }}</span>
+                </div>
+              }
+            }
           </div>
-          <div class="legend-item">
-            <span class="legend-color vip"></span>
-            <span>Ghế VIP</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color sweetbox"></span>
-            <span>Ghế đôi (Sweetbox)</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color maintenance"></span>
-            <span>Đang bảo trì</span>
-          </div>
-        </div>
+        }
       </div>
     </div>
   }
@@ -145,22 +157,42 @@
   @if (tabs[1].active) {
     <div class="full-card">
       <div class="table-header-title">
-        <span>DANH MỤC ĐỊNH DẠNG VÀ LOẠI PHÒNG CHIẾU TOÀN HỆ THỐNG</span>
+        <span>DANH MỤC LOẠI PHÒNG CỦA CHUỖI ĐANG CHỌN</span>
+        <div class="header-right">
+          <button class="btn-primary-action" type="button" (click)="openRoomTypeModal()">+ Thêm loại phòng</button>
+        </div>
       </div>
+      @if (roomTypeSuccess) {
+        <div class="alert-box success" role="status">{{ roomTypeSuccess }}</div>
+      }
+      @if (roomTypeError) {
+        <div class="alert-box error" role="alert">{{ roomTypeError }}</div>
+      }
+      <p class="catalog-help">Danh mục được dùng chung tại các rạp thuộc chuỗi {{ selectedChainName }}. IMAX, 3D, âm thanh và tiện ích khác được cấu hình riêng cho từng phòng.</p>
       <div class="card-inner-table">
         <div class="table-header-row types-grid">
           <div class="col-head">MÃ ĐỊNH DẠNG</div>
           <div class="col-head">TÊN LOẠI PHÒNG</div>
           <div class="col-head">MÔ TẢ CHI TIẾT</div>
-          <div class="col-head">TRẠNG THÁI</div>
+          <div class="col-head">TRẠNG THÁI / THAO TÁC</div>
         </div>
         <div class="table-body">
+          @if (roomTypes.length === 0) {
+            <div class="empty-cell">Chưa có loại phòng. Hãy thêm loại phòng trước khi khai báo phòng chiếu.</div>
+          } @else if (activeRoomTypes.length === 0) {
+            <div class="empty-cell">Tất cả loại phòng đang ngừng dùng; hãy kích hoạt một loại để tạo phòng mới.</div>
+          }
           @for (t of roomTypes; track t.id) {
             <div class="table-data-row types-grid">
               <div class="col-cell font-bold text-red">{{ t.typeCode }}</div>
               <div class="col-cell font-medium">{{ t.typeName }}</div>
               <div class="col-cell text-muted">{{ t.description || 'Không có mô tả' }}</div>
-              <div class="col-cell text-green font-semibold">{{ t.status }}</div>
+              <div class="col-cell status-action-cell">
+                <span class="font-semibold" [class.text-green]="t.status === 'ACTIVE'">{{ t.status === 'ACTIVE' ? 'Đang dùng' : 'Ngừng dùng' }}</span>
+                <button class="btn-status-toggle" type="button" (click)="toggleRoomTypeStatus(t)">
+                  {{ t.status === 'ACTIVE' ? 'Ngừng dùng' : 'Kích hoạt' }}
+                </button>
+              </div>
             </div>
           }
         </div>
@@ -173,7 +205,15 @@
     <div class="full-card">
       <div class="table-header-title">
         <span>DANH MỤC PHÂN HẠNG VÀ LOẠI GHẾ NGỒI</span>
+        <div class="header-right">
+          <button class="btn-primary-action" type="button" (click)="openSeatTypeModal()">+ Thêm loại ghế</button>
+        </div>
       </div>
+      @if (seatTypeSuccess) { <div class="alert-box success" role="status">{{ seatTypeSuccess }}</div> }
+      @if (seatTypeError) { <div class="alert-box error" role="alert">{{ seatTypeError }}</div> }
+      @if (seatTypes.length === 0) {
+        <div class="empty-cell seat-types-empty">Chưa có danh mục loại ghế trong Oracle. Hãy thêm các loại đang dùng tại rạp (ví dụ Ghế thường, Ghế VIP, Ghế đôi) trước khi tạo sơ đồ phòng.</div>
+      }
       <div class="card-inner-table">
         <div class="table-header-row types-grid">
           <div class="col-head">MÃ GHẾ</div>
@@ -187,7 +227,10 @@
               <div class="col-cell font-bold text-red">{{ s.typeCode }}</div>
               <div class="col-cell font-medium">{{ s.typeName }}</div>
               <div class="col-cell text-muted">{{ s.description || 'Tiêu chuẩn rạp chiếu phim' }}</div>
-              <div class="col-cell text-green font-semibold">{{ s.status }}</div>
+              <div class="col-cell status-action-cell">
+                <span class="font-semibold" [class.text-green]="s.status === 'ACTIVE'">{{ s.status === 'ACTIVE' ? 'Đang dùng' : 'Ngừng dùng' }}</span>
+                <button class="btn-status-toggle" type="button" (click)="toggleSeatTypeStatus(s)">{{ s.status === 'ACTIVE' ? 'Ngừng dùng' : 'Kích hoạt' }}</button>
+              </div>
             </div>
           }
         </div>
@@ -198,11 +241,11 @@
   <!-- MODAL: Tạo Phòng Chiếu Mới -->
   @if (isCreateModalOpen) {
     <div class="modal-backdrop" (click)="closeCreateModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card room-create-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
             <h2 class="modal-title">Tạo phòng chiếu mới</h2>
-            <p class="modal-subtitle">Thêm phòng chiếu vật lý vào cụm rạp đã chọn</p>
+            <p class="modal-subtitle">Tạo phòng cùng sơ đồ ghế ban đầu để sẵn sàng khai báo suất chiếu</p>
           </div>
           <button class="btn-close" (click)="closeCreateModal()" type="button">✕</button>
         </div>
@@ -229,24 +272,223 @@
 
             <div class="form-group">
               <label>Loại phòng chiếu (*)</label>
-              <select [(ngModel)]="newRoom.roomTypeId" name="roomTypeId" class="form-select">
-                @for (t of roomTypes; track t.id) {
-                  <option [value]="t.id">{{ t.typeName }} ({{ t.typeCode }})</option>
+              <select [(ngModel)]="newRoom.roomTypeId" name="roomTypeId" class="form-select" [class.field-invalid]="roomTypeSelectionRequired" [attr.aria-invalid]="roomTypeSelectionRequired" (ngModelChange)="roomTypeSelectionRequired = false; createError = ''" required>
+                <option [ngValue]="null" disabled>Chọn loại phòng</option>
+                @for (t of activeRoomTypes; track t.id) {
+                  <option [ngValue]="t.id">{{ t.typeName }} ({{ t.typeCode }})</option>
                 }
               </select>
+              @if (roomTypeSelectionRequired) {
+                <small class="field-validation-error">Chọn loại phòng để tiếp tục tạo phòng chiếu.</small>
+              }
             </div>
 
             <div class="form-group full-width">
               <label>Tên phòng chiếu (*)</label>
               <input type="text" [(ngModel)]="newRoom.roomName" name="roomName" class="form-input" placeholder="VD: Phòng Chiếu 01 - Laser Surround" required />
             </div>
+
+            <div class="form-group full-width layout-name-field">
+              <label>Tên sơ đồ ghế ban đầu (*)</label>
+              <input type="text" [(ngModel)]="newRoom.layoutName" name="layoutName" class="form-input" maxlength="120" placeholder="VD: Sơ đồ ban đầu" required />
+            </div>
           </div>
+
+          <section class="room-layout-editor" aria-label="Cấu hình sơ đồ ghế ban đầu">
+            <div class="layout-editor-heading">
+              <div>
+                <h3>Sơ đồ ghế ban đầu</h3>
+                <p>Cấu hình theo từng hàng. Tổng hiện tại: <strong>{{ configuredSeatCount }}</strong> ghế</p>
+              </div>
+              <button type="button" class="btn-row-add" (click)="addRoomRow()" [disabled]="newRoomRows.length >= 60">+ Thêm hàng</button>
+            </div>
+            @if (activeSeatTypes.length === 0) {
+              <div class="seat-type-missing" role="alert">
+                <span>Chưa có loại ghế hoạt động trong Oracle. Tạo danh mục ghế trước để gán cho sơ đồ.</span>
+                <button type="button" (click)="openSeatTypeModal()">+ Thêm loại ghế</button>
+              </div>
+            }
+            <div class="layout-row-list">
+              <div class="layout-row-header"><span>HÀNG</span><span>SƠ ĐỒ GHẾ</span><span>SỐ GHẾ</span><span>LOẠI GHẾ</span><span>VỊ TRÍ</span><span></span></div>
+              @for (row of newRoomRows; track $index; let i = $index) {
+                <div class="layout-row-item">
+                  <div class="layout-row-label"><strong>{{ row.rowLabel || '—' }}</strong></div>
+                  <div class="seat-row-preview" [class.align-left]="row.alignment === 'LEFT'" [class.align-center]="row.alignment === 'CENTER'" [class.align-right]="row.alignment === 'RIGHT'" [attr.aria-label]="'Xem trước hàng ' + row.rowLabel + ', ' + row.seatCount + ' ghế, lệch ' + (row.alignment === 'LEFT' ? 'trái' : row.alignment === 'RIGHT' ? 'phải' : 'giữa')">
+                    @for (seatNumber of seatPreviewNumbers(row.seatCount); track seatNumber) {
+                      <span class="seat-preview-cell" [class.seat-vip]="seatTypeStyleClass(row.seatTypeId) === 'seat-vip'" [class.seat-sweetbox]="seatTypeStyleClass(row.seatTypeId) === 'seat-sweetbox'" [title]="row.rowLabel + seatNumber">{{ seatNumber }}</span>
+                    }
+                  </div>
+                  <input [(ngModel)]="row.seatCount" [name]="'seatCount' + i" class="form-input" type="number" min="1" max="60" aria-label="Số ghế trong hàng" required />
+                  <select [(ngModel)]="row.seatTypeId" [name]="'seatType' + i" class="form-select" aria-label="Loại ghế trong hàng" required>
+                    <option [ngValue]="null" disabled>Chọn loại ghế</option>
+                    @for (type of activeSeatTypes; track type.id) {
+                      <option [ngValue]="type.id">{{ type.typeName }} ({{ type.typeCode }})</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="row.alignment" [name]="'rowAlignment' + i" class="form-select row-alignment-select" aria-label="Vị trí hàng ghế">
+                    <option value="LEFT">Lệch trái</option>
+                    <option value="CENTER">Ở giữa</option>
+                    <option value="RIGHT">Lệch phải</option>
+                  </select>
+                  <button type="button" class="btn-row-remove" (click)="removeRoomRow(i)" [disabled]="newRoomRows.length <= 1" [attr.aria-label]="'Xóa hàng ' + row.rowLabel">Xóa</button>
+                </div>
+              }
+            </div>
+            <small class="layout-editor-help">Mỗi hàng tối đa 60 ghế; toàn sơ đồ tối đa 2.000 ghế. Mã ghế được tạo theo hàng và số thứ tự, ví dụ A1, A2.</small>
+          </section>
 
           <div class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeCreateModal()">Hủy bỏ</button>
-            <button type="submit" class="btn-save" [disabled]="isCreating">
+            <button type="submit" class="btn-save" [disabled]="isCreating || roomTypes.length === 0 || activeSeatTypes.length === 0">
               {{ isCreating ? 'Đang lưu...' : 'Xác nhận tạo phòng' }}
             </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isLayoutModalOpen) {
+    <div class="modal-backdrop" (click)="closeExistingLayoutModal()">
+      <div class="modal-card room-create-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">{{ selectedRoom?.activeLayoutId ? 'Điều chỉnh sơ đồ ghế' : 'Thiết lập sơ đồ ghế' }}</h2>
+            <p class="modal-subtitle">{{ selectedRoom?.roomName }} ({{ selectedRoom?.roomCode }}) · {{ selectedRoom?.activeLayoutId ? 'Lưu sẽ tạo phiên bản mới; sơ đồ hiện tại vẫn được giữ cho các suất chiếu đã tạo.' : 'Sơ đồ sẽ được lưu và kích hoạt cho phòng này.' }}</p>
+          </div>
+          <button class="btn-close" type="button" (click)="closeExistingLayoutModal()">✕</button>
+        </div>
+        @if (layoutError) { <div class="alert-box error" role="alert">{{ layoutError }}</div> }
+        @if (selectedRoom?.activeLayoutId) {
+          <div class="layout-revision-note" role="note">Có thể đổi số ghế, thêm hoặc xóa hàng và căn trái/giữa/phải. Ghế còn lại giữ mã, loại và trạng thái bán; ghế thêm mới dùng loại đang chọn. Hệ thống tạo phiên bản sơ đồ mới, các suất chiếu đã tạo vẫn dùng sơ đồ cũ.</div>
+        }
+        <form (ngSubmit)="submitExistingRoomLayout()" class="modal-form">
+          <div class="form-group full-width existing-layout-name">
+            <label>Tên sơ đồ ghế (*)</label>
+            <input type="text" [(ngModel)]="existingLayoutName" name="existingLayoutName" class="form-input" maxlength="120" required />
+          </div>
+          <section class="room-layout-editor" aria-label="Cấu hình sơ đồ ghế cho phòng đã có">
+            <div class="layout-editor-heading">
+              <div>
+                <h3>Sơ đồ ghế cho {{ selectedRoom?.roomName }}</h3>
+                <p>Cấu hình theo từng hàng. Tổng hiện tại: <strong>{{ configuredSeatCount }}</strong> ghế</p>
+              </div>
+              <button type="button" class="btn-row-add" (click)="addRoomRow()" [disabled]="newRoomRows.length >= 60">+ Thêm hàng</button>
+            </div>
+            @if (activeSeatTypes.length === 0 && !selectedRoom?.activeLayoutId) {
+              <div class="seat-type-missing" role="alert">
+                <span>Chưa có loại ghế hoạt động trong Oracle. Tạo danh mục ghế trước để gán cho sơ đồ.</span>
+                <button type="button" (click)="openSeatTypeModal()">+ Thêm loại ghế</button>
+              </div>
+            }
+            <div class="layout-row-list">
+              <div class="layout-row-header"><span>HÀNG</span><span>SƠ ĐỒ GHẾ</span><span>SỐ GHẾ</span><span>LOẠI GHẾ MỚI</span><span>VỊ TRÍ</span><span></span></div>
+              @for (row of newRoomRows; track $index; let i = $index) {
+                <div class="layout-row-item">
+                  <div class="layout-row-label"><strong>{{ row.rowLabel || '—' }}</strong></div>
+                  <div class="seat-row-preview" [class.align-left]="row.alignment === 'LEFT'" [class.align-center]="row.alignment === 'CENTER'" [class.align-right]="row.alignment === 'RIGHT'" [attr.aria-label]="'Xem trước hàng ' + row.rowLabel + ', ' + row.seatCount + ' ghế, lệch ' + (row.alignment === 'LEFT' ? 'trái' : row.alignment === 'RIGHT' ? 'phải' : 'giữa')">
+                    @for (seatNumber of seatPreviewNumbers(row.seatCount); track seatNumber) {
+                      <span class="seat-preview-cell" [class.seat-vip]="seatTypeStyleClass(row.seatTypeId) === 'seat-vip'" [class.seat-sweetbox]="seatTypeStyleClass(row.seatTypeId) === 'seat-sweetbox'" [title]="row.rowLabel + seatNumber">{{ seatNumber }}</span>
+                    }
+                  </div>
+                  <input [(ngModel)]="row.seatCount" [name]="'existingSeatCount' + i" class="form-input" type="number" min="1" max="60" aria-label="Số ghế trong hàng" required />
+                  <select [(ngModel)]="row.seatTypeId" [name]="'existingSeatType' + i" class="form-select" aria-label="Loại ghế dùng cho ghế thêm" [required]="needsNewSeats(row)" [disabled]="!!selectedRoom?.activeLayoutId && !needsNewSeats(row)">
+                    <option [ngValue]="null" disabled>Chọn loại ghế</option>
+                    @for (type of activeSeatTypes; track type.id) {
+                      <option [ngValue]="type.id">{{ type.typeName }} ({{ type.typeCode }})</option>
+                    }
+                  </select>
+                  <select [(ngModel)]="row.alignment" [name]="'existingRowAlignment' + i" class="form-select row-alignment-select" aria-label="Vị trí hàng ghế">
+                    <option value="LEFT">Lệch trái</option>
+                    <option value="CENTER">Ở giữa</option>
+                    <option value="RIGHT">Lệch phải</option>
+                  </select>
+                  <button type="button" class="btn-row-remove" (click)="removeRoomRow(i)" [disabled]="newRoomRows.length <= 1" [attr.aria-label]="'Xóa hàng ' + row.rowLabel">Xóa</button>
+                </div>
+              }
+            </div>
+            <small class="layout-editor-help">Mỗi hàng tối đa 60 ghế; toàn sơ đồ tối đa 2.000 ghế. Mã ghế được tạo theo hàng và số thứ tự, ví dụ A1, A2.</small>
+          </section>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeExistingLayoutModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isSavingLayout || activeSeatTypes.length === 0">{{ isSavingLayout ? 'Đang lưu...' : 'Lưu và kích hoạt sơ đồ' }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isRoomTypeModalOpen) {
+    <div class="modal-backdrop" (click)="closeRoomTypeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm loại phòng chiếu</h2>
+            <p class="modal-subtitle">Tạo loại phòng dùng chung cho các rạp thuộc chuỗi {{ selectedChainName }}.</p>
+          </div>
+          <button class="btn-close" type="button" (click)="closeRoomTypeModal()">✕</button>
+        </div>
+
+        @if (roomTypeError) {
+          <div class="alert-box error" role="alert">{{ roomTypeError }}</div>
+        }
+
+        <form (ngSubmit)="submitCreateRoomType()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Mã loại phòng (*)</label>
+              <input type="text" [(ngModel)]="newRoomType.typeCode" name="typeCode" class="form-input" placeholder="VD: DELUXE, SCREENX" maxlength="30" required />
+              <small>Tự chuyển thành chữ in hoa; chỉ dùng chữ không dấu, số và dấu gạch dưới.</small>
+            </div>
+            <div class="form-group">
+              <label>Tên loại phòng (*)</label>
+              <input type="text" [(ngModel)]="newRoomType.typeName" name="typeName" class="form-input" placeholder="VD: Phòng Deluxe" maxlength="120" required />
+            </div>
+            <div class="form-group full-width">
+              <label>Mô tả</label>
+              <textarea [(ngModel)]="newRoomType.description" name="typeDescription" class="form-input" rows="3" maxlength="1000" placeholder="Mô tả mục đích sử dụng và cách phân biệt loại phòng"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeRoomTypeModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isSavingRoomType">
+              {{ isSavingRoomType ? 'Đang lưu...' : 'Thêm loại phòng' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (isSeatTypeModalOpen) {
+    <div class="modal-backdrop" (click)="closeSeatTypeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Thêm loại ghế</h2>
+            <p class="modal-subtitle">Tạo phân hạng ghế dùng chung cho sơ đồ các phòng.</p>
+          </div>
+          <button class="btn-close" type="button" (click)="closeSeatTypeModal()">✕</button>
+        </div>
+        @if (seatTypeError) { <div class="alert-box error" role="alert">{{ seatTypeError }}</div> }
+        <form (ngSubmit)="submitCreateSeatType()" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Mã loại ghế (*)</label>
+              <input type="text" [(ngModel)]="newSeatType.typeCode" name="seatTypeCode" class="form-input" maxlength="30" placeholder="VD: STANDARD, VIP, COUPLE" required />
+            </div>
+            <div class="form-group">
+              <label>Tên loại ghế (*)</label>
+              <input type="text" [(ngModel)]="newSeatType.typeName" name="seatTypeName" class="form-input" maxlength="120" placeholder="VD: Ghế thường" required />
+            </div>
+            <div class="form-group full-width">
+              <label>Mô tả</label>
+              <textarea [(ngModel)]="newSeatType.description" name="seatTypeDescription" class="form-input" rows="3" maxlength="1000" placeholder="Mô tả đặc điểm và cách tính giá"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeSeatTypeModal()">Hủy bỏ</button>
+            <button type="submit" class="btn-save" [disabled]="isSavingSeatType">{{ isSavingSeatType ? 'Đang lưu...' : 'Thêm loại ghế' }}</button>
           </div>
         </form>
       </div>
