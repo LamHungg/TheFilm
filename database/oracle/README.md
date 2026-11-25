@@ -2,7 +2,7 @@
 
 This folder contains the first Oracle schema baseline for the cinema chain system. The migration files are numbered and Flyway-compatible. They are designed for Oracle Database 19c or newer and use Oracle identity columns.
 
-For a single-file setup on a clean development schema, use `THEFILM_ORACLE_FULL_SCHEMA.sql`. It contains the schema DDL and four MoMo-based demo films with their required age and genre lookups. Do not apply the full script and the migration files to the same schema; choose one approach. `V006__film_metadata_and_momo_samples.sql` is the upgrade path for an existing schema created before the film metadata fields; it adds four separate `DEMO-MOMO-*` sample films without overwriting existing film records. The application's Oracle profile currently leaves Flyway disabled, so run V006 manually in SQL Developer against an existing development schema.
+For a single-file setup on a clean development schema, use `THEFILM_ORACLE_FULL_SCHEMA.sql`. It contains the schema DDL and four MoMo-based demo films with their required age and genre lookups. Room types belong to a cinema chain; each newly created chain receives `STANDARD`, `PREMIUM`, and `LARGE_FORMAT` defaults and can add its own types. Do not apply the full script and the migration files to the same schema; choose one approach. The application's Oracle profile currently leaves Flyway disabled, so apply pending upgrades manually against an existing development schema.
 
 ## Migrations
 
@@ -12,16 +12,29 @@ Run these migrations in order, once per schema, using Flyway or another migratio
 2. `migrations/V002__pricing_booking_payments.sql` — effective-dated prices, promotions, membership points, order snapshots, seat holds, tickets, payments, callbacks and refunds.
 3. `migrations/V003__tax_fnb_hr_support_audit.sql` — mock-only invoice/tax simulation, F&B catalog/inventory, employee/shift/payroll foundations, CSKH/AI records, audit, outbox and app settings.
 4. `migrations/V004__vietnamese_data_dictionary.sql` — Vietnamese `COMMENT ON TABLE` and `COMMENT ON COLUMN` descriptions for all tables and fields.
+5. `migrations/V005__sample_data.sql` — initial organization, room, film and operational demo data.
+6. `migrations/V006__film_metadata_and_momo_samples.sql` — film metadata and MoMo sample films.
+7. `migrations/V007__film_reviews.sql` — audience review records.
+8. `migrations/V008__film_banner_uri.sql` — film banner media URL.
+9. `migrations/V009__database_user_roles.sql` — database-backed user roles.
+10. `migrations/V010__separate_staff_accounts.sql` — separate employee login accounts.
+11. `migrations/V011__department_module_permissions.sql` — department-level admin module permissions.
+12. `migrations/V012__default_room_type.sql` — default room-type entries for existing installations.
+13. `migrations/V013__room_types_per_chain.sql` — scopes room types to each chain and preserves existing room assignments.
+14. `migrations/V014__default_versions_for_momo_demo_films.sql` — ensures demo film versions exist.
+15. `migrations/V015__film_specific_price_rules.sql` — supports price rules scoped to film releases.
+16. `migrations/V016__fnb_inventory_threshold.sql` — stores product-specific low-stock thresholds and ensures base F&B categories exist.
 
 After applying, inspect the data dictionary in Oracle with `SELECT table_name, comments FROM user_tab_comments` and `SELECT table_name, column_name, comments FROM user_col_comments ORDER BY table_name, column_name`.
 
-The workspace has an Angular customer portal and the Spring Boot application in BE. The backend packages V001-V004 from this folder into its Flyway resources, so this folder remains the single migration source of truth. The consolidated script was executed successfully on local Oracle FREEPDB1 in an isolated validation schema on 2026-11-06: 83 tables, 782 columns, zero missing column comments, zero invalid objects. Configure the Oracle JDBC connection and Keycloak issuer through environment-specific settings; never commit database credentials.
+The workspace has an Angular customer portal and the Spring Boot application in BE. Migration files in this folder are copied into the backend build from this single source. The consolidated script was executed successfully on local Oracle FREEPDB1 in an isolated validation schema on 2026-11-06: 83 tables, 782 columns, zero missing column comments, zero invalid objects. Configure the Oracle JDBC connection and identity settings through environment-specific settings; never commit database credentials.
 
 ## Important design rules
 
 - Keycloak remains the identity and role provider. `app_user` stores the OIDC issuer and subject for linking business data; it stores no password, secret, refresh token or role grant. `user_cinema_scope` holds the data scope that the API must enforce alongside Keycloak roles.
 - A screening gets its own `show_seat` rows from a versioned room layout. The unique key `(screening_id, room_seat_id)` prevents duplicate allocations. Booking code must lock a seat row, verify status and expiry, then update the hold/sale in one transaction. An expired hold must be released by a scheduled worker or during a locked seat recheck. Hold duration is intentionally not seeded because the requirement document marks it TBD.
 - Price, promotion, room, seat, film and tax details are copied onto order/ticket/invoice records as snapshots. Updating a catalog item later must not rewrite issued history.
+- Room types are owned by a chain. Rooms may only use an active type from their cinema's chain; retiring a type hides it from new-room forms while preserving existing room assignments.
 - Callback and points idempotency keys are persisted with uniqueness constraints. Payment timeout is a separate state and must be reconciled with the provider before it is treated as failed.
 - Tax rules, VAT/PIT parameters and their effective dates are data, not hard-coded rates. The first schema enforces `simulation_only = 'Y'` and provider `MOCK`; it cannot submit an invoice to a real tax provider.
 - Amounts use `NUMBER(18,2)` and currency `VND`. No legal tax rate, seat-hold duration, cancellation deadline, payment provider, or payroll policy is seeded because those values remain unconfirmed in the analysis document.
