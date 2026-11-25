@@ -51,3 +51,7 @@ Thumbs.db
 /BE/src/main/resources/application-local.yml
 /.agents/mcp_config.json
 /tools/ai-dev-orchestrator/ui-qa-artifacts/
+
+# Graphify-generated project graphs
+/graphify-out/
+/FE/graphify-out/
