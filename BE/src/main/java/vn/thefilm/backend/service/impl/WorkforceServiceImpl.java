@@ -7,6 +7,8 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.server.ResponseStatusException;
 import vn.thefilm.backend.dto.*;
 import vn.thefilm.backend.dto.WorkforceDtos.*;
@@ -25,11 +27,21 @@ public class WorkforceServiceImpl implements WorkforceService {
     private final DepartmentRepository departments;
     private final JobPositionRepository positions;
     private final AdminAudit audit;
+    private final AppUserRepository appUsers;
+    private final StaffAccountRepository staffAccounts;
+    private final StaffCredentialRepository staffCredentials;
+    private final PasswordEncoder passwordEncoder;
+    private final String authIssuer;
     @PersistenceContext private EntityManager em;
     public WorkforceServiceImpl(EmployeeRepository employees, EmployeeAssignmentRepository assignments,
-            CinemaRepository cinemas, DepartmentRepository departments, JobPositionRepository positions, AdminAudit audit) {
+            CinemaRepository cinemas, DepartmentRepository departments, JobPositionRepository positions, AdminAudit audit,
+            AppUserRepository appUsers, StaffAccountRepository staffAccounts,
+            StaffCredentialRepository staffCredentials, PasswordEncoder passwordEncoder,
+            @Value("${app.security.jwt.issuer:http://localhost:8080/auth}") String authIssuer) {
         this.employees=employees; this.assignments=assignments; this.cinemas=cinemas;
         this.departments=departments; this.positions=positions; this.audit=audit;
+        this.appUsers=appUsers; this.staffAccounts=staffAccounts; this.staffCredentials=staffCredentials;
+        this.passwordEncoder=passwordEncoder; this.authIssuer=authIssuer;
     }
     public PageResponse<EmployeeDto> search(String keyword, EmployeeStatus status, int page, int size) {
         return AdminPages.response(employees.findAll((root,q,cb)-> {
@@ -45,12 +57,52 @@ public class WorkforceServiceImpl implements WorkforceService {
     }
     public EmployeeDetail detail(Long id) { return new EmployeeDetail(dto(employee(id,false)),assignments(id)); }
     @Transactional
-    public EmployeeDto create(EmployeeRequest r, AdminActionContext ctx) {
+    public EmployeeDto create(EmployeeRequest r, AdminActionContext ctx, boolean mayGrantChainAdmin) {
         lockChain(r.chainId());
         uniqueEmployee(r.chainId(),r.employeeCode().trim());
         validateDates(r,null);
+        String accountMode = r.accountMode() == null || r.accountMode().isBlank() ? "NONE" : r.accountMode().trim().toUpperCase(Locale.ROOT);
+        String loginEmail = r.accountEmail() == null || r.accountEmail().isBlank() ? r.email() : r.accountEmail();
+        String roleCode = r.roleCode() == null || r.roleCode().isBlank() ? null : r.roleCode().trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("NONE", "CREATE").contains(accountMode)) throw new IllegalArgumentException("Chọn cách xử lý tài khoản nhân viên hợp lệ.");
+        if (accountMode.equals("NONE") && roleCode != null) throw new IllegalArgumentException("Cần tạo tài khoản nhân viên trước khi cấp vai trò hệ thống.");
+        if (accountMode.equals("CREATE") && (loginEmail == null || loginEmail.isBlank() || r.initialPassword() == null || roleCode == null))
+            throw new IllegalArgumentException("Tạo tài khoản nhân viên cần email, mật khẩu ban đầu và vai trò hệ thống.");
+        Set<String> allowedRoles = Set.of("CHAIN_ADMIN", "CINEMA_MANAGER", "HR", "CASHIER", "USHER");
+        if (roleCode != null && !allowedRoles.contains(roleCode)) throw new IllegalArgumentException("Vai trò không hợp lệ.");
+        if ("CHAIN_ADMIN".equals(roleCode) && !mayGrantChainAdmin) throw new org.springframework.security.access.AccessDeniedException("Chỉ quản trị chuỗi được cấp quyền quản trị chuỗi.");
+        CinemaEntity cinema = cinemas.findById(r.cinemaId()).orElseThrow(() -> missing("rạp"));
+        JobPositionEntity position = em.find(JobPositionEntity.class, r.jobPositionId(), LockModeType.PESSIMISTIC_READ);
+        if (position == null) throw missing("chức vụ");
+        DepartmentEntity department = em.find(DepartmentEntity.class, r.departmentId(), LockModeType.PESSIMISTIC_READ);
+        if (department == null) throw missing("phòng ban");
+        if (!r.chainId().equals(cinema.getChainId()) || !r.chainId().equals(position.getChainId())
+                || !r.chainId().equals(department.getChainId()) || cinema.getStatus() != CinemaStatus.ACTIVE
+                || position.getStatus() != ActiveStatus.ACTIVE || department.getStatus() != ActiveStatus.ACTIVE) {
+            throw new IllegalArgumentException("Chuỗi, rạp, phòng ban và chức vụ phải khớp nhau và đang hoạt động.");
+        }
         EmployeeEntity e=employees.saveAndFlush(new EmployeeEntity(r.chainId(),r.employeeCode().trim(),r.fullName().trim(),
                 r.dateOfBirth(),r.phone(),r.email(),r.hiredOn()));
+        if (accountMode.equals("CREATE")) {
+            String accountEmail = loginEmail.trim().toLowerCase(Locale.ROOT);
+            if (staffAccounts.existsByLoginEmailIgnoreCase(accountEmail)) conflict("Email này đã được dùng cho một tài khoản nhân viên khác.");
+            AppUserEntity actorIdentity = appUsers.saveAndFlush(new AppUserEntity(authIssuer,
+                    "staff:" + UUID.randomUUID(), "Tài khoản nội bộ", null, null, AppUserStatus.ACTIVE));
+            em.createNativeQuery("UPDATE employee SET app_user_id = :userId WHERE employee_id = :employeeId")
+                    .setParameter("userId", actorIdentity.getAppUserId()).setParameter("employeeId", e.getEmployeeId()).executeUpdate();
+            em.refresh(e);
+            StaffAccountEntity account = staffAccounts.saveAndFlush(new StaffAccountEntity(
+                    actorIdentity.getAppUserId(), e.getEmployeeId(), accountEmail, e.getFullName(), AppUserStatus.ACTIVE));
+            staffCredentials.save(account.getStaffAccountId(), passwordEncoder.encode(r.initialPassword()));
+            em.createNativeQuery("INSERT INTO staff_account_role (staff_account_id, role_code, granted_by) VALUES (:staffId, :roleCode, :actorId)")
+                    .setParameter("staffId", account.getStaffAccountId()).setParameter("roleCode", roleCode)
+                    .setParameter("actorId", ctx.actorUserId()).executeUpdate();
+        }
+        LocalDate assignmentStart = r.hiredOn() == null ? LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")) : r.hiredOn();
+        EmployeeAssignmentEntity assignment = assignments.saveAndFlush(new EmployeeAssignmentEntity(
+                e, cinema, department.getId(), position.getId(), assignmentStart, null, actor(ctx)));
+        audit.record(ctx,"EMPLOYEE_ASSIGNMENT_CREATED","EMPLOYEE_ASSIGNMENT",assignment.getEmployeeAssignmentId(),
+                Map.of(),assignmentSnapshot(assignment));
         audit.record(ctx,"EMPLOYEE_CREATED","EMPLOYEE",e.getEmployeeId(),Map.of(),snapshot(e));
         return dto(e);
     }
@@ -139,7 +191,9 @@ public class WorkforceServiceImpl implements WorkforceService {
         return after;
     }
     private void lockChain(Long id) {
-        if(em.find(OrgChainEntity.class,id,LockModeType.PESSIMISTIC_WRITE)==null) throw missing("chuỗi");
+        OrgChainEntity chain=em.find(OrgChainEntity.class,id,LockModeType.PESSIMISTIC_WRITE);
+        if(chain==null) throw missing("chuỗi");
+        if(chain.getStatus()!=ActiveStatus.ACTIVE) throw new IllegalArgumentException("Chỉ tạo hồ sơ trong chuỗi đang hoạt động.");
     }
     private void uniqueEmployee(Long chain, String code) {
         if(!em.createQuery("SELECT e FROM EmployeeEntity e WHERE e.chainId=:chain AND e.employeeCode=:code",EmployeeEntity.class)

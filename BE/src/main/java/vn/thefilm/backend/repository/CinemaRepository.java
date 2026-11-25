@@ -29,4 +29,11 @@ public interface CinemaRepository extends JpaRepository<CinemaEntity, Long> {
 
     @Query("SELECT COUNT(c) FROM CinemaEntity c WHERE c.chainId = :chainId AND c.cinemaCode = :cinemaCode")
     long countByChainAndCode(@Param("chainId") Long chainId, @Param("cinemaCode") String cinemaCode);
+
+    @Query("SELECT c.cinemaId FROM CinemaEntity c WHERE c.chainId = :chainId ORDER BY c.cinemaId")
+    List<Long> findCinemaIdsByChainId(@Param("chainId") Long chainId);
+
+    long countByChainIdAndStatus(Long chainId, CinemaStatus status);
+
+    long countByLegalEntityIdAndStatus(Long legalEntityId, CinemaStatus status);
 }

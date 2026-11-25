@@ -2,10 +2,12 @@ package vn.thefilm.backend.dto;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -33,8 +35,17 @@ public final class AdminCatalogDtos {
             @NotNull @Min(1) @Max(9999) Integer runtimeMinutes,
             Long ageClassificationId,
             @Size(max = 1000) String posterUri,
+            @Size(max = 1000) String bannerUri,
             @Size(max = 1000) String trailerUri,
-            List<Long> genreIds) {
+            List<Long> genreIds,
+            LocalDate releaseDate,
+            @Size(max = 300) String director,
+            @Size(max = 2000) String castNames,
+            @DecimalMin("0.0") @jakarta.validation.constraints.DecimalMax("10.0") BigDecimal externalRatingScore,
+            @Min(0) Integer externalRatingCount,
+            @Size(max = 80) String externalRatingSource,
+            @Size(max = 1000) String externalRatingUri,
+            OffsetDateTime externalRatingUpdatedAt) {
     }
 
     public record FilmUpdateRequest(
@@ -44,8 +55,17 @@ public final class AdminCatalogDtos {
             @NotNull @Min(1) @Max(9999) Integer runtimeMinutes,
             Long ageClassificationId,
             @Size(max = 1000) String posterUri,
+            @Size(max = 1000) String bannerUri,
             @Size(max = 1000) String trailerUri,
-            List<Long> genreIds) {
+            List<Long> genreIds,
+            LocalDate releaseDate,
+            @Size(max = 300) String director,
+            @Size(max = 2000) String castNames,
+            @DecimalMin("0.0") @jakarta.validation.constraints.DecimalMax("10.0") BigDecimal externalRatingScore,
+            @Min(0) Integer externalRatingCount,
+            @Size(max = 80) String externalRatingSource,
+            @Size(max = 1000) String externalRatingUri,
+            OffsetDateTime externalRatingUpdatedAt) {
     }
 
     public record FilmAdminDto(
@@ -57,13 +77,23 @@ public final class AdminCatalogDtos {
             Integer runtimeMinutes,
             Long ageClassificationId,
             String posterUri,
+            String bannerUri,
             String trailerUri,
+            LocalDate releaseDate,
+            String director,
+            String castNames,
+            BigDecimal externalRatingScore,
+            Integer externalRatingCount,
+            String externalRatingSource,
+            String externalRatingUri,
+            OffsetDateTime externalRatingUpdatedAt,
             FilmApprovalStatus approvalStatus,
             List<Long> genreIds) {
 
         public FilmAdminDto withGenreIds(List<Long> ids) {
             return new FilmAdminDto(filmId, filmCode, titleLocal, titleOriginal, synopsis, runtimeMinutes,
-                    ageClassificationId, posterUri, trailerUri, approvalStatus, ids);
+                    ageClassificationId, posterUri, bannerUri, trailerUri, releaseDate, director, castNames, externalRatingScore,
+                    externalRatingCount, externalRatingSource, externalRatingUri, externalRatingUpdatedAt, approvalStatus, ids);
         }
     }
 
@@ -120,6 +150,12 @@ public final class AdminCatalogDtos {
             @Size(max = 1000) String description) {
     }
 
+    public record RoomTypeRequest(
+            @NotBlank @Size(max = 30) @Pattern(regexp = "[A-Z0-9_]+") String typeCode,
+            @NotBlank @Size(max = 120) String typeName,
+            @Size(max = 1000) String description) {
+    }
+
     public record TypeStatusRequest(@NotBlank @Pattern(regexp = "ACTIVE|INACTIVE") String status) {
     }
 
@@ -129,7 +165,9 @@ public final class AdminCatalogDtos {
     public record RoomCreateRequest(
             @NotNull Long roomTypeId,
             @NotBlank @Size(max = 30) String roomCode,
-            @NotBlank @Size(max = 150) String roomName) {
+            @NotBlank @Size(max = 150) String roomName,
+            @NotBlank @Size(max = 120) String layoutName,
+            @NotEmpty @Valid List<RowSpec> rows) {
     }
 
     public record RoomStatusRequest(@NotNull RoomStatus status) {
@@ -149,7 +187,20 @@ public final class AdminCatalogDtos {
     public record RowSpec(
             @NotBlank @Size(max = 10) @Pattern(regexp = "[A-Za-z0-9]+") String rowLabel,
             @NotNull @Min(1) @Max(60) Integer seatCount,
-            @NotNull Long seatTypeId) {
+            @NotNull Long seatTypeId,
+            @Pattern(regexp = "LEFT|CENTER|RIGHT") String alignment) {
+    }
+
+    public record RowAlignmentSpec(
+            @NotBlank @Size(max = 10) @Pattern(regexp = "[A-Za-z0-9]+") String rowLabel,
+            @NotNull @Min(1) @Max(60) Integer seatCount,
+            @NotBlank @Pattern(regexp = "LEFT|CENTER|RIGHT") String alignment,
+            @Min(1) Long seatTypeId) {
+    }
+
+    public record LayoutAlignmentRequest(
+            @NotBlank @Size(max = 120) String layoutName,
+            @NotEmpty @Size(max = 60) @Valid List<RowAlignmentSpec> rows) {
     }
 
     public record LayoutCreateRequest(
@@ -207,6 +258,21 @@ public final class AdminCatalogDtos {
             @Min(0) @Max(240) Integer cleanupMinutes) {
     }
 
+    public record ScreeningBulkCreateRequest(
+            @NotNull Long cinemaId,
+            @NotNull Long roomId,
+            @NotNull Long filmVersionId,
+            @NotEmpty @Size(max = 31) List<@NotNull @Future OffsetDateTime> startsAt,
+            @NotBlank @Size(max = 40) String screeningTypeCode,
+            @Min(0) @Max(240) Integer cleanupMinutes) {
+    }
+
+    public record ScreeningUpdateRequest(
+            @NotNull @Future OffsetDateTime startsAt,
+            @NotBlank @Size(max = 40) String screeningTypeCode,
+            @Min(0) @Max(240) Integer cleanupMinutes) {
+    }
+
     public record ScreeningCancelRequest(@NotBlank @Size(max = 500) String reason) {
     }
 
@@ -232,6 +298,7 @@ public final class AdminCatalogDtos {
             Long cinemaId,
             Long roomTypeId,
             @NotNull Long seatTypeId,
+            Long filmId,
             @Size(max = 40) String screeningTypeCode,
             @Min(1) @Max(7) Integer weekdayNo,
             @NotNull OffsetDateTime validFrom,
@@ -249,6 +316,7 @@ public final class AdminCatalogDtos {
             Long cinemaId,
             Long roomTypeId,
             Long seatTypeId,
+            Long filmId,
             String screeningTypeCode,
             Integer weekdayNo,
             OffsetDateTime validFrom,

@@ -13,7 +13,7 @@ import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.*;
 
 @RestController @Validated @RequestMapping("/api/v1/admin/hr/{kind:departments|job-positions}")
-@PreAuthorize("hasAnyRole('CHAIN_ADMIN','HR')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'STAFF')")
 public class AdminHrCatalogController {
     private final WorkforceService service;
     public AdminHrCatalogController(WorkforceService service) { this.service=service; }

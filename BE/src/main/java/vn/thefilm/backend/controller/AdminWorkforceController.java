@@ -14,7 +14,7 @@ import vn.thefilm.backend.security.TheFilmUserPrincipal;
 import vn.thefilm.backend.service.*;
 
 @RestController @Validated @RequestMapping("/api/v1/admin/employees")
-@PreAuthorize("hasAnyRole('CHAIN_ADMIN','HR')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'STAFF')")
 public class AdminWorkforceController {
     private final WorkforceService workforce;
     private final EmployeeManagementService employees;
@@ -27,8 +27,11 @@ public class AdminWorkforceController {
     public ApiResponse<EmployeeDetail> detail(@PathVariable @Positive Long id) { return ApiResponse.success(workforce.detail(id)); }
     @PostMapping
     public ApiResponse<EmployeeDto> create(@Valid @RequestBody EmployeeRequest r,@AuthenticationPrincipal TheFilmUserPrincipal p,
-            @RequestHeader(value="X-Request-Id",required=false) String trace,HttpServletRequest http) {
-        return ApiResponse.success(workforce.create(r,AdminActionContext.of(p,trace,http.getRemoteAddr())));
+            @RequestHeader(value="X-Request-Id",required=false) String trace,HttpServletRequest http,
+            org.springframework.security.core.Authentication authentication) {
+        boolean mayGrantChainAdmin = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CHAIN_ADMIN".equals(a.getAuthority()));
+        return ApiResponse.success(workforce.create(r,AdminActionContext.of(p,trace,http.getRemoteAddr()),mayGrantChainAdmin));
     }
     @PutMapping("/{id}")
     public ApiResponse<EmployeeDto> update(@PathVariable @Positive Long id,@Valid @RequestBody EmployeeRequest r,
@@ -36,9 +39,10 @@ public class AdminWorkforceController {
         return ApiResponse.success(workforce.update(id,r,AdminActionContext.of(p,trace,http.getRemoteAddr())));
     }
     @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('CHAIN_ADMIN','HR')")
     public ApiResponse<EmployeeDto> status(@PathVariable @Positive Long id,@Valid @RequestBody StatusRequest r,
             @AuthenticationPrincipal TheFilmUserPrincipal p,@RequestHeader(value="X-Request-Id",required=false) String trace,HttpServletRequest http) {
-        return ApiResponse.success(employees.updateEmployeeStatus(id,r.status(),p==null?null:p.appUserId(),trace,http.getRemoteAddr()));
+        return ApiResponse.success(employees.updateEmployeeStatus(id,r.status(),r.reason(),p==null?null:p.appUserId(),trace,http.getRemoteAddr()));
     }
     @GetMapping("/{id}/assignments")
     public ApiResponse<List<AssignmentDto>> assignments(@PathVariable @Positive Long id) { return ApiResponse.success(workforce.assignments(id)); }

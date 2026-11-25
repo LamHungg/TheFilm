@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningAdminDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningCancelRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningCreateRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningBulkCreateRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningUpdateRequest;
 import vn.thefilm.backend.dto.ApiResponse;
 import vn.thefilm.backend.security.AdminScopeGuard;
 import vn.thefilm.backend.security.TheFilmUserPrincipal;
@@ -29,7 +32,7 @@ import vn.thefilm.backend.service.AdminScreeningService;
 
 @RestController
 @RequestMapping("/api/v1/admin/screenings")
-@PreAuthorize("hasAnyRole('CHAIN_ADMIN', 'CINEMA_MANAGER')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'SHOWTIMES')")
 public class AdminScreeningController {
 
     private final AdminScreeningService screeningService;
@@ -44,8 +47,8 @@ public class AdminScreeningController {
     public ApiResponse<List<ScreeningAdminDto>> search(
             @RequestParam Long cinemaId,
             @RequestParam(required = false) Long filmId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
             Authentication authentication) {
         guard.forCinema(authentication, cinemaId);
         return ApiResponse.success(screeningService.search(cinemaId, filmId, from, to));
@@ -57,6 +60,18 @@ public class AdminScreeningController {
         return ApiResponse.success(screeningService.get(id));
     }
 
+    @PutMapping("/{id}")
+    public ApiResponse<ScreeningAdminDto> update(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody ScreeningUpdateRequest request,
+            Authentication authentication,
+            @AuthenticationPrincipal TheFilmUserPrincipal principal,
+            @RequestHeader(value = "X-Request-Id", required = false) String traceId,
+            HttpServletRequest http) {
+        guard.forScreening(authentication, id);
+        return ApiResponse.success(screeningService.update(id, request, ctx(principal, traceId, http)));
+    }
+
     @PostMapping
     public ApiResponse<ScreeningAdminDto> create(
             @Valid @RequestBody ScreeningCreateRequest request,
@@ -66,6 +81,17 @@ public class AdminScreeningController {
             HttpServletRequest http) {
         guard.forCinema(authentication, request.cinemaId());
         return ApiResponse.success(screeningService.create(request, ctx(principal, traceId, http)));
+    }
+
+    @PostMapping("/bulk")
+    public ApiResponse<List<ScreeningAdminDto>> createBulk(
+            @Valid @RequestBody ScreeningBulkCreateRequest request,
+            Authentication authentication,
+            @AuthenticationPrincipal TheFilmUserPrincipal principal,
+            @RequestHeader(value = "X-Request-Id", required = false) String traceId,
+            HttpServletRequest http) {
+        guard.forCinema(authentication, request.cinemaId());
+        return ApiResponse.success(screeningService.createBulk(request, ctx(principal, traceId, http)));
     }
 
     @PostMapping("/{id}/publish")

@@ -7,7 +7,10 @@ import vn.thefilm.backend.enums.EmployeeStatus;
 public interface WorkforceService {
     PageResponse<EmployeeDto> search(String keyword, EmployeeStatus status, int page, int size);
     EmployeeDetail detail(Long id);
-    EmployeeDto create(EmployeeRequest request, AdminActionContext ctx);
+    EmployeeDto create(EmployeeRequest request, AdminActionContext ctx, boolean mayGrantChainAdmin);
+    default EmployeeDto create(EmployeeRequest request, AdminActionContext ctx) {
+        return create(request, ctx, false);
+    }
     EmployeeDto update(Long id, EmployeeRequest request, AdminActionContext ctx);
     List<AssignmentDto> assignments(Long id);
     AssignmentDto assign(Long id, AssignmentRequest request, AdminActionContext ctx);

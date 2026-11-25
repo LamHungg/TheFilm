@@ -28,6 +28,7 @@ public interface EmployeeManagementService {
     EmployeeDto updateEmployeeStatus(
             Long employeeId,
             EmployeeStatus status,
+            String reason,
             Long actorUserId,
             String traceId,
             String sourceIp);

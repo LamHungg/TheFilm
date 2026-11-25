@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import vn.thefilm.backend.entity.LegalEntityEntity;
+import vn.thefilm.backend.enums.ActiveStatus;
 
 @Repository
 public interface LegalEntityRepository extends JpaRepository<LegalEntityEntity, Long> {
@@ -17,4 +18,6 @@ public interface LegalEntityRepository extends JpaRepository<LegalEntityEntity, 
 
     @Query("SELECT COUNT(e) FROM LegalEntityEntity e WHERE e.chainId = :chainId AND e.entityCode = :entityCode")
     long countByChainAndCode(@Param("chainId") Long chainId, @Param("entityCode") String entityCode);
+
+    long countByChainIdAndStatus(Long chainId, ActiveStatus status);
 }

@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -61,11 +63,29 @@ public interface ScreeningRepository extends JpaRepository<ScreeningEntity, Long
             SELECT s
             FROM ScreeningEntity s
             JOIN FETCH s.film
+            JOIN FETCH s.cinema
+            JOIN FETCH s.room
+            JOIN FETCH s.filmVersion
+            WHERE s.cinema.cinemaId = :cinemaId
+              AND (:filmId IS NULL OR s.film.filmId = :filmId)
+            ORDER BY s.startsAt, s.screeningId
+            """)
+    List<ScreeningEntity> findAllAdminScreenings(
+            @Param("cinemaId") Long cinemaId,
+            @Param("filmId") Long filmId);
+
+    @Query("""
+            SELECT s
+            FROM ScreeningEntity s
+            JOIN FETCH s.film
             JOIN FETCH s.room
             JOIN FETCH s.filmVersion
             WHERE s.screeningId = :screeningId
             """)
     Optional<ScreeningEntity> findAdminById(@Param("screeningId") Long screeningId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<ScreeningEntity> findByScreeningId(Long screeningId);
 
     @Query("""
             SELECT s

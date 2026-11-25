@@ -27,7 +27,7 @@ import vn.thefilm.backend.service.AdminPriceRuleService;
 
 @RestController
 @RequestMapping("/api/v1/admin/price-rules")
-@PreAuthorize("hasRole('CHAIN_ADMIN')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'PRICING')")
 public class AdminPriceRuleController {
 
     private final AdminPriceRuleService priceRuleService;

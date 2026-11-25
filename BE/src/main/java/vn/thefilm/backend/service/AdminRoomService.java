@@ -3,6 +3,7 @@ package vn.thefilm.backend.service;
 import java.util.List;
 
 import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutCreateRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutAlignmentRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.MaintenanceDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.MaintenanceRequest;
@@ -12,14 +13,15 @@ import vn.thefilm.backend.dto.AdminCatalogDtos.RoomSeatDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.SeatUpdateRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.RoomTypeRequest;
 import vn.thefilm.backend.enums.ActiveStatus;
 import vn.thefilm.backend.enums.RoomStatus;
 
 public interface AdminRoomService {
 
-    List<TypeDto> listRoomTypes();
+    List<TypeDto> listRoomTypes(Long cinemaId);
 
-    TypeDto createRoomType(TypeRequest request, AdminActionContext ctx);
+    TypeDto createRoomType(Long cinemaId, RoomTypeRequest request, AdminActionContext ctx);
 
     TypeDto changeRoomTypeStatus(Long id, ActiveStatus status, AdminActionContext ctx);
 
@@ -38,6 +40,10 @@ public interface AdminRoomService {
     List<LayoutDto> listLayouts(Long roomId);
 
     LayoutDto createLayout(Long roomId, LayoutCreateRequest request, AdminActionContext ctx);
+
+    LayoutDto createAndActivateLayout(Long roomId, LayoutCreateRequest request, AdminActionContext ctx);
+
+    LayoutDto createAlignedRevision(Long roomId, LayoutAlignmentRequest request, AdminActionContext ctx);
 
     LayoutDto activateLayout(Long layoutId, AdminActionContext ctx);
 

@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutCreateRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutAlignmentRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.MaintenanceDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.MaintenanceRequest;
@@ -24,9 +26,11 @@ import vn.thefilm.backend.dto.AdminCatalogDtos.RoomAdminDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.RoomCreateRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.RoomSeatDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.RowSpec;
+import vn.thefilm.backend.dto.AdminCatalogDtos.RowAlignmentSpec;
 import vn.thefilm.backend.dto.AdminCatalogDtos.SeatUpdateRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.RoomTypeRequest;
 import vn.thefilm.backend.entity.CinemaEntity;
 import vn.thefilm.backend.entity.CinemaRoomEntity;
 import vn.thefilm.backend.entity.RoomLayoutEntity;
@@ -86,8 +90,10 @@ public class AdminRoomServiceImpl implements AdminRoomService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TypeDto> listRoomTypes() {
-        return roomTypeRepository.findAllByOrderByTypeCodeAsc().stream()
+    public List<TypeDto> listRoomTypes(Long cinemaId) {
+        CinemaEntity cinema = cinemaRepository.findById(cinemaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay rap " + cinemaId));
+        return roomTypeRepository.findAllByChainIdOrderByTypeCodeAsc(cinema.getChainId()).stream()
                 .map(t -> new TypeDto(t.getRoomTypeId(), t.getTypeCode(), t.getTypeName(), t.getDescription(),
                         t.getStatus().name()))
                 .toList();
@@ -95,14 +101,17 @@ public class AdminRoomServiceImpl implements AdminRoomService {
 
     @Override
     @Transactional
-    public TypeDto createRoomType(TypeRequest request, AdminActionContext ctx) {
-        if (roomTypeRepository.existsByTypeCode(request.typeCode())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ma loai phong da ton tai");
+    public TypeDto createRoomType(Long cinemaId, RoomTypeRequest request, AdminActionContext ctx) {
+        CinemaEntity cinema = cinemaRepository.findById(cinemaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay rap " + cinemaId));
+        Long chainId = cinema.getChainId();
+        if (roomTypeRepository.existsByChainIdAndTypeCode(chainId, request.typeCode())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Mã loại phòng đã tồn tại trong chuỗi rạp này");
         }
         RoomTypeEntity saved = roomTypeRepository.save(
-                new RoomTypeEntity(request.typeCode(), request.typeName().trim(), request.description()));
+                new RoomTypeEntity(chainId, request.typeCode(), request.typeName().trim(), request.description()));
         audit.record(ctx, "ROOM_TYPE_CREATE", "ROOM_TYPE", saved.getRoomTypeId(), null,
-                Map.of("typeCode", saved.getTypeCode()));
+                Map.of("typeCode", saved.getTypeCode(), "chainId", chainId));
         return new TypeDto(saved.getRoomTypeId(), saved.getTypeCode(), saved.getTypeName(),
                 saved.getDescription(), saved.getStatus().name());
     }
@@ -177,6 +186,9 @@ public class AdminRoomServiceImpl implements AdminRoomService {
                 .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay rap " + cinemaId));
         RoomTypeEntity type = roomTypeRepository.findById(request.roomTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay loai phong " + request.roomTypeId()));
+        if (!type.getChainId().equals(cinema.getChainId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Loại phòng không thuộc chuỗi của rạp đã chọn");
+        }
         if (type.getStatus() != ActiveStatus.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Loai phong dang ngung hoat dong");
         }
@@ -188,7 +200,9 @@ public class AdminRoomServiceImpl implements AdminRoomService {
                 request.roomName().trim()));
         audit.record(ctx, "ROOM_CREATE", "CINEMA_ROOM", saved.getRoomId(), null,
                 Map.of("cinemaId", cinemaId, "roomCode", code));
-        return toRoomDto(saved, null);
+        LayoutDto active = createAndActivateLayout(saved.getRoomId(),
+                new LayoutCreateRequest(request.layoutName(), request.rows()), ctx);
+        return toRoomDto(saved, active.layoutId());
     }
 
     @Override
@@ -239,6 +253,7 @@ public class AdminRoomServiceImpl implements AdminRoomService {
         if (total > MAX_SEATS_PER_LAYOUT) {
             throw new IllegalArgumentException("So ghe toi da cho mot so do la " + MAX_SEATS_PER_LAYOUT);
         }
+        int layoutWidth = request.rows().stream().mapToInt(RowSpec::seatCount).max().orElse(0) + 4;
         Set<Long> typeIds = request.rows().stream().map(RowSpec::seatTypeId).collect(Collectors.toSet());
         Map<Long, SeatTypeEntity> types = seatTypeRepository.findAllById(typeIds).stream()
                 .collect(Collectors.toMap(SeatTypeEntity::getSeatTypeId, Function.identity()));
@@ -259,15 +274,115 @@ public class AdminRoomServiceImpl implements AdminRoomService {
         for (RowSpec row : request.rows()) {
             String label = row.rowLabel().trim().toUpperCase(Locale.ROOT);
             SeatTypeEntity type = types.get(row.seatTypeId());
+            String alignment = row.alignment() == null ? "CENTER" : row.alignment();
+            int leftPadding = switch (alignment) {
+                case "LEFT" -> 0;
+                case "RIGHT" -> layoutWidth - row.seatCount();
+                default -> (layoutWidth - row.seatCount()) / 2;
+            };
             for (int col = 1; col <= row.seatCount(); col++) {
                 String code = label + col;
-                seats.add(new RoomSeatEntity(layout, type, code, label, col, code));
+                seats.add(new RoomSeatEntity(layout, type, code, label, leftPadding + col, code));
             }
         }
         seatRepository.saveAll(seats);
         audit.record(ctx, "LAYOUT_CREATE", "ROOM_LAYOUT", layout.getLayoutId(), null,
                 Map.of("roomId", roomId, "versionNo", version, "seatCount", total));
         return toLayoutDto(layout, total);
+    }
+
+    @Override
+    @Transactional
+    public LayoutDto createAndActivateLayout(Long roomId, LayoutCreateRequest request, AdminActionContext ctx) {
+        LayoutDto draft = createLayout(roomId, request, ctx);
+        return activateLayout(draft.layoutId(), ctx);
+    }
+
+    @Override
+    @Transactional
+    public LayoutDto createAlignedRevision(Long roomId, LayoutAlignmentRequest request, AdminActionContext ctx) {
+        CinemaRoomEntity room = roomRepository.findByIdForUpdate(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay phong " + roomId));
+        RoomLayoutEntity activeLayout = layoutRepository.findByRoomAndStatus(roomId, RoomLayoutStatus.ACTIVE)
+                .stream().findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Phong chua co so do ghe dang hoat dong"));
+        List<RoomSeatEntity> activeSeats = seatRepository.findByLayoutWithType(activeLayout.getLayoutId());
+        if (activeSeats.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "So do ghe hien tai chua co ghe nao");
+        }
+
+        Map<String, RowAlignmentSpec> rowRequests = new LinkedHashMap<>();
+        int totalSeats = 0;
+        for (RowAlignmentSpec row : request.rows()) {
+            String rowLabel = row.rowLabel().trim().toUpperCase(Locale.ROOT);
+            if (rowRequests.putIfAbsent(rowLabel, row) != null) {
+                throw new IllegalArgumentException("Hang ghe bi lap: " + rowLabel);
+            }
+            totalSeats += row.seatCount();
+        }
+        if (totalSeats > MAX_SEATS_PER_LAYOUT) {
+            throw new IllegalArgumentException("So ghe toi da cho mot so do la " + MAX_SEATS_PER_LAYOUT);
+        }
+        Map<String, List<RoomSeatEntity>> seatsByRow = activeSeats.stream()
+                .collect(Collectors.groupingBy(seat -> seat.getRowLabel().toUpperCase(Locale.ROOT)));
+
+        Set<Long> newSeatTypeIds = rowRequests.values().stream()
+                .filter(row -> row.seatCount() > seatsByRow.getOrDefault(
+                        row.rowLabel().trim().toUpperCase(Locale.ROOT), List.of()).size())
+                .map(RowAlignmentSpec::seatTypeId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (rowRequests.values().stream().anyMatch(row -> row.seatCount() > seatsByRow.getOrDefault(
+                row.rowLabel().trim().toUpperCase(Locale.ROOT), List.of()).size() && row.seatTypeId() == null)) {
+            throw new IllegalArgumentException("Hay chon loai ghe cho cac ghe moi duoc them");
+        }
+        Map<Long, SeatTypeEntity> newSeatTypes = seatTypeRepository.findAllById(newSeatTypeIds).stream()
+                .collect(Collectors.toMap(SeatTypeEntity::getSeatTypeId, Function.identity()));
+        for (Long typeId : newSeatTypeIds) {
+            SeatTypeEntity type = newSeatTypes.get(typeId);
+            if (type == null || type.getStatus() != ActiveStatus.ACTIVE) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Loai ghe duoc chon cho ghe moi khong ton tai hoac da ngung hoat dong");
+            }
+        }
+
+        int layoutWidth = rowRequests.values().stream().mapToInt(RowAlignmentSpec::seatCount).max().orElse(0) + 4;
+        int version = layoutRepository.findMaxVersionNo(roomId) + 1;
+        RoomLayoutEntity newLayout = layoutRepository.save(new RoomLayoutEntity(room, version,
+                request.layoutName().trim(), ctx.actorUserId()));
+        List<RoomSeatEntity> copiedSeats = new ArrayList<>(totalSeats);
+        for (Map.Entry<String, RowAlignmentSpec> entry : rowRequests.entrySet()) {
+            String rowLabel = entry.getKey();
+            RowAlignmentSpec rowRequest = entry.getValue();
+            List<RoomSeatEntity> rowSeats = seatsByRow.getOrDefault(rowLabel, List.of()).stream()
+                    .sorted(java.util.Comparator.comparing(RoomSeatEntity::getColumnNo)).toList();
+            int leftPadding = switch (rowRequest.alignment()) {
+                case "LEFT" -> 0;
+                case "RIGHT" -> layoutWidth - rowRequest.seatCount();
+                default -> (layoutWidth - rowRequest.seatCount()) / 2;
+            };
+            for (int seatNumber = 1; seatNumber <= rowRequest.seatCount(); seatNumber++) {
+                if (seatNumber <= rowSeats.size()) {
+                    RoomSeatEntity oldSeat = rowSeats.get(seatNumber - 1);
+                    RoomSeatEntity copied = new RoomSeatEntity(newLayout, oldSeat.getSeatType(), oldSeat.getSeatCode(),
+                            rowLabel, leftPadding + seatNumber, oldSeat.getSeatLabel());
+                    copied.update(oldSeat.getSeatType(), oldSeat.isSellable());
+                    copiedSeats.add(copied);
+                } else {
+                    SeatTypeEntity type = newSeatTypes.get(rowRequest.seatTypeId());
+                    String seatCode = rowLabel + seatNumber;
+                    copiedSeats.add(new RoomSeatEntity(newLayout, type, seatCode, rowLabel,
+                            leftPadding + seatNumber, seatCode));
+                }
+            }
+        }
+        seatRepository.saveAll(copiedSeats);
+        audit.record(ctx, "LAYOUT_ALIGNMENT_REVISION", "ROOM_LAYOUT", newLayout.getLayoutId(),
+                Map.of("sourceLayoutId", activeLayout.getLayoutId()),
+                Map.of("roomId", roomId, "versionNo", version, "seatCount", copiedSeats.size(),
+                        "rowCount", rowRequests.size()));
+        return activateLayout(newLayout.getLayoutId(), ctx);
     }
 
     @Override

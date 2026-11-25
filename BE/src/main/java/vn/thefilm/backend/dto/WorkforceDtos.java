@@ -10,8 +10,19 @@ public final class WorkforceDtos {
     public record EmployeeRequest(@NotNull @Positive Long chainId,
             @NotBlank @Size(max=40) String employeeCode, @NotBlank @Size(max=200) String fullName,
             @Past LocalDate dateOfBirth, @Size(max=30) String phone,
-            @Email @Size(max=320) String email, LocalDate hiredOn) { }
-    public record StatusRequest(@NotNull EmployeeStatus status) { }
+            @Email @Size(max=320) String email, LocalDate hiredOn,
+            String accountMode, @Email @Size(max=320) String accountEmail,
+            @Size(min=12, max=72) String initialPassword, String roleCode,
+            @NotNull @Positive Long cinemaId, @NotNull @Positive Long departmentId,
+            @NotNull @Positive Long jobPositionId) {
+        public EmployeeRequest(Long chainId, String employeeCode, String fullName, LocalDate dateOfBirth,
+                String phone, String email, LocalDate hiredOn) {
+            this(chainId, employeeCode, fullName, dateOfBirth, phone, email, hiredOn,
+                    null, null, null, null, null, null, null);
+        }
+    }
+    public record StatusRequest(@NotNull EmployeeStatus status,
+            @NotBlank @Size(max=500) String reason) { }
     public record AssignmentRequest(@NotNull @Positive Long cinemaId, @Positive Long departmentId,
             @NotNull @Positive Long jobPositionId, @NotNull LocalDate validFrom, LocalDate validTo) { }
     public record EndAssignmentRequest(@NotNull LocalDate validTo) { }

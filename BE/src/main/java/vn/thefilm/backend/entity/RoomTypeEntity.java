@@ -20,6 +20,9 @@ public class RoomTypeEntity {
     @Column(name = "room_type_id")
     private Long roomTypeId;
 
+    @Column(name = "chain_id", nullable = false, updatable = false)
+    private Long chainId;
+
     @Column(name = "type_code", nullable = false)
     private String typeCode;
 
@@ -36,7 +39,8 @@ public class RoomTypeEntity {
     protected RoomTypeEntity() {
     }
 
-    public RoomTypeEntity(String typeCode, String typeName, String description) {
+    public RoomTypeEntity(Long chainId, String typeCode, String typeName, String description) {
+        this.chainId = chainId;
         this.typeCode = typeCode;
         this.typeName = typeName;
         this.description = description;
@@ -44,6 +48,10 @@ public class RoomTypeEntity {
 
     public Long getRoomTypeId() {
         return roomTypeId;
+    }
+
+    public Long getChainId() {
+        return chainId;
     }
 
     public String getTypeCode() {

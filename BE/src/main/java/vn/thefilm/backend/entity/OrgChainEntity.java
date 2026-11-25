@@ -74,6 +74,14 @@ public class OrgChainEntity {
         return chainName;
     }
 
+    public void updateName(String chainName) {
+        this.chainName = chainName;
+    }
+
+    public void changeStatus(ActiveStatus status) {
+        this.status = status;
+    }
+
     public ActiveStatus getStatus() {
         return status;
     }

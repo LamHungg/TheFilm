@@ -25,6 +25,7 @@ public class PriceRuleEntity {
     @Column(name = "cinema_id") private Long cinemaId;
     @Column(name = "room_type_id") private Long roomTypeId;
     @Column(name = "seat_type_id") private Long seatTypeId;
+    @Column(name = "film_id") private Long filmId;
     @Column(name = "screening_type_code", length = 40) private String screeningTypeCode;
     @Column(name = "weekday_no") private Integer weekdayNo;
     @Column(name = "valid_from", nullable = false) private OffsetDateTime validFrom;
@@ -42,10 +43,18 @@ public class PriceRuleEntity {
     public PriceRuleEntity(String ruleCode, Long cinemaId, Long roomTypeId, Long seatTypeId,
             String screeningTypeCode, Integer weekdayNo, OffsetDateTime validFrom, OffsetDateTime validTo,
             BigDecimal basePrice, Integer priorityNo, ApprovalStatus approvalStatus, Long createdBy) {
+        this(ruleCode, cinemaId, roomTypeId, seatTypeId, null, screeningTypeCode, weekdayNo, validFrom, validTo,
+                basePrice, priorityNo, approvalStatus, createdBy);
+    }
+
+    public PriceRuleEntity(String ruleCode, Long cinemaId, Long roomTypeId, Long seatTypeId, Long filmId,
+            String screeningTypeCode, Integer weekdayNo, OffsetDateTime validFrom, OffsetDateTime validTo,
+            BigDecimal basePrice, Integer priorityNo, ApprovalStatus approvalStatus, Long createdBy) {
         this.ruleCode = ruleCode;
         this.cinemaId = cinemaId;
         this.roomTypeId = roomTypeId;
         this.seatTypeId = seatTypeId;
+        this.filmId = filmId;
         this.screeningTypeCode = screeningTypeCode;
         this.weekdayNo = weekdayNo;
         this.validFrom = validFrom;
@@ -61,6 +70,7 @@ public class PriceRuleEntity {
     public Long getCinemaId() { return cinemaId; }
     public Long getRoomTypeId() { return roomTypeId; }
     public Long getSeatTypeId() { return seatTypeId; }
+    public Long getFilmId() { return filmId; }
     public String getScreeningTypeCode() { return screeningTypeCode; }
     public Integer getWeekdayNo() { return weekdayNo; }
     public OffsetDateTime getValidFrom() { return validFrom; }

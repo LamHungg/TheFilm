@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import vn.thefilm.backend.enums.CinemaStatus;
+import vn.thefilm.backend.enums.ActiveStatus;
 
 /** Request va response cua cac API quan tri chuoi, phap nhan va rap. */
 public final class AdminOrgDtos {
@@ -18,12 +19,23 @@ public final class AdminOrgDtos {
             @NotBlank @Size(max = 200) String chainName) {
     }
 
+    public record ChainUpdateRequest(@NotBlank @Size(max = 200) String chainName) {
+    }
+
+    public record ActiveStatusRequest(@NotNull ActiveStatus status) {
+    }
+
     public record ChainDto(Long chainId, String chainCode, String chainName, String status) {
     }
 
     public record LegalEntityRequest(
             @NotNull Long chainId,
             @NotBlank @Size(max = 30) String entityCode,
+            @NotBlank @Size(max = 300) String legalName,
+            @Size(max = 30) String taxIdentifier) {
+    }
+
+    public record LegalEntityUpdateRequest(
             @NotBlank @Size(max = 300) String legalName,
             @Size(max = 30) String taxIdentifier) {
     }

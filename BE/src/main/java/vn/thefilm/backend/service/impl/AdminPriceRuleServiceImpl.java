@@ -13,9 +13,12 @@ import org.springframework.web.server.ResponseStatusException;
 import vn.thefilm.backend.dto.AdminCatalogDtos.PriceRuleDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.PriceRuleRequest;
 import vn.thefilm.backend.entity.PriceRuleEntity;
+import vn.thefilm.backend.entity.CinemaEntity;
+import vn.thefilm.backend.entity.RoomTypeEntity;
 import vn.thefilm.backend.enums.ApprovalStatus;
 import vn.thefilm.backend.exception.ResourceNotFoundException;
 import vn.thefilm.backend.repository.CinemaRepository;
+import vn.thefilm.backend.repository.FilmRepository;
 import vn.thefilm.backend.repository.PriceRuleRepository;
 import vn.thefilm.backend.repository.RoomTypeRepository;
 import vn.thefilm.backend.repository.SeatTypeRepository;
@@ -36,14 +39,17 @@ public class AdminPriceRuleServiceImpl implements AdminPriceRuleService {
     private final CinemaRepository cinemaRepository;
     private final RoomTypeRepository roomTypeRepository;
     private final SeatTypeRepository seatTypeRepository;
+    private final FilmRepository filmRepository;
     private final AdminAudit audit;
 
     public AdminPriceRuleServiceImpl(PriceRuleRepository priceRuleRepository, CinemaRepository cinemaRepository,
-            RoomTypeRepository roomTypeRepository, SeatTypeRepository seatTypeRepository, AdminAudit audit) {
+            RoomTypeRepository roomTypeRepository, SeatTypeRepository seatTypeRepository,
+            FilmRepository filmRepository, AdminAudit audit) {
         this.priceRuleRepository = priceRuleRepository;
         this.cinemaRepository = cinemaRepository;
         this.roomTypeRepository = roomTypeRepository;
         this.seatTypeRepository = seatTypeRepository;
+        this.filmRepository = filmRepository;
         this.audit = audit;
     }
 
@@ -67,26 +73,36 @@ public class AdminPriceRuleServiceImpl implements AdminPriceRuleService {
         if (request.validTo() != null && !request.validTo().isAfter(request.validFrom())) {
             throw new IllegalArgumentException("validTo phai sau validFrom");
         }
-        if (request.cinemaId() != null && !cinemaRepository.existsById(request.cinemaId())) {
-            throw new ResourceNotFoundException("Khong tim thay rap " + request.cinemaId());
-        }
-        if (request.roomTypeId() != null && !roomTypeRepository.existsById(request.roomTypeId())) {
-            throw new ResourceNotFoundException("Khong tim thay loai phong " + request.roomTypeId());
+        CinemaEntity cinema = request.cinemaId() == null ? null : cinemaRepository.findById(request.cinemaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay rap " + request.cinemaId()));
+        if (request.roomTypeId() != null) {
+            RoomTypeEntity roomType = roomTypeRepository.findById(request.roomTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay loai phong " + request.roomTypeId()));
+            if (cinema == null) {
+                throw new IllegalArgumentException("Hãy chọn rạp trước khi chọn loại phòng vì danh mục thuộc từng chuỗi.");
+            }
+            if (!roomType.getChainId().equals(cinema.getChainId())) {
+                throw new IllegalArgumentException("Loại phòng không thuộc chuỗi của rạp đã chọn.");
+            }
         }
         if (!seatTypeRepository.existsById(request.seatTypeId())) {
             throw new ResourceNotFoundException("Khong tim thay loai ghe " + request.seatTypeId());
+        }
+        if (request.filmId() != null && !filmRepository.existsById(request.filmId())) {
+            throw new ResourceNotFoundException("Khong tim thay phim " + request.filmId());
         }
         String screeningType = request.screeningTypeCode() == null || request.screeningTypeCode().isBlank()
                 ? null
                 : request.screeningTypeCode().trim();
         PriceRuleEntity saved = priceRuleRepository.save(new PriceRuleEntity(code, request.cinemaId(),
-                request.roomTypeId(), request.seatTypeId(), screeningType, request.weekdayNo(),
+                request.roomTypeId(), request.seatTypeId(), request.filmId(), screeningType, request.weekdayNo(),
                 request.validFrom(), request.validTo(), request.basePrice(), request.priorityNo(),
                 ApprovalStatus.DRAFT, ctx.actorUserId()));
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("ruleCode", code);
         after.put("basePrice", request.basePrice().toPlainString());
         after.put("seatTypeId", request.seatTypeId());
+        if (request.filmId() != null) after.put("filmId", request.filmId());
         audit.record(ctx, "PRICE_RULE_CREATE", "PRICE_RULE", saved.getPriceRuleId(), null, after);
         return toDto(saved);
     }
@@ -113,7 +129,7 @@ public class AdminPriceRuleServiceImpl implements AdminPriceRuleService {
 
     private PriceRuleDto toDto(PriceRuleEntity r) {
         return new PriceRuleDto(r.getPriceRuleId(), r.getRuleCode(), r.getCinemaId(), r.getRoomTypeId(),
-                r.getSeatTypeId(), r.getScreeningTypeCode(), r.getWeekdayNo(), r.getValidFrom(), r.getValidTo(),
+                r.getSeatTypeId(), r.getFilmId(), r.getScreeningTypeCode(), r.getWeekdayNo(), r.getValidFrom(), r.getValidTo(),
                 r.getBasePrice(), r.getPriorityNo(), r.getApprovalStatus());
     }
 }

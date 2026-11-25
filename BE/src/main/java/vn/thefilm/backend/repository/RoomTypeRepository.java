@@ -10,7 +10,7 @@ import vn.thefilm.backend.entity.RoomTypeEntity;
 @Repository
 public interface RoomTypeRepository extends JpaRepository<RoomTypeEntity, Long> {
 
-    List<RoomTypeEntity> findAllByOrderByTypeCodeAsc();
+    List<RoomTypeEntity> findAllByChainIdOrderByTypeCodeAsc(Long chainId);
 
-    boolean existsByTypeCode(String typeCode);
+    boolean existsByChainIdAndTypeCode(Long chainId, String typeCode);
 }

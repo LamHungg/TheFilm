@@ -25,7 +25,7 @@ import vn.thefilm.backend.service.EmployeeManagementService;
 
 @RestController
 @RequestMapping("/api/v1/admin/employees")
-@PreAuthorize("hasAnyRole('CHAIN_ADMIN', 'HR')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'STAFF')")
 public class AdminEmployeeController {
 
     private final EmployeeManagementService employeeManagementService;

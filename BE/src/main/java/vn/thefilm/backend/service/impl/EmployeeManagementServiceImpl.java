@@ -184,11 +184,12 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
     public EmployeeDto updateEmployeeStatus(
             Long employeeId,
             EmployeeStatus status,
+            String reason,
             Long actorUserId,
             String traceId,
             String sourceIp) {
-        if (status == null || status == EmployeeStatus.PENDING) {
-            throw new IllegalArgumentException("Trạng thái nhân viên phải là ACTIVE, ON_LEAVE hoặc TERMINATED.");
+        if (status == null || status == EmployeeStatus.PENDING || reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Chọn trạng thái hợp lệ và nhập lý do cập nhật.");
         }
         lockEmployee(employeeId);
         EmployeeEntity employee = getEmployee(employeeId);
@@ -220,6 +221,8 @@ public class EmployeeManagementServiceImpl implements EmployeeManagementService 
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("status", status.name());
         after.put("terminatedOn", employee.getTerminatedOn() == null ? null : employee.getTerminatedOn().toString());
+        after.put("effectiveOn", java.time.LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toString());
+        after.put("reason", reason.trim());
         auditLogService.recordSecurityEvent(actorUserId, "EMPLOYEE_STATUS_CHANGED", "EMPLOYEE",
                 employeeId.toString(), safeTraceId(traceId), before, after, sourceIp);
         return toDto(employee);

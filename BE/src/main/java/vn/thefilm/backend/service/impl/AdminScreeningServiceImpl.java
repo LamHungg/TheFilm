@@ -1,6 +1,7 @@
 package vn.thefilm.backend.service.impl;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -16,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningAdminDto;
+import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningBulkCreateRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningCreateRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.ScreeningUpdateRequest;
 import vn.thefilm.backend.entity.CinemaRoomEntity;
 import vn.thefilm.backend.entity.FilmEntity;
 import vn.thefilm.backend.entity.FilmVersionEntity;
@@ -81,6 +84,13 @@ public class AdminScreeningServiceImpl implements AdminScreeningService {
     @Override
     @Transactional(readOnly = true)
     public List<ScreeningAdminDto> search(Long cinemaId, Long filmId, OffsetDateTime from, OffsetDateTime to) {
+        if (from == null && to == null) {
+            return screeningRepository.findAllAdminScreenings(cinemaId, filmId).stream()
+                    .map(this::toDto).toList();
+        }
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("Can cung cap ca ngay bat dau va ngay ket thuc hoac bo loc ngay");
+        }
         if (!to.isAfter(from)) {
             throw new IllegalArgumentException("Khoang thoi gian khong hop le");
         }
@@ -163,8 +173,93 @@ public class AdminScreeningServiceImpl implements AdminScreeningService {
 
     @Override
     @Transactional
+    public List<ScreeningAdminDto> createBulk(ScreeningBulkCreateRequest request, AdminActionContext ctx) {
+        Set<Instant> uniqueStarts = new HashSet<>();
+        for (OffsetDateTime startsAt : request.startsAt()) {
+            if (!uniqueStarts.add(startsAt.toInstant())) {
+                throw new IllegalArgumentException("Danh sach ngay chieu co gio bat dau bi trung");
+            }
+        }
+
+        List<OffsetDateTime> startsAtList = request.startsAt().stream().sorted().toList();
+        List<ScreeningAdminDto> created = new ArrayList<>(startsAtList.size());
+        for (OffsetDateTime startsAt : startsAtList) {
+            try {
+                created.add(create(new ScreeningCreateRequest(
+                        request.cinemaId(), request.roomId(), request.filmVersionId(), startsAt,
+                        request.screeningTypeCode(), request.cleanupMinutes()), ctx));
+            } catch (ResponseStatusException ex) {
+                throw new ResponseStatusException(ex.getStatusCode(),
+                        "Ngay " + startsAt + " khong tao duoc: " + ex.getReason(), ex);
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalArgumentException("Ngay " + startsAt + " khong tao duoc: " + ex.getMessage(), ex);
+            }
+        }
+        return created;
+    }
+
+    @Override
+    @Transactional
+    public ScreeningAdminDto update(Long screeningId, ScreeningUpdateRequest request, AdminActionContext ctx) {
+        ScreeningEntity screening = screeningRepository.findByScreeningId(screeningId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay suat chieu " + screeningId));
+        if (screening.getStatus() != ScreeningStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Chi suat o trang thai SCHEDULED moi duoc chinh sua");
+        }
+
+        OffsetDateTime startsAt = request.startsAt();
+        OffsetDateTime now = OffsetDateTime.now();
+        if (!startsAt.isAfter(now)) {
+            throw new IllegalArgumentException("Gio bat dau phai o tuong lai");
+        }
+
+        CinemaRoomEntity lockedRoom = roomRepository.findByIdForUpdate(screening.getRoom().getRoomId())
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay phong " + screening.getRoom().getRoomId()));
+        if (lockedRoom.getStatus() != RoomStatus.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phong dang khong hoat dong");
+        }
+
+        long takenSeats = showSeatRepository.countByScreeningAndStatuses(screeningId,
+                List.of(ShowSeatStatus.HELD, ShowSeatStatus.SOLD));
+        if (takenSeats > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Suat chieu da co ghe dang giu hoac da ban, khong the chinh sua");
+        }
+
+        int cleanup = request.cleanupMinutes() == null ? defaultCleanupMinutes : request.cleanupMinutes();
+        OffsetDateTime endsAt = startsAt.plusMinutes(screening.getFilmVersion().getRuntimeMinutes());
+        if (rightRepository.countActiveByFilm(screening.getFilm().getFilmId(), ActiveStatus.ACTIVE) > 0
+                && rightRepository.countCovering(screening.getFilm().getFilmId(), screening.getCinema().getCinemaId(),
+                        ActiveStatus.ACTIVE, startsAt, endsAt) == 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Suat chieu nam ngoai thoi han quyen phat hanh cua phim tai rap nay");
+        }
+        checkOverlap(screening.getRoom().getRoomId(), startsAt, endsAt, cleanup, screeningId);
+
+        Map<String, Object> before = new LinkedHashMap<>();
+        before.put("startsAt", screening.getStartsAt().toString());
+        before.put("endsAt", screening.getEndsAt().toString());
+        before.put("screeningTypeCode", screening.getScreeningTypeCode());
+        before.put("cleanupMinutes", screening.getCleanupMinutes());
+        String screeningTypeCode = request.screeningTypeCode().trim();
+        screening.updateSchedule(startsAt, endsAt, screeningTypeCode, cleanup);
+        screeningRepository.save(screening);
+
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("startsAt", startsAt.toString());
+        after.put("endsAt", endsAt.toString());
+        after.put("screeningTypeCode", screeningTypeCode);
+        after.put("cleanupMinutes", cleanup);
+        audit.record(ctx, "SCREENING_UPDATE", "SCREENING", screeningId, before, after);
+        return toDto(screening);
+    }
+
+    @Override
+    @Transactional
     public ScreeningAdminDto publish(Long screeningId, AdminActionContext ctx) {
-        ScreeningEntity screening = load(screeningId);
+        ScreeningEntity screening = screeningRepository.findByScreeningId(screeningId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay suat chieu " + screeningId));
         if (screening.getStatus() != ScreeningStatus.SCHEDULED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Chi suat o trang thai SCHEDULED moi duoc mo ban");
@@ -183,7 +278,8 @@ public class AdminScreeningServiceImpl implements AdminScreeningService {
     @Override
     @Transactional
     public ScreeningAdminDto cancel(Long screeningId, String reason, AdminActionContext ctx) {
-        ScreeningEntity screening = load(screeningId);
+        ScreeningEntity screening = screeningRepository.findByScreeningId(screeningId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay suat chieu " + screeningId));
         ScreeningStatus before = screening.getStatus();
         if (before == ScreeningStatus.CANCELLED || before == ScreeningStatus.COMPLETED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Suat chieu khong the huy o trang thai " + before);

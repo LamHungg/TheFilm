@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutCreateRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutAlignmentRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.LayoutDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.MaintenanceDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.MaintenanceRequest;
@@ -28,6 +29,7 @@ import vn.thefilm.backend.dto.AdminCatalogDtos.RoomStatusRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.SeatUpdateRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeDto;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeRequest;
+import vn.thefilm.backend.dto.AdminCatalogDtos.RoomTypeRequest;
 import vn.thefilm.backend.dto.AdminCatalogDtos.TypeStatusRequest;
 import vn.thefilm.backend.dto.ApiResponse;
 import vn.thefilm.backend.enums.ActiveStatus;
@@ -38,7 +40,7 @@ import vn.thefilm.backend.service.AdminRoomService;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@PreAuthorize("hasAnyRole('CHAIN_ADMIN', 'CINEMA_MANAGER')")
+@PreAuthorize("@adminModuleAccess.canAccess(authentication, 'ROOMS')")
 public class AdminRoomController {
 
     private final AdminRoomService roomService;
@@ -51,25 +53,31 @@ public class AdminRoomController {
 
     // ---- loai phong, loai ghe (ghi chi CHAIN_ADMIN) ----
 
-    @GetMapping("/room-types")
-    public ApiResponse<List<TypeDto>> listRoomTypes() {
-        return ApiResponse.success(roomService.listRoomTypes());
+    @GetMapping("/cinemas/{cinemaId}/room-types")
+    public ApiResponse<List<TypeDto>> listRoomTypes(@PathVariable("cinemaId") Long cinemaId,
+            Authentication authentication) {
+        guard.forCinema(authentication, cinemaId);
+        return ApiResponse.success(roomService.listRoomTypes(cinemaId));
     }
 
-    @PostMapping("/room-types")
-    @PreAuthorize("hasRole('CHAIN_ADMIN')")
-    public ApiResponse<TypeDto> createRoomType(@Valid @RequestBody TypeRequest request,
+    @PostMapping("/cinemas/{cinemaId}/room-types")
+    @PreAuthorize("@adminModuleAccess.canAccess(authentication, 'ROOMS')")
+    public ApiResponse<TypeDto> createRoomType(@PathVariable("cinemaId") Long cinemaId,
+            @Valid @RequestBody RoomTypeRequest request, Authentication authentication,
             @AuthenticationPrincipal TheFilmUserPrincipal principal,
             @RequestHeader(value = "X-Request-Id", required = false) String traceId, HttpServletRequest http) {
-        return ApiResponse.success(roomService.createRoomType(request, ctx(principal, traceId, http)));
+        guard.forCinema(authentication, cinemaId);
+        return ApiResponse.success(roomService.createRoomType(cinemaId, request, ctx(principal, traceId, http)));
     }
 
     @PatchMapping("/room-types/{id}/status")
-    @PreAuthorize("hasRole('CHAIN_ADMIN')")
+    @PreAuthorize("@adminModuleAccess.canAccess(authentication, 'ROOMS')")
     public ApiResponse<TypeDto> changeRoomTypeStatus(@PathVariable("id") Long id,
             @Valid @RequestBody TypeStatusRequest request,
+            Authentication authentication,
             @AuthenticationPrincipal TheFilmUserPrincipal principal,
             @RequestHeader(value = "X-Request-Id", required = false) String traceId, HttpServletRequest http) {
+        guard.forRoomType(authentication, id);
         return ApiResponse.success(roomService.changeRoomTypeStatus(id, ActiveStatus.valueOf(request.status()),
                 ctx(principal, traceId, http)));
     }
@@ -80,7 +88,7 @@ public class AdminRoomController {
     }
 
     @PostMapping("/seat-types")
-    @PreAuthorize("hasRole('CHAIN_ADMIN')")
+    @PreAuthorize("@adminModuleAccess.canAccess(authentication, 'ROOMS')")
     public ApiResponse<TypeDto> createSeatType(@Valid @RequestBody TypeRequest request,
             @AuthenticationPrincipal TheFilmUserPrincipal principal,
             @RequestHeader(value = "X-Request-Id", required = false) String traceId, HttpServletRequest http) {
@@ -88,7 +96,7 @@ public class AdminRoomController {
     }
 
     @PatchMapping("/seat-types/{id}/status")
-    @PreAuthorize("hasRole('CHAIN_ADMIN')")
+    @PreAuthorize("@adminModuleAccess.canAccess(authentication, 'ROOMS')")
     public ApiResponse<TypeDto> changeSeatTypeStatus(@PathVariable("id") Long id,
             @Valid @RequestBody TypeStatusRequest request,
             @AuthenticationPrincipal TheFilmUserPrincipal principal,
@@ -141,6 +149,26 @@ public class AdminRoomController {
             @RequestHeader(value = "X-Request-Id", required = false) String traceId, HttpServletRequest http) {
         guard.forRoom(authentication, roomId);
         return ApiResponse.success(roomService.createLayout(roomId, request, ctx(principal, traceId, http)));
+    }
+
+    @PostMapping("/rooms/{roomId}/layouts/activate")
+    public ApiResponse<LayoutDto> createAndActivateLayout(@PathVariable("roomId") Long roomId,
+            @Valid @RequestBody LayoutCreateRequest request, Authentication authentication,
+            @AuthenticationPrincipal TheFilmUserPrincipal principal,
+            @RequestHeader(value = "X-Request-Id", required = false) String traceId, HttpServletRequest http) {
+        guard.forRoom(authentication, roomId);
+        return ApiResponse.success(roomService.createAndActivateLayout(roomId, request,
+                ctx(principal, traceId, http)));
+    }
+
+    @PostMapping("/rooms/{roomId}/layouts/alignment")
+    public ApiResponse<LayoutDto> createAlignedRevision(@PathVariable("roomId") Long roomId,
+            @Valid @RequestBody LayoutAlignmentRequest request, Authentication authentication,
+            @AuthenticationPrincipal TheFilmUserPrincipal principal,
+            @RequestHeader(value = "X-Request-Id", required = false) String traceId, HttpServletRequest http) {
+        guard.forRoom(authentication, roomId);
+        return ApiResponse.success(roomService.createAlignedRevision(roomId, request,
+                ctx(principal, traceId, http)));
     }
 
     @PostMapping("/layouts/{layoutId}/activate")

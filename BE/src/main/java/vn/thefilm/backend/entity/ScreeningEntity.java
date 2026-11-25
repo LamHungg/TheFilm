@@ -132,6 +132,14 @@ public class ScreeningEntity {
         this.status = newStatus;
     }
 
+    public void updateSchedule(OffsetDateTime startsAt, OffsetDateTime endsAt, String screeningTypeCode,
+            Integer cleanupMinutes) {
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.screeningTypeCode = screeningTypeCode;
+        this.cleanupMinutes = cleanupMinutes;
+    }
+
     public Long getScreeningId() {
         return screeningId;
     }

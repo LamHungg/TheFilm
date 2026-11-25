@@ -90,6 +90,15 @@ public class LegalEntityEntity {
         return taxIdentifier;
     }
 
+    public void updateDetails(String legalName, String taxIdentifier) {
+        this.legalName = legalName;
+        this.taxIdentifier = taxIdentifier;
+    }
+
+    public void changeStatus(ActiveStatus status) {
+        this.status = status;
+    }
+
     public ActiveStatus getStatus() {
         return status;
     }
